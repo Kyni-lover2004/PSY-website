@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="hero">
+    <div class="container">
+        <h1>Психолог Ксения Панкратова</h1>
+        <p class="hero-subtitle">Исследуйте себя и свои отношения через архетипы</p>
+        <div class="hero-buttons">
+            <a href="{{ url_for('tests') }}" class="btn btn-primary">Пройти тесты</a>
+            <a href="{{ url_for('appointment') }}" class="btn btn-secondary">Записаться на консультацию</a>
+        </div>
+    </div>
+</section>
+
+<section class="about">
+    <div class="container">
+        <h2>Обо мне</h2>
+        <div class="about-content">
+            <div class="about-text">
+                <p>Здравствуйте! Меня зовут <strong>Ксения Панкратова</strong>, и я практикующий психолог, специализирующийся на исследовании архетипов в отношениях.</p>
+                
+                <p>Я создала этот исследовательский тест для того, чтобы помочь вам разобраться в своих отношениях с партнёром и раскрыть свои архетипы с точки зрения сексуальности.</p>
+                
+                <p>Мой подход основан на работе с архетипическими образами — универсальными паттернами, которые живут в нашем коллективном бессознательном и влияют на наше поведение, выбор партнёров и сценарии отношений.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="history">
+    <div class="container">
+        <h2>Моя история</h2>
+        <div class="timeline">
+            <div class="timeline-item">
+                <div class="timeline-year">2015</div>
+                <div class="timeline-content">
+                    <h3>Начало пути</h3>
+                    <p>Начала изучать психологию, прошла первое профессиональное обучение в области консультирования.</p>
+                </div>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-year">2017</div>
+                <div class="timeline-content">
+                    <h3>Открытие архетипов</h3>
+                    <p>Познакомилась с теорией архетипов К.Г. Юнга и прошла специализацию по архетипическому анализу.</p>
+                </div>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-year">2019</div>
+                <div class="timeline-content">
+                    <h3>Собственная методика</h3>
+                    <p>Разработала авторскую методику работы с архетипами в отношениях, основанную на 7 женских и 7 мужских архетипах.</p>
+                </div>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-year">2024</div>
+                <div class="timeline-content">
+                    <h3>Онлайн-платформа</h3>
+                    <p>Запустила онлайн-платформу для тестирования и консультаций, чтобы помочь большему числу людей.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="services">
+    <div class="container">
+        <h2>Услуги</h2>
+        <div class="services-grid">
+            <div class="service-card">
+                <h3>📊 Тестирование на архетипы</h3>
+                <p>Узнайте свой доминирующий архетип и получите рекомендации по совместимости с партнёром.</p>
+                <a href="{{ url_for('tests') }}" class="btn-link">Пройти тест →</a>
+            </div>
+            <div class="service-card">
+                <h3>💬 Индивидуальная консультация</h3>
+                <p>Персональная работа с психологом для глубокого исследования ваших паттернов и запросов.</p>
+                <a href="{{ url_for('appointment') }}" class="btn-link">Записаться →</a>
+            </div>
+            <div class="service-card">
+                <h3>💕 Проверка совместимости</h3>
+                <p>Анализ совместимости с партнёром на основе архетипических профилей.</p>
+                <a href="{{ url_for('register') }}" class="btn-link">Создать аккаунт →</a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

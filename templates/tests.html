@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}Тесты - Психолог Ксения Панкратова{% endblock %}
+
+{% block content %}
+<section class="tests-section">
+    <div class="container">
+        <h2>Тесты</h2>
+        <p style="text-align: center; max-width: 700px; margin: 0 auto 50px; color: #666; font-size: 1.1em;">
+            Пройдите наши тесты, чтобы лучше понять себя, свои архетипы и улучшить отношения с партнёром
+        </p>
+        
+        <div class="tests-grid">
+            <div class="test-card">
+                <h3>🔮 Тест на архетипы</h3>
+                <p>Узнайте свой доминирующий архетип среди 7 женских или 7 мужских паттернов поведения.</p>
+                <a href="{{ url_for('archetype_test') }}" class="btn btn-primary">Пройти тест</a>
+            </div>
+            
+            <div class="test-card">
+                <h3>💕 Совместимость партнёров</h3>
+                <p>Проверьте совместимость со своим партнёром на основе архетипических профилей.</p>
+                <a href="{{ url_for('register') }}" class="btn btn-primary">Создать аккаунт</a>
+            </div>
+            
+            <div class="test-card">
+                <h3>📋 Другие тесты</h3>
+                <p>В разработке новые тесты для исследования различных аспектов личности и отношений.</p>
+                <span class="btn btn-secondary" style="cursor: not-allowed;">Скоро</span>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

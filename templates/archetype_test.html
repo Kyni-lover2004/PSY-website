@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+
+{% block title %}Тест на архетипы{% endblock %}
+
+{% block content %}
+<section class="test-section">
+    <div class="container">
+        <h2>Тест на архетипы в отношениях</h2>
+        <p style="text-align: center; max-width: 700px; margin: 0 auto 30px; color: #666;">
+            Этот тест поможет вам разобраться в своих архетипах с точки зрения сексуальности и отношений
+        </p>
+        
+        <div class="form-container" style="max-width: 700px;">
+            <div id="step1">
+                <div class="form-group">
+                    <label>Ваш пол:</label>
+                    <select id="gender">
+                        <option value="">Выберите...</option>
+                        <option value="female">Женский</option>
+                        <option value="male">Мужской</option>
+                        <option value="nonbinary">Небинарный</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Ваша ориентация:</label>
+                    <select id="orientation">
+                        <option value="">Выберите...</option>
+                        <option value="hetero">Гетеро</option>
+                        <option value="homo">Гомо</option>
+                        <option value="bi">Бисексуальная</option>
+                        <option value="pan">Пансексуальная</option>
+                    </select>
+                </div>
+
+                <button class="btn btn-primary" onclick="startTest()" style="width: 100%;">Начать тест</button>
+            </div>
+            
+            <div id="step2" style="display: none;">
+                <div class="progress" style="margin-bottom: 20px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <span>Вопрос <span id="currentQuestion">1</span> из <span id="totalQuestions">0</span></span>
+                    </div>
+                    <div style="background: #e0e0e0; height: 8px; border-radius: 4px; overflow: hidden;">
+                        <div id="progressFill" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); height: 100%; width: 0%; transition: width 0.3s;"></div>
+                    </div>
+                </div>
+                
+                <div id="questionsContainer"></div>
+                
+                <div style="display: flex; gap: 15px; margin-top: 20px;">
+                    <button class="btn btn-secondary" id="prevBtn" onclick="prevQuestion()" style="display: none; flex: 1;">Назад</button>
+                    <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()" style="flex: 1;">Далее</button>
+                </div>
+            </div>
+            
+            <div id="step3" style="display: none;">
+                <h3 style="text-align: center; color: #667eea; margin-bottom: 20px;">Ваши результаты</h3>
+                
+                <div class="dashboard-card" id="dominantArchetype">
+                    <h4 style="color: #667eea; margin-bottom: 15px;">🏆 Ваш доминирующий архетип</h4>
+                    <p id="dominantArchetypeText"></p>
+                </div>
+
+                <div class="dashboard-card">
+                    <h4 style="color: #667eea; margin-bottom: 15px;">📊 Все архетипы</h4>
+                    <div id="allArchetypes" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;"></div>
+                </div>
+                
+                {% if current_user.is_authenticated %}
+                <div class="dashboard-card">
+                    <h4 style="color: #667eea; margin-bottom: 15px;">💕 Ваш код совместимости</h4>
+                    <div class="code-display">{{ current_user.compatibility_code }}</div>
+                    <p style="text-align: center; color: #666; font-size: 0.9em;">
+                        Поделитесь этим кодом с партнёром для проверки совместимости
+                    </p>
+                </div>
+                {% else %}
+                <div style="text-align: center; padding: 20px; background: #f8f9fa; border-radius: 10px;">
+                    <p style="margin-bottom: 15px;">Хотите проверить совместимость с партнёром?</p>
+                    <a href="{{ url_for('register') }}" class="btn btn-primary">Создать аккаунт</a>
+                </div>
+                {% endif %}
+                
+                <button class="btn btn-secondary" onclick="location.reload()" style="width: 100%; margin-top: 20px;">Пройти заново</button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+const femaleArchetypes = {
+    demeter: { name: 'Деметра', description: 'Архетип матери. Заботливая, тёплая, видит счастье в материнстве.' },
+    hera: { name: 'Гера', description: 'Архетип жены. Верная, ориентирована на семью и долгосрочные отношения.' },
+    aphrodite: { name: 'Афродита', description: 'Архетип любви и красоты. Чувственная, творческая, умеет наслаждаться жизнью.' },
+    artemis: { name: 'Артемида', description: 'Архетип независимой женщины. Самостоятельная, целеустремлённая, ценит свободу.' },
+    athena: { name: 'Афина', description: 'Архетип мудрости. Рациональная, умная, умеет планировать и достигать целей.' },
+    persephone: { name: 'Персефона', description: 'Архетип дочери. Мягкая, адаптивная, открытая к новому.' },
+    hestia: { name: 'Гестия', description: 'Архетип хранительницы очага. Создаёт уют, ценит спокойствие и гармонию.' }
+};
+
+const maleArchetypes = {
+    konstantin: { name: 'Константин', description: 'Архетип правителя. Уверенный, лидер, стремится управлять и создавать.' },
+    klement: { name: 'Клемент', description: 'Архетип потустороннего. Погружён в себя, интуитивный, самодостаточный.' },
+    kondratiy: { name: 'Кондратий', description: 'Архетип дипломата. Гармоничный, логичный, умеет находить компромиссы.' },
+    kuzma: { name: 'Кузьма', description: 'Архетип путника. Постоянно в движении, умный, разнообразный.' },
+    klim: { name: 'Клим', description: 'Архетип воина. Эмоциональный, живой, импульсивный.' },
+    kristian: { name: 'Кристиан', description: 'Архетип творца. Чувствительный, творческий, глубокий.' },
+    dionis: { name: 'Дионис', description: 'Архетип бунтаря. Экстравагантный, эмоциональный, стремится к переменам.' }
+};
+
+const femaleQuestions = [
+    { text: 'Мне нравится быть в образе мамы, такой теплой и заботливой.', archetype: 'demeter' },
+    { text: 'Я с детства любила мечтать, путешествовала в своих мирах и фантазиях.', archetype: 'persephone' },
+    { text: 'Я всегда чувствовала себя в ответе за взрослых, сочувствовала им.', archetype: 'demeter' },
+    { text: 'Девочкой меня называли «пацанкой», интересовали мальчишеские забавы.', archetype: 'artemis' },
+    { text: 'В детстве во время ссор родителей я старалась стать незаметной.', archetype: 'hestia' },
+    { text: 'Тема секса вызывала у меня больше любопытства, чем страха.', archetype: 'aphrodite' },
+    { text: 'Глава семьи – отец, он опора и сила. Главное чувство к нему – уважение.', archetype: 'hera' },
+    { text: 'Папа всегда был прав, его мышление казалось мне единственно верным.', archetype: 'athena' },
+    { text: 'Мне всегда хотелось быть как папа, он вызывал гордость.', archetype: 'athena' },
+    { text: 'Я верю в судьбу, предопределенность.', archetype: 'persephone' },
+    { text: 'Когда дома никого нет, я навожу порядок, делаю уют.', archetype: 'hestia' },
+    { text: 'Выбирая партнера, смотрю на его мужественность и достижения.', archetype: 'hera' },
+    { text: 'Себя и близких в обиду не дам, буду защищать.', archetype: 'artemis' },
+    { text: 'Мужская сексуальность мне нравится, вижу привлекательность в разных типажах.', archetype: 'aphrodite' },
+    { text: 'Если партнер получил удовольствие, я получаю большее удовольствие.', archetype: 'aphrodite' },
+    { text: 'Таинство секса – это подарок мой миру, нечто сакральное.', archetype: 'hestia' }
+];
+
+const maleQuestions = [
+    { text: 'Мне нравится управлять людьми, создавать свои правила.', archetype: 'konstantin' },
+    { text: 'Я погружен в себя, в свой внутренний мир.', archetype: 'klement' },
+    { text: 'Я люблю точность и порядок, предпочитаю внешние события чувствам.', archetype: 'kondratiy' },
+    { text: 'Меня невозможно привязать к одному делу, я постоянно в движении.', archetype: 'kuzma' },
+    { text: 'Я живу эмоциями «здесь и сейчас», сразу их выражаю.', archetype: 'klim' },
+    { text: 'Я интроверт, живу во власти глубоких эмоций, но не умею их выражать.', archetype: 'kristian' },
+    { text: 'Я всегда неспокоен, стремлюсь всё менять, экстравагантен.', archetype: 'dionis' },
+    { text: 'Для меня важен престиж, я разрабатываю план завоевания женщины.', archetype: 'konstantin' },
+    { text: 'Мне сложно адаптироваться в обществе, но у меня развита интуиция.', archetype: 'klement' },
+    { text: 'Я дипломат, умею найти компромисс, дорожу общением.', archetype: 'kondratiy' },
+    { text: 'У меня много знакомых, но мало друзей.', archetype: 'kuzma' },
+    { text: 'Я болезненно переношу одиночество, нуждаюсь в компании.', archetype: 'klim' },
+    { text: 'Меня тянет к сильным женщинам, которые поймут глубину моих переживаний.', archetype: 'kristian' },
+    { text: 'Я люблю женщин и способен на искреннюю дружбу.', archetype: 'dionis' },
+    { text: 'Я выбираю жену, которая будет следить за домом. Я — глава семьи.', archetype: 'konstantin' },
+    { text: 'Я просто живу комфортно для себя, без особых амбиций.', archetype: 'kondratiy' }
+];
+
+let currentQuestionIndex = 0;
+let answers = [];
+let questions = [];
+let userData = {};
+
+function startTest() {
+    const gender = document.getElementById('gender').value;
+    const orientation = document.getElementById('orientation').value;
+    
+    if (!gender || !orientation) {
+        alert('Пожалуйста, выберите пол и ориентацию');
+        return;
+    }
+    
+    userData = { gender, orientation };
+    questions = gender === 'male' ? maleQuestions : femaleQuestions;
+    answers = new Array(questions.length).fill(null);
+    
+    document.getElementById('totalQuestions').textContent = questions.length;
+    document.getElementById('step1').style.display = 'none';
+    document.getElementById('step2').style.display = 'block';
+    
+    renderQuestion();
+}
+
+function renderQuestion() {
+    const container = document.getElementById('questionsContainer');
+    const question = questions[currentQuestionIndex];
+    
+    document.getElementById('currentQuestion').textContent = currentQuestionIndex + 1;
+    document.getElementById('progressFill').style.width = ((currentQuestionIndex + 1) / questions.length * 100) + '%';
+    
+    document.getElementById('prevBtn').style.display = currentQuestionIndex === 0 ? 'none' : 'block';
+    document.getElementById('nextBtn').textContent = currentQuestionIndex === questions.length - 1 ? 'Завершить' : 'Далее';
+    
+    container.innerHTML = `
+        <div style="background: #f8f9fa; padding: 25px; border-radius: 15px; margin-bottom: 20px;">
+            <p style="font-size: 1.1em; margin-bottom: 20px; line-height: 1.6;">${question.text}</p>
+            <div style="display: flex; gap: 15px;">
+                <label style="flex: 1; display: flex; align-items: center; justify-content: center; padding: 15px; background: white; border: 2px solid #e0e0e0; border-radius: 10px; cursor: pointer; transition: all 0.3s;" onclick="selectAnswer(this, true)">
+                    <input type="radio" name="answer" value="yes" ${answers[currentQuestionIndex] === true ? 'checked' : ''} style="margin-right: 10px;">
+                    <span>Да</span>
+                </label>
+                <label style="flex: 1; display: flex; align-items: center; justify-content: center; padding: 15px; background: white; border: 2px solid #e0e0e0; border-radius: 10px; cursor: pointer; transition: all 0.3s;" onclick="selectAnswer(this, false)">
+                    <input type="radio" name="answer" value="no" ${answers[currentQuestionIndex] === false ? 'checked' : ''} style="margin-right: 10px;">
+                    <span>Нет</span>
+                </label>
+            </div>
+        </div>
+    `;
+}
+
+function selectAnswer(label, value) {
+    answers[currentQuestionIndex] = value;
+    document.querySelectorAll('#questionsContainer label').forEach(l => l.style.borderColor = '#e0e0e0');
+    label.style.borderColor = '#667eea';
+    label.querySelector('input').checked = true;
+}
+
+function nextQuestion() {
+    if (answers[currentQuestionIndex] === null) {
+        alert('Пожалуйста, выберите ответ');
+        return;
+    }
+    
+    if (currentQuestionIndex < questions.length - 1) {
+        currentQuestionIndex++;
+        renderQuestion();
+    } else {
+        showResults();
+    }
+}
+
+function prevQuestion() {
+    if (currentQuestionIndex > 0) {
+        currentQuestionIndex--;
+        renderQuestion();
+    }
+}
+
+function showResults() {
+    const archetypeScores = {};
+    const archetypes = userData.gender === 'male' ? maleArchetypes : femaleArchetypes;
+    
+    Object.keys(archetypes).forEach(key => archetypeScores[key] = 0);
+    
+    questions.forEach((q, i) => {
+        if (answers[i]) archetypeScores[q.archetype]++;
+    });
+    
+    const sortedArchetypes = Object.entries(archetypeScores).sort((a, b) => b[1] - a[1]);
+    const dominantKey = sortedArchetypes[0][0];
+    const dominant = archetypes[dominantKey];
+    
+    document.getElementById('dominantArchetypeText').innerHTML = `
+        <strong>${dominant.name}</strong><br><br>${dominant.description}
+    `;
+    
+    document.getElementById('allArchetypes').innerHTML = sortedArchetypes.map(([key, score]) => `
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; text-align: center;">
+            <div style="font-weight: 600; color: #667eea;">${archetypes[key].name}</div>
+            <div style="color: #999; font-size: 0.9em;">${score} баллов</div>
+        </div>
+    `).join('');
+    
+    document.getElementById('step2').style.display = 'none';
+    document.getElementById('step3').style.display = 'block';
+}
+</script>
+{% endblock %}
