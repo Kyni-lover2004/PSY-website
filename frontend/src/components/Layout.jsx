@@ -18,14 +18,14 @@ const Layout = () => {
           <div className="flex justify-between h-16">
             <div className="flex items-center">
               <Link to="/" className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">
-                🔮 PSY
+                🔮 Психолог Ксения Панкратова
               </Link>
             </div>
             
             <div className="hidden md:flex items-center space-x-8">
               <Link to="/" className="text-gray-700 hover:text-primary transition">Главная</Link>
               <Link to="/test" className="text-gray-700 hover:text-primary transition">Тесты</Link>
-              <Link to="/compatibility" className="text-gray-700 hover:text-primary transition">Совместимость</Link>
+              <Link to="/appointment" className="text-gray-700 hover:text-primary transition">Записаться</Link>
               
               {user ? (
                 <>
@@ -53,7 +53,7 @@ const Layout = () => {
       {/* Футер */}
       <footer className="bg-gray-900 text-white py-8">
         <div className="max-w-7xl mx-auto px-4 text-center">
-          <p>&copy; 2024 Естественные архетипы взаимоотношений. Все права защищены.</p>
+          <p>&copy; 2024 Психолог Ксения Панкратова. Все права защищены.</p>
         </div>
       </footer>
     </div>

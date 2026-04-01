@@ -7,12 +7,12 @@ const Register = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
   const [formData, setFormData] = useState({
+    surname: '',
     name: '',
-    email: '',
+    phone: '',
     password: '',
-    passwordConfirm: '',
-    gender: '',
-    orientation: ''
+    confirmPassword: '',
+    gender: 'female'
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -21,8 +21,14 @@ const Register = () => {
     e.preventDefault();
     setError('');
 
-    if (formData.password !== formData.passwordConfirm) {
+    // Проверка паролей
+    if (formData.password !== formData.confirmPassword) {
       setError('Пароли не совпадают');
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setError('Пароль должен быть не менее 6 символов');
       return;
     }
 
@@ -30,23 +36,27 @@ const Register = () => {
 
     try {
       const response = await authAPI.register({
+        surname: formData.surname,
         name: formData.name,
-        email: formData.email,
+        phone: formData.phone,
         password: formData.password,
-        gender: formData.gender,
-        orientation: formData.orientation
+        gender: formData.gender
       });
 
-      // Автоматический вход после регистрации
-      const loginResponse = await authAPI.login({
-        email: formData.email,
-        password: formData.password
-      });
+      // Сохраняем пользователя
+      const user = {
+        id: response.data.user_id,
+        name: response.data.name,
+        surname: response.data.surname,
+        gender: response.data.gender
+      };
+      localStorage.setItem('user', JSON.stringify(user));
+      sessionStorage.setItem('compatibilityCode', response.data.compatibility_code);
 
-      login(loginResponse.data.user, loginResponse.data.access_token);
       navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.detail || 'Ошибка регистрации');
+      console.error('Registration error:', err);
+      setError(err.response?.data?.detail || 'Ошибка регистрации. Попробуйте другой номер телефона.');
     } finally {
       setLoading(false);
     }
@@ -56,62 +66,44 @@ const Register = () => {
     <div className="py-12 px-4">
       <div className="max-w-md mx-auto bg-white rounded-3xl shadow-2xl p-8 fade-in">
         <h1 className="text-3xl font-bold text-center text-gray-800 mb-2">Регистрация</h1>
-        <p className="text-center text-gray-600 mb-8">Создайте аккаунт для сохранения результатов</p>
+        <p className="text-center text-gray-600 mb-8">Для сохранения результатов и кода совместимости</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-gray-700 font-semibold mb-2">Имя *</label>
-            <input
-              type="text"
-              required
-              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition"
-              value={formData.name}
-              onChange={(e) => setFormData({...formData, name: e.target.value})}
-              placeholder="Ваше имя"
-            />
-          </div>
-
-          <div>
-            <label className="block text-gray-700 font-semibold mb-2">Email *</label>
-            <input
-              type="email"
-              required
-              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition"
-              value={formData.email}
-              onChange={(e) => setFormData({...formData, email: e.target.value})}
-              placeholder="example@mail.ru"
-            />
-          </div>
-
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-gray-700 font-semibold mb-2">Пол *</label>
-              <select
+              <label className="block text-gray-700 font-semibold mb-2">Фамилия *</label>
+              <input
+                type="text"
                 required
                 className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition"
-                value={formData.gender}
-                onChange={(e) => setFormData({...formData, gender: e.target.value})}
-              >
-                <option value="">...</option>
-                <option value="female">Ж</option>
-                <option value="male">М</option>
-              </select>
+                value={formData.surname}
+                onChange={(e) => setFormData({...formData, surname: e.target.value})}
+                placeholder="Иванова"
+              />
             </div>
             <div>
-              <label className="block text-gray-700 font-semibold mb-2">Ориентация *</label>
-              <select
+              <label className="block text-gray-700 font-semibold mb-2">Имя *</label>
+              <input
+                type="text"
                 required
                 className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition"
-                value={formData.orientation}
-                onChange={(e) => setFormData({...formData, orientation: e.target.value})}
-              >
-                <option value="">...</option>
-                <option value="hetero">Гетеро</option>
-                <option value="homo">Гомо</option>
-                <option value="bi">Би</option>
-                <option value="pan">Пан</option>
-              </select>
+                value={formData.name}
+                onChange={(e) => setFormData({...formData, name: e.target.value})}
+                placeholder="Мария"
+              />
             </div>
+          </div>
+
+          <div>
+            <label className="block text-gray-700 font-semibold mb-2">Номер телефона *</label>
+            <input
+              type="tel"
+              required
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition"
+              value={formData.phone}
+              onChange={(e) => setFormData({...formData, phone: e.target.value})}
+              placeholder="+7 (999) 123-45-67"
+            />
           </div>
 
           <div>
@@ -119,10 +111,11 @@ const Register = () => {
             <input
               type="password"
               required
+              minLength={6}
               className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition"
               value={formData.password}
               onChange={(e) => setFormData({...formData, password: e.target.value})}
-              placeholder="••••••••"
+              placeholder="Минимум 6 символов"
             />
           </div>
 
@@ -131,11 +124,24 @@ const Register = () => {
             <input
               type="password"
               required
+              minLength={6}
               className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition"
-              value={formData.passwordConfirm}
-              onChange={(e) => setFormData({...formData, passwordConfirm: e.target.value})}
-              placeholder="••••••••"
+              value={formData.confirmPassword}
+              onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
+              placeholder="Повторите пароль"
             />
+          </div>
+
+          <div>
+            <label className="block text-gray-700 font-semibold mb-2">Пол *</label>
+            <select
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition"
+              value={formData.gender}
+              onChange={(e) => setFormData({...formData, gender: e.target.value})}
+            >
+              <option value="female">Женский</option>
+              <option value="male">Мужской</option>
+            </select>
           </div>
 
           {error && (
@@ -158,10 +164,8 @@ const Register = () => {
         </form>
 
         <p className="text-center text-gray-600 mt-6">
-          Уже есть аккаунт?{' '}
-          <Link to="/login" className="text-primary font-semibold hover:underline">
-            Войти
-          </Link>
+          Уже зарегистрированы?{' '}
+          <Link to="/login" className="text-primary font-semibold hover:underline">Войти</Link>
         </p>
       </div>
     </div>

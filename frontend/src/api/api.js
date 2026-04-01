@@ -4,24 +4,8 @@ const API_URL = 'http://localhost:8000/api';
 
 const api = axios.create({
   baseURL: API_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  headers: { 'Content-Type': 'application/json' },
 });
-
-// Добавляем токен к запросам
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-export const authAPI = {
-  register: (data) => api.post('/auth/register', data),
-  login: (data) => api.post('/auth/login', data),
-};
 
 export const questionsAPI = {
   getQuestions: (gender) => api.get(`/questions/${gender}`),
@@ -31,16 +15,21 @@ export const testAPI = {
   complete: (data) => api.post('/test/complete', data),
 };
 
-export const compatibilityAPI = {
-  check: (code1, code2) => api.post('/compatibility/check', { code1, code2 }),
+export const consultationAPI = {
+  create: (data) => api.post('/consultation', data),
 };
 
 export const profileAPI = {
   getProfile: (code) => api.get(`/profile/${code}`),
 };
 
-export const consultationAPI = {
-  create: (data) => api.post('/consultation', data),
+export const compatibilityAPI = {
+  check: (code1, code2) => api.post('/compatibility/check', { code1, code2 }),
+};
+
+export const authAPI = {
+  register: (data) => api.post('/auth/register', data),
+  login: (data) => api.post('/auth/login', data),
 };
 
 export const adminAPI = {

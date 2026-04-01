@@ -10,32 +10,51 @@ const TestQuestionnaire = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
+  // Получаем testData
   const testData = JSON.parse(sessionStorage.getItem('testData') || '{}');
+  
+  console.log('TestQuestionnaire - testData:', testData);
+  console.log('TestQuestionnaire - gender:', testData?.gender);
+  
+  // Генерируем session_id при загрузке
+  const [sessionId] = useState(() => {
+    let stored = sessionStorage.getItem('sessionId');
+    if (!stored) {
+      stored = 'sess_' + Math.random().toString(36).substr(2, 9);
+      sessionStorage.setItem('sessionId', stored);
+    }
+    return stored;
+  });
 
   useEffect(() => {
+    console.log('Fetching questions for gender:', testData?.gender);
+    
+    if (!testData?.gender) {
+      alert('Ошибка: пол не выбран. Возвращаемся к анкете.');
+      navigate('/test');
+      return;
+    }
+    
     const fetchQuestions = async () => {
       try {
+        console.log('API call: /questions/' + testData.gender);
         const response = await questionsAPI.getQuestions(testData.gender);
+        console.log('Questions received:', response.data);
         setQuestions(response.data);
       } catch (error) {
         console.error('Ошибка загрузки вопросов:', error);
-        alert('Ошибка загрузки вопросов. Попробуйте позже.');
+        alert('Ошибка загрузки вопросов: ' + (error.message || 'Проверьте подключение к серверу'));
         navigate('/test');
       } finally {
         setLoading(false);
       }
     };
 
-    if (testData.gender) {
-      fetchQuestions();
-    }
-  }, [testData.gender, navigate]);
+    fetchQuestions();
+  }, [testData?.gender, navigate]);
 
   const handleAnswer = (value) => {
-    setAnswers(prev => ({
-      ...prev,
-      [questions[currentIndex].id]: value
-    }));
+    setAnswers(prev => ({ ...prev, [questions[currentIndex].id]: value }));
   };
 
   const handleNext = () => {
@@ -47,36 +66,29 @@ const TestQuestionnaire = () => {
   };
 
   const handlePrev = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex(prev => prev - 1);
-    }
+    if (currentIndex > 0) setCurrentIndex(prev => prev - 1);
   };
 
   const submitTest = async () => {
     setSubmitting(true);
     try {
-      const answersArray = Object.entries(answers).map(([questionId, value]) => ({
-        question_id: parseInt(questionId),
+      const answersArray = Object.entries(answers).map(([qid, value]) => ({
+        question_id: parseInt(qid),
         value
       }));
 
-      const payload = {
+      const response = await testAPI.complete({
+        session_id: sessionId,
         answers: answersArray,
-        goal: testData.goal,
-        partner_code: testData.partnerCode || null,
-        consultation_request: testData.consultationRequest || null
-      };
-
-      const response = await testAPI.complete(payload);
+        gender: testData.gender
+      });
+      
       const code = response.data.compatibility_code;
-      
-      // Сохраняем код совместимости
       sessionStorage.setItem('compatibilityCode', code);
-      
       navigate(`/test/results/${code}`);
     } catch (error) {
-      console.error('Ошибка отправки теста:', error);
-      alert('Ошибка при сохранении результатов. Попробуйте позже.');
+      console.error('Ошибка отправки:', error);
+      alert('Ошибка при сохранении результатов.');
     } finally {
       setSubmitting(false);
     }
@@ -85,7 +97,10 @@ const TestQuestionnaire = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-white text-xl">Загрузка вопросов...</div>
+        <div className="bg-white rounded-3xl p-8 text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-gray-600">Загрузка вопросов...</p>
+        </div>
       </div>
     );
   }
@@ -93,28 +108,30 @@ const TestQuestionnaire = () => {
   const currentQuestion = questions[currentIndex];
   const progress = ((currentIndex + 1) / questions.length) * 100;
   const hasAnswer = answers[currentQuestion?.id] !== undefined;
+  
+  console.log('currentIndex:', currentIndex);
+  console.log('questions.length:', questions.length);
+  console.log('currentQuestion:', currentQuestion);
+  console.log('currentQuestion.text:', currentQuestion?.text);
 
   return (
     <div className="py-12 px-4">
       <div className="max-w-3xl mx-auto">
-        {/* Прогресс бар */}
+        {/* Прогресс */}
         <div className="mb-8">
           <div className="flex justify-between text-white mb-2">
             <span>Вопрос {currentIndex + 1} из {questions.length}</span>
             <span>{Math.round(progress)}%</span>
           </div>
           <div className="h-3 bg-white/20 rounded-full overflow-hidden">
-            <div 
-              className="h-full bg-white transition-all duration-300"
-              style={{ width: `${progress}%` }}
-            />
+            <div className="h-full bg-white transition-all duration-300" style={{ width: `${progress}%` }} />
           </div>
         </div>
 
-        {/* Карточка вопроса */}
+        {/* Вопрос */}
         <div className="bg-white rounded-3xl shadow-2xl p-8 fade-in">
           <h2 className="text-2xl font-semibold text-gray-800 mb-8 leading-relaxed">
-            {currentQuestion?.text || 'Загрузка...'}
+            {currentQuestion ? (currentQuestion.text || 'Нет текста') : 'Вопрос не найден'}
           </h2>
 
           <div className="grid grid-cols-2 gap-4 mb-8">
@@ -125,9 +142,7 @@ const TestQuestionnaire = () => {
                   ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-lg'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
-            >
-              ✅ Да
-            </button>
+            >✅ Да</button>
             <button
               onClick={() => handleAnswer(false)}
               className={`py-4 px-6 rounded-xl font-semibold text-lg transition transform hover:scale-105 ${
@@ -135,31 +150,22 @@ const TestQuestionnaire = () => {
                   ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-lg'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
-            >
-              ❌ Нет
-            </button>
+            >❌ Нет</button>
           </div>
 
-          {/* Навигация */}
           <div className="flex gap-4">
             <button
               onClick={handlePrev}
               disabled={currentIndex === 0}
               className={`flex-1 py-3 rounded-xl font-semibold transition ${
-                currentIndex === 0
-                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                currentIndex === 0 ? 'bg-gray-200 text-gray-400' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
-            >
-              ← Назад
-            </button>
+            >← Назад</button>
             <button
               onClick={handleNext}
               disabled={!hasAnswer || submitting}
               className={`flex-1 py-3 rounded-xl font-semibold transition ${
-                !hasAnswer || submitting
-                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-primary to-secondary text-white hover:shadow-lg hover:scale-105'
+                !hasAnswer || submitting ? 'bg-gray-200 text-gray-400' : 'bg-gradient-to-r from-primary to-secondary text-white hover:shadow-lg'
               }`}
             >
               {submitting ? 'Сохранение...' : currentIndex === questions.length - 1 ? 'Завершить' : 'Далее →'}
@@ -167,10 +173,7 @@ const TestQuestionnaire = () => {
           </div>
         </div>
 
-        {/* Подсказка */}
-        <p className="text-center text-white/80 mt-6">
-          Отвечайте честно — здесь нет правильных или неправильных ответов
-        </p>
+        <p className="text-center text-white/80 mt-6">Отвечайте честно — здесь нет правильных ответов</p>
       </div>
     </div>
   );
