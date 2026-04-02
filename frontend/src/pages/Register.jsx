@@ -2,14 +2,15 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { authAPI } from '../api/api';
 import { useAuth } from '../context/AuthContext';
+import { usePhoneMask } from '../hooks/usePhoneMask';
 
 const Register = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const { phone, setPhone, handleChange, handleFocus, getCleanPhone } = usePhoneMask('+7');
   const [formData, setFormData] = useState({
     surname: '',
     name: '',
-    phone: '',
     password: '',
     confirmPassword: '',
     gender: 'female'
@@ -38,7 +39,7 @@ const Register = () => {
       const response = await authAPI.register({
         surname: formData.surname,
         name: formData.name,
-        phone: formData.phone,
+        phone: getCleanPhone(),
         password: formData.password,
         gender: formData.gender
       });
@@ -100,8 +101,9 @@ const Register = () => {
               type="tel"
               required
               className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition"
-              value={formData.phone}
-              onChange={(e) => setFormData({...formData, phone: e.target.value})}
+              value={phone}
+              onChange={handleChange}
+              onFocus={handleFocus}
               placeholder="+7 (999) 123-45-67"
             />
           </div>

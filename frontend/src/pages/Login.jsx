@@ -2,14 +2,13 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { authAPI } from '../api/api';
 import { useAuth } from '../context/AuthContext';
+import { usePhoneMask } from '../hooks/usePhoneMask';
 
 const Login = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const [formData, setFormData] = useState({
-    phone: '',
-    password: ''
-  });
+  const { phone, setPhone, handleChange, handleFocus, getCleanPhone } = usePhoneMask('+7');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -20,8 +19,8 @@ const Login = () => {
 
     try {
       const response = await authAPI.login({
-        phone: formData.phone,
-        password: formData.password
+        phone: getCleanPhone(),
+        password: password
       });
 
       const user = {
@@ -57,8 +56,9 @@ const Login = () => {
               type="tel"
               required
               className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition"
-              value={formData.phone}
-              onChange={(e) => setFormData({...formData, phone: e.target.value})}
+              value={phone}
+              onChange={handleChange}
+              onFocus={handleFocus}
               placeholder="+7 (999) 123-45-67"
             />
           </div>
@@ -69,8 +69,8 @@ const Login = () => {
               type="password"
               required
               className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition"
-              value={formData.password}
-              onChange={(e) => setFormData({...formData, password: e.target.value})}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               placeholder="Введите ваш пароль"
             />
           </div>

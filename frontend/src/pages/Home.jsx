@@ -16,7 +16,7 @@ const Home = () => {
             <Link to="/test" className="bg-white text-primary px-8 py-4 rounded-xl font-semibold text-lg hover:shadow-2xl hover:scale-105 transition transform">
               Пройти тест
             </Link>
-            <Link to="/appointment" className="bg-transparent border-2 border-white text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-white hover:text-primary transition">
+            <Link to="/appointment" className="bg-transparent text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-white hover:text-primary transition">
               Записаться на консультацию
             </Link>
           </div>

@@ -50,3 +50,12 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #764ba2;
 }
+
+/* Фиолетовая обводка при фокусе для полей ввода */
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: #764ba2 !important;
+  box-shadow: 0 0 0 3px rgba(118, 75, 162, 0.2);
+}
