@@ -1,18 +1,22 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
-const TestWelcome = () => {
+const TestAnketa = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
-    name: '',
-    surname: '',
-    gender: '',
     orientation: '',
     goal: '',
     partnerCode: '',
     consultationRequest: '',
     consent: false,
   });
+
+  // Если пользователь не авторизован - перенаправляем
+  if (!user) {
+    return null;
+  }
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -21,8 +25,19 @@ const TestWelcome = () => {
       return;
     }
 
-    // Сохраняем данные в sessionStorage для использования в тесте
-    sessionStorage.setItem('testData', JSON.stringify(formData));
+    // Сохраняем данные вместе с данными пользователя из кабинета
+    const testData = {
+      name: user.name,
+      surname: user.surname,
+      gender: user.gender,
+      orientation: formData.orientation,
+      goal: formData.goal,
+      partnerCode: formData.partnerCode,
+      consultationRequest: formData.consultationRequest,
+      consent: formData.consent,
+    };
+
+    sessionStorage.setItem('testData', JSON.stringify(testData));
     navigate('/test/questionnaire');
   };
 
@@ -34,6 +49,14 @@ const TestWelcome = () => {
           <h1 className="text-4xl font-bold text-white mb-4">Тест на архетипы</h1>
           <p className="text-xl text-white/80">
             Узнайте свой ведущий архетип и подберите идеальных партнёров
+          </p>
+        </div>
+
+        {/* Инфо о пользователе */}
+        <div className="max-w-2xl mx-auto bg-white/10 backdrop-blur-lg rounded-2xl p-6 mb-8 text-center">
+          <p className="text-white/90">
+            👤 <span className="font-semibold">{user.surname} {user.name}</span> •{' '}
+            {user.gender === 'female' ? 'Женский' : 'Мужской'} пол
           </p>
         </div>
 
@@ -70,44 +93,6 @@ const TestWelcome = () => {
           <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">Анкета</h2>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label className="block text-gray-700 font-semibold mb-2">Ваша фамилия *</label>
-              <input
-                type="text"
-                required
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition"
-                value={formData.surname}
-                onChange={(e) => setFormData({...formData, surname: e.target.value})}
-                placeholder="Иванов"
-              />
-            </div>
-
-            <div>
-              <label className="block text-gray-700 font-semibold mb-2">Ваше имя *</label>
-              <input
-                type="text"
-                required
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition"
-                value={formData.name}
-                onChange={(e) => setFormData({...formData, name: e.target.value})}
-                placeholder="Как к вам обращаться"
-              />
-            </div>
-
-            <div>
-              <label className="block text-gray-700 font-semibold mb-2">Пол *</label>
-              <select
-                required
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition"
-                value={formData.gender}
-                onChange={(e) => setFormData({...formData, gender: e.target.value})}
-              >
-                <option value="">Выберите...</option>
-                <option value="female">Женский</option>
-                <option value="male">Мужской</option>
-              </select>
-            </div>
-
             <div>
               <label className="block text-gray-700 font-semibold mb-2">Ориентация *</label>
               <select
@@ -203,4 +188,4 @@ const TestWelcome = () => {
   );
 };
 
-export default TestWelcome;
+export default TestAnketa;

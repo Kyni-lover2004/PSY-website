@@ -80,15 +80,18 @@ const TestQuestionnaire = () => {
       const response = await testAPI.complete({
         session_id: sessionId,
         answers: answersArray,
-        gender: testData.gender
+        gender: testData.gender,
+        name: testData.name,
+        surname: testData.surname || "User",
+        orientation: testData.orientation
       });
-      
+
       const code = response.data.compatibility_code;
       sessionStorage.setItem('compatibilityCode', code);
       navigate(`/test/results/${code}`);
     } catch (error) {
       console.error('Ошибка отправки:', error);
-      alert('Ошибка при сохранении результатов.');
+      alert('Ошибка при сохранении результатов: ' + (error.response?.data?.detail || error.message));
     } finally {
       setSubmitting(false);
     }

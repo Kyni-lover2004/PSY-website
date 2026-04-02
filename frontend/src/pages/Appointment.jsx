@@ -1,22 +1,45 @@
 import { useState } from 'react';
 import { consultationAPI } from '../api/api';
+import { usePhoneMask } from '../hooks/usePhoneMask';
 
 const Appointment = () => {
+  const { phone, setPhone, handleChange, handleFocus, getCleanPhone } = usePhoneMask('+7');
   const [formData, setFormData] = useState({
     name: '',
-    phone: '',
-    email: '',
+    telegram: '',
+    date: '',
+    time: '',
     request: ''
   });
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const handleTelegramChange = (e) => {
+    let value = e.target.value;
+    // Удаляем @ если пользователь ввёл
+    value = value.replace('@', '');
+    // Разрешаем только буквы, цифры и подчёркивания
+    value = value.replace(/[^a-zA-Z0-9_]/g, '');
+    setFormData({...formData, telegram: value});
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      await consultationAPI.create({ request_text: formData.request });
+      const requestData = {
+        request_text: `
+Имя: ${formData.name}
+Телефон: ${getCleanPhone()}
+Telegram: ${formData.telegram ? '@' + formData.telegram : 'Не указан'}
+Желаемая дата: ${formData.date || 'Не указана'}
+Желаемое время: ${formData.time || 'Не указано'}
+Запрос: ${formData.request}
+        `.trim()
+      };
+
+      await consultationAPI.create(requestData);
       setSubmitted(true);
     } catch (error) {
       console.error('Ошибка отправки:', error);
@@ -25,6 +48,40 @@ const Appointment = () => {
       setLoading(false);
     }
   };
+
+  // Генерация доступных дат (следующие 14 дней)
+  const getAvailableDates = () => {
+    const dates = [];
+    const today = new Date();
+    const daysOfWeek = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+    const months = ['янв', 'фев', 'мар', 'апр', 'мая', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
+    
+    for (let i = 1; i <= 14; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() + i);
+      
+      const dateStr = date.toISOString().split('T')[0];
+      const dayName = daysOfWeek[date.getDay()];
+      const dayNum = date.getDate();
+      const month = months[date.getMonth()];
+      
+      dates.push({
+        value: dateStr,
+        label: `${dayName}, ${dayNum} ${month}`,
+        isWeekend: date.getDay() === 0 || date.getDay() === 6
+      });
+    }
+    
+    return dates;
+  };
+
+  // Доступное время
+  const timeSlots = [
+    '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
+    '12:00', '12:30', '13:00', '13:30', '14:00', '14:30',
+    '15:00', '15:30', '16:00', '16:30', '17:00', '17:30',
+    '18:00', '18:30', '19:00', '19:30', '20:00'
+  ];
 
   if (submitted) {
     return (
@@ -35,10 +92,17 @@ const Appointment = () => {
           <p className="text-gray-600 mb-6">
             Спасибо! Ксения свяжется с вами в ближайшее время для обсуждения деталей.
           </p>
+          <div className="bg-blue-50 rounded-xl p-4 mb-6">
+            <p className="text-sm text-blue-800">
+              📅 Желаемая дата: <strong>{formData.date || 'Не указана'}</strong><br/>
+              🕐 Желаемое время: <strong>{formData.time || 'Не указано'}</strong><br/>
+              ✈️ Telegram: <strong>{formData.telegram ? '@' + formData.telegram : 'Не указан'}</strong>
+            </p>
+          </div>
           <button
             onClick={() => {
               setSubmitted(false);
-              setFormData({ name: '', phone: '', email: '', request: '' });
+              setFormData({ name: '', phone: '', telegram: '', date: '', time: '', request: '' });
             }}
             className="bg-gradient-to-r from-primary to-secondary text-white px-8 py-3 rounded-xl font-semibold hover:shadow-lg transition"
           >
@@ -49,59 +113,155 @@ const Appointment = () => {
     );
   }
 
+  const availableDates = getAvailableDates();
+
   return (
     <div className="py-20 px-4">
       <div className="max-w-2xl mx-auto">
+        {/* Заголовок */}
         <div className="text-center mb-8">
+          <div className="text-5xl mb-4">🗓️</div>
           <h1 className="text-4xl font-bold text-white mb-4">Записаться на консультацию</h1>
           <p className="text-white/80 text-lg">
-            Оставьте заявку, и я свяжусь с вами в ближайшее время для обсуждения деталей
+            Выберите удобное время, и я свяжусь с вами для подтверждения
+          </p>
+        </div>
+
+        {/* Инфо блок */}
+        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 mb-8 text-center">
+          <p className="text-white">
+            💬 <strong>Онлайн</strong> (Zoom, Telegram) или <strong>Очно</strong> (г. Рязань)
+          </p>
+          <p className="text-white/80 text-sm mt-2">
+            ⏱️ Длительность сессии: 50 минут
           </p>
         </div>
 
         <div className="bg-white rounded-3xl shadow-2xl p-8 fade-in">
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label className="block text-gray-700 font-semibold mb-2">
-                Ваше имя *
-              </label>
-              <input
-                type="text"
-                required
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition"
-                value={formData.name}
-                onChange={(e) => setFormData({...formData, name: e.target.value})}
-                placeholder="Как к вам обращаться"
-              />
+            {/* Имя и телефон */}
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-gray-700 font-semibold mb-2">
+                  Ваше имя *
+                </label>
+                <input
+                  type="text"
+                  required
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition"
+                  value={formData.name}
+                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  placeholder="Как к вам обращаться"
+                />
+              </div>
+
+              <div>
+                <label className="block text-gray-700 font-semibold mb-2">
+                  Номер телефона *
+                </label>
+                <input
+                  type="tel"
+                  required
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition"
+                  value={phone}
+                  onChange={handleChange}
+                  onFocus={handleFocus}
+                  placeholder="+7 (___) ___-__-__"
+                />
+              </div>
             </div>
 
+            {/* Telegram */}
             <div>
               <label className="block text-gray-700 font-semibold mb-2">
-                Номер телефона *
+                Telegram для связи
               </label>
-              <input
-                type="tel"
-                required
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition"
-                value={formData.phone}
-                onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                placeholder="+7 (___) ___-__-__"
-              />
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-semibold">
+                  @
+                </span>
+                <input
+                  type="text"
+                  className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition"
+                  value={formData.telegram}
+                  onChange={handleTelegramChange}
+                  placeholder="username"
+                />
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Ваш никнейм в Telegram (без @)
+              </p>
             </div>
 
+            {/* Дата и время */}
+            <div className="grid md:grid-cols-2 gap-4">
+              {/* Дата */}
+              <div>
+                <label className="block text-gray-700 font-semibold mb-2">
+                  📅 Желаемая дата
+                </label>
+                <select
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition"
+                  value={formData.date}
+                  onChange={(e) => setFormData({...formData, date: e.target.value})}
+                >
+                  <option value="">Не выбрана</option>
+                  {availableDates.map((date) => (
+                    <option 
+                      key={date.value} 
+                      value={date.value}
+                      disabled={date.isWeekend}
+                    >
+                      {date.label} {date.isWeekend ? '(выходной)' : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Время */}
+              <div>
+                <label className="block text-gray-700 font-semibold mb-2">
+                  🕐 Желаемое время
+                </label>
+                <select
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition"
+                  value={formData.time}
+                  onChange={(e) => setFormData({...formData, time: e.target.value})}
+                >
+                  <option value="">Не выбрано</option>
+                  {timeSlots.map((time) => (
+                    <option key={time} value={time}>
+                      {time}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Быстрый выбор времени */}
             <div>
-              <label className="block text-gray-700 font-semibold mb-2">
-                Email
+              <label className="block text-gray-700 font-semibold mb-3">
+                🕐 Или выберите время быстро:
               </label>
-              <input
-                type="email"
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition"
-                value={formData.email}
-                onChange={(e) => setFormData({...formData, email: e.target.value})}
-                placeholder="example@mail.ru"
-              />
+              <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                {timeSlots.map((time) => (
+                  <button
+                    key={time}
+                    type="button"
+                    onClick={() => setFormData({...formData, time})}
+                    className={`py-2 px-3 rounded-lg text-sm font-semibold transition ${
+                      formData.time === time
+                        ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-lg'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {time}
+                  </button>
+                ))}
+              </div>
             </div>
 
+            {/* Запрос */}
             <div>
               <label className="block text-gray-700 font-semibold mb-2">
                 Ваш запрос *
@@ -112,10 +272,11 @@ const Appointment = () => {
                 className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition"
                 value={formData.request}
                 onChange={(e) => setFormData({...formData, request: e.target.value})}
-                placeholder="Опишите, с чем вы хотели бы поработать..."
+                placeholder="Опишите кратко, с чем вы хотели бы поработать..."
               />
             </div>
 
+            {/* Кнопка отправки */}
             <button
               type="submit"
               disabled={loading}
@@ -129,9 +290,11 @@ const Appointment = () => {
             </button>
           </form>
 
-          <p className="text-center text-gray-500 text-sm mt-6">
-            После отправки заявки психолог свяжется с вами для согласования времени встречи
-          </p>
+          <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4 mt-6">
+            <p className="text-sm text-gray-700 text-center">
+              ✨ После отправки заявки Ксения свяжется с вами в Telegram или по телефону для подтверждения времени встречи
+            </p>
+          </div>
         </div>
       </div>
     </div>

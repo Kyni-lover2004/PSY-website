@@ -24,7 +24,7 @@ const Layout = () => {
             
             <div className="hidden md:flex items-center space-x-8">
               <Link to="/" className="text-gray-700 hover:text-primary transition">Главная</Link>
-              <Link to="/test" className="text-gray-700 hover:text-primary transition">Тесты</Link>
+              <Link to="/tests" className="text-gray-700 hover:text-primary transition">Тесты</Link>
               <Link to="/appointment" className="text-gray-700 hover:text-primary transition">Записаться</Link>
               
               {user ? (

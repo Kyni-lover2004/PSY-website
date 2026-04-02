@@ -34,11 +34,12 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True)
-    surname = Column(String(100), nullable=False)
-    name = Column(String(100), nullable=False)
-    phone = Column(String(20), unique=True, nullable=False)
-    password_hash = Column(String(255), nullable=False)
+    surname = Column(String(100), nullable=True)
+    name = Column(String(100), nullable=True)
+    phone = Column(String(20), unique=True, nullable=True)
+    password_hash = Column(String(255), nullable=True)
     gender = Column(String(10), nullable=True)
+    orientation = Column(String(20), nullable=True)
     session_id = Column(String(100), unique=True, default=lambda: str(uuid.uuid4()))
     created_at = Column(DateTime, default=datetime.utcnow)
     compatibility_code = Column(String(20), unique=True, nullable=True)
@@ -116,6 +117,7 @@ class TestComplete(BaseModel):
     answers: List[AnswerSubmit]
     gender: str
     name: Optional[str] = None
+    surname: Optional[str] = None
     orientation: Optional[str] = None
 
 class ConsultationCreate(BaseModel):
@@ -420,55 +422,63 @@ async def get_questions(gender: str, db: Session = Depends(get_db)):
 
 @app.post("/api/test/complete")
 async def complete_test(data: TestComplete, db: Session = Depends(get_db)):
-    # Сохраняем ответы
-    for ans in data.answers:
-        db.add(Answer(session_id=data.session_id, question_id=ans.question_id, value=ans.value))
-    
-    # Считаем результаты по каждому архетипу
-    scores = {}
-    for ans in data.answers:
-        if ans.value:  # Если "Да"
-            q = db.query(Question).filter(Question.id == ans.question_id).first()
-            if q:
-                scores[q.archetype_code] = scores.get(q.archetype_code, 0) + 1
-    
-    # Добавляем нулевые значения для всех архетипов
-    prefix = "1." if data.gender == "male" else "2."
-    for i in range(1, 8):
-        code = f"{prefix}{i}"
-        if code not in scores:
-            scores[code] = 0
-    
-    # Определяем статусы
-    active_archetypes = {code: calculate_status(score) for code, score in scores.items()}
-    
-    # Создаём/обновляем пользователя
-    user = db.query(User).filter(User.session_id == data.session_id).first()
-    if not user:
-        code = generate_code()
-        user = User(
-            name=data.name or "User",
-            gender=data.gender,
-            orientation=data.orientation,
-            session_id=data.session_id,
-            compatibility_code=code,
-            archetype_scores=scores,
-            active_archetypes=active_archetypes
-        )
-        db.add(user)
-    else:
-        user.archetype_scores = scores
-        user.active_archetypes = active_archetypes
-    
-    db.commit()
-    db.refresh(user)
-    
-    return {
-        "session_id": data.session_id,
-        "compatibility_code": user.compatibility_code,
-        "scores": scores,
-        "active_archetypes": active_archetypes
-    }
+    try:
+        # Сохраняем ответы
+        for ans in data.answers:
+            db.add(Answer(session_id=data.session_id, question_id=ans.question_id, value=ans.value))
+
+        # Считаем результаты по каждому архетипу
+        scores = {}
+        for ans in data.answers:
+            if ans.value:  # Если "Да"
+                q = db.query(Question).filter(Question.id == ans.question_id).first()
+                if q:
+                    scores[q.archetype_code] = scores.get(q.archetype_code, 0) + 1
+
+        # Добавляем нулевые значения для всех архетипов
+        prefix = "1." if data.gender == "male" else "2."
+        for i in range(1, 8):
+            code = f"{prefix}{i}"
+            if code not in scores:
+                scores[code] = 0
+
+        # Определяем статусы
+        active_archetypes = {code: calculate_status(score) for code, score in scores.items()}
+
+        # Создаём/обновляем пользователя
+        user = db.query(User).filter(User.session_id == data.session_id).first()
+        if not user:
+            code = generate_code()
+            user = User(
+                surname=data.surname or "User",
+                name=data.name or "User",
+                gender=data.gender,
+                orientation=data.orientation,
+                session_id=data.session_id,
+                compatibility_code=code,
+                archetype_scores=scores,
+                active_archetypes=active_archetypes
+            )
+            db.add(user)
+        else:
+            user.archetype_scores = scores
+            user.active_archetypes = active_archetypes
+
+        db.commit()
+        db.refresh(user)
+
+        return {
+            "session_id": data.session_id,
+            "compatibility_code": user.compatibility_code,
+            "scores": scores,
+            "active_archetypes": active_archetypes
+        }
+    except Exception as e:
+        db.rollback()
+        print(f"Error in complete_test: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/consultation")
 async def create_consultation(data: ConsultationCreate, db: Session = Depends(get_db)):
@@ -480,6 +490,8 @@ async def create_consultation(data: ConsultationCreate, db: Session = Depends(ge
     )
     db.add(consultation)
     db.commit()
+    db.refresh(consultation)
+    
     return {"message": "Заявка отправлена", "id": consultation.id}
 
 @app.get("/api/profile/{code}")

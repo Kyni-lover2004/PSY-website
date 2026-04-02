@@ -10,11 +10,11 @@ const Home = () => {
             Психолог Ксения Панкратова
           </h1>
           <p className="text-xl text-white/90 mb-8 max-w-3xl mx-auto fade-in">
-            Исследуйте себя и свои отношения через архетипы
+            Практикующий психолог. Помогаю обрести гармонию с собой и построить счастливые отношения
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center fade-in">
-            <Link to="/test" className="bg-white text-primary px-8 py-4 rounded-xl font-semibold text-lg hover:shadow-2xl hover:scale-105 transition transform">
-              Пройти тест
+            <Link to="/tests" className="bg-white text-primary px-8 py-4 rounded-xl font-semibold text-lg hover:shadow-2xl hover:scale-105 transition transform">
+              Все тесты
             </Link>
             <Link to="/appointment" className="bg-transparent text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-white hover:text-primary transition">
               Записаться на консультацию
@@ -33,18 +33,39 @@ const Home = () => {
             </div>
             <div className="space-y-6">
               <p className="text-lg text-gray-700 leading-relaxed">
-                Здравствуйте! Меня зовут <strong className="text-primary">Ксения Панкратова</strong>, 
-                и я практикующий психолог, специализирующийся на исследовании архетипов в отношениях.
+                Здравствуйте! Меня зовут <strong className="text-primary">Ксения Панкратова</strong> — 
+                практикующий психолог с более чем 10-летним опытом работы.
               </p>
               <p className="text-lg text-gray-700 leading-relaxed">
-                Я создала этот исследовательский тест для того, чтобы помочь вам разобраться в своих 
-                отношениях с партнёром и раскрыть свои архетипы с точки зрения сексуальности.
+                Я помогаю людям справляться с тревогой, выгоранием, сложностями в отношениях и жизненными кризисами. 
+                В своей работе я использую интегративный подход, сочетающий классическую психологию, 
+                гештальт-терапию, когнитивно-поведенческие техники и глубинную работу с бессознательным.
               </p>
               <p className="text-lg text-gray-700 leading-relaxed">
-                Мой подход основан на работе с архетипическими образами — универсальными паттернами, 
-                которые живут в нашем коллективном бессознательном и влияют на наше поведение, 
-                выбор партнёров и сценарии отношений.
+                Моя специализация:
               </p>
+              <ul className="text-lg text-gray-700 space-y-2">
+                <li className="flex items-start gap-2">
+                  <span className="text-primary">✓</span>
+                  <span>Отношения в паре, совместимость, конфликты</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary">✓</span>
+                  <span>Самооценка, принятие себя, личные границы</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary">✓</span>
+                  <span>Тревожность, страхи, эмоциональное выгорание</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary">✓</span>
+                  <span>Поиск предназначения, жизненные кризисы</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary">✓</span>
+                  <span>Глубинное понимание себя через архетипы</span>
+                </li>
+              </ul>
             </div>
           </div>
         </div>
@@ -74,25 +95,46 @@ const Home = () => {
       {/* Услуги */}
       <section className="py-20 px-4 bg-white">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-4xl font-bold text-center text-gray-800 mb-12">Услуги</h2>
+          <h2 className="text-4xl font-bold text-center text-gray-800 mb-4">С чем я работаю</h2>
+          <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
+            Помогаю в самых разных жизненных ситуациях — от личных кризисов до сложностей в отношениях
+          </p>
           <div className="grid md:grid-cols-3 gap-8">
             <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-8 text-center hover:shadow-xl transition transform hover:-translate-y-2">
-              <div className="text-5xl mb-4">📊</div>
-              <h3 className="text-xl font-semibold mb-3 text-gray-800">Тестирование на архетипы</h3>
-              <p className="text-gray-600 mb-4">Узнайте свой доминирующий архетип и получите рекомендации по совместимости с партнёром.</p>
-              <Link to="/test" className="text-primary font-semibold hover:underline">Пройти тест →</Link>
+              <div className="text-5xl mb-4">💑</div>
+              <h3 className="text-xl font-semibold mb-3 text-gray-800">Отношения в паре</h3>
+              <p className="text-gray-600 mb-4">Конфликты, недопонимание, потеря близости, поиск совместимости с партнёром.</p>
+              <Link to="/compatibility" className="text-primary font-semibold hover:underline">Проверить совместимость →</Link>
             </div>
             <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-8 text-center hover:shadow-xl transition transform hover:-translate-y-2">
-              <div className="text-5xl mb-4">💬</div>
-              <h3 className="text-xl font-semibold mb-3 text-gray-800">Индивидуальная консультация</h3>
-              <p className="text-gray-600 mb-4">Персональная работа с психологом для глубокого исследования ваших паттернов и запросов.</p>
-              <Link to="/appointment" className="text-primary font-semibold hover:underline">Записаться →</Link>
+              <div className="text-5xl mb-4">💆</div>
+              <h3 className="text-xl font-semibold mb-3 text-gray-800">Тревога и стресс</h3>
+              <p className="text-gray-600 mb-4">Постоянное беспокойство, панические атаки, эмоциональное выгорание, усталость.</p>
+              <Link to="/appointment" className="text-primary font-semibold hover:underline">Записаться на консультацию →</Link>
             </div>
             <div className="bg-gradient-to-br from-pink-50 to-red-50 rounded-2xl p-8 text-center hover:shadow-xl transition transform hover:-translate-y-2">
-              <div className="text-5xl mb-4">💕</div>
-              <h3 className="text-xl font-semibold mb-3 text-gray-800">Проверка совместимости</h3>
-              <p className="text-gray-600 mb-4">Анализ совместимости с партнёром на основе архетипических профилей.</p>
-              <Link to="/compatibility" className="text-primary font-semibold hover:underline">Проверить →</Link>
+              <div className="text-5xl mb-4">🎭</div>
+              <h3 className="text-xl font-semibold mb-3 text-gray-800">Самопознание</h3>
+              <p className="text-gray-600 mb-4">Поиск себя, принятие своих теневых сторон, понимание глубинных мотивов.</p>
+              <Link to="/tests" className="text-primary font-semibold hover:underline">Пройти тесты →</Link>
+            </div>
+            <div className="bg-gradient-to-br from-green-50 to-teal-50 rounded-2xl p-8 text-center hover:shadow-xl transition transform hover:-translate-y-2">
+              <div className="text-5xl mb-4">🎯</div>
+              <h3 className="text-xl font-semibold mb-3 text-gray-800">Жизненные кризисы</h3>
+              <p className="text-gray-600 mb-4">Потеря смысла, смена жизненного этапа, развод, утрата, переезд.</p>
+              <Link to="/appointment" className="text-primary font-semibold hover:underline">Записаться на консультацию →</Link>
+            </div>
+            <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-8 text-center hover:shadow-xl transition transform hover:-translate-y-2">
+              <div className="text-5xl mb-4">💪</div>
+              <h3 className="text-xl font-semibold mb-3 text-gray-800">Самооценка</h3>
+              <p className="text-gray-600 mb-4">Неуверенность в себе, зависимость от чужого мнения, нарушение границ.</p>
+              <Link to="/appointment" className="text-primary font-semibold hover:underline">Записаться на консультацию →</Link>
+            </div>
+            <div className="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-2xl p-8 text-center hover:shadow-xl transition transform hover:-translate-y-2">
+              <div className="text-5xl mb-4">🔮</div>
+              <h3 className="text-xl font-semibold mb-3 text-gray-800">Глубинная терапия</h3>
+              <p className="text-gray-600 mb-4">Работа с бессознательным, архетипами, родовыми сценариями и повторами.</p>
+              <Link to="/tests" className="text-primary font-semibold hover:underline">Узнать свои архетипы →</Link>
             </div>
           </div>
         </div>
@@ -155,8 +197,8 @@ const Home = () => {
             Пройдите тест бесплатно прямо сейчас. Регистрация потребуется только для сохранения результатов.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/test" className="bg-gradient-to-r from-primary to-secondary text-white px-10 py-4 rounded-xl font-semibold text-lg hover:shadow-2xl hover:scale-105 transition transform">
-              Начать тестирование
+            <Link to="/tests" className="bg-gradient-to-r from-primary to-secondary text-white px-10 py-4 rounded-xl font-semibold text-lg hover:shadow-2xl hover:scale-105 transition transform">
+              Все тесты
             </Link>
             <Link to="/appointment" className="bg-gray-100 text-gray-800 px-10 py-4 rounded-xl font-semibold text-lg hover:shadow-lg hover:scale-105 transition transform">
               Записаться к психологу

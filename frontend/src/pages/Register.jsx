@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { authAPI } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import { usePhoneMask } from '../hooks/usePhoneMask';
 
 const Register = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { login } = useAuth();
   const { phone, setPhone, handleChange, handleFocus, getCleanPhone } = usePhoneMask('+7');
   const [formData, setFormData] = useState({
@@ -54,7 +55,13 @@ const Register = () => {
       localStorage.setItem('user', JSON.stringify(user));
       sessionStorage.setItem('compatibilityCode', response.data.compatibility_code);
 
-      navigate('/dashboard');
+      // Проверяем, был ли редирект с теста
+      const redirect = searchParams.get('redirect');
+      if (redirect === 'test') {
+        navigate('/test/archetypes/anketa');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (err) {
       console.error('Registration error:', err);
       setError(err.response?.data?.detail || 'Ошибка регистрации. Попробуйте другой номер телефона.');
@@ -67,7 +74,11 @@ const Register = () => {
     <div className="py-12 px-4">
       <div className="max-w-md mx-auto bg-white rounded-3xl shadow-2xl p-8 fade-in">
         <h1 className="text-3xl font-bold text-center text-gray-800 mb-2">Регистрация</h1>
-        <p className="text-center text-gray-600 mb-8">Для сохранения результатов и кода совместимости</p>
+        <p className="text-center text-gray-600 mb-8">
+          {searchParams.get('redirect') === 'test' 
+            ? 'Зарегистрируйтесь для прохождения теста'
+            : 'Для сохранения результатов и кода совместимости'}
+        </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
