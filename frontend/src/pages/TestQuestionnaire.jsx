@@ -81,8 +81,7 @@ const TestQuestionnaire = () => {
         session_id: sessionId,
         answers: answersArray,
         gender: testData.gender,
-        name: testData.name,
-        surname: testData.surname || "User",
+        login: testData.login,
         orientation: testData.orientation
       });
 
@@ -99,7 +98,7 @@ const TestQuestionnaire = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #6B8F8B 0%, #4A6B68 100%)' }}>
         <div className="bg-white rounded-3xl p-8 text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-gray-600">Загрузка вопросов...</p>
@@ -118,7 +117,7 @@ const TestQuestionnaire = () => {
   console.log('currentQuestion.text:', currentQuestion?.text);
 
   return (
-    <div className="py-12 px-4">
+    <div className="py-12 px-4" style={{ background: 'linear-gradient(135deg, #6B8F8B 0%, #4A6B68 100%)', minHeight: '100vh' }}>
       <div className="max-w-3xl mx-auto">
         {/* Прогресс */}
         <div className="mb-8">
@@ -142,7 +141,7 @@ const TestQuestionnaire = () => {
               onClick={() => handleAnswer(true)}
               className={`py-4 px-6 rounded-xl font-semibold text-lg transition transform hover:scale-105 ${
                 answers[currentQuestion?.id] === true
-                  ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-lg'
+                  ? 'bg-primary text-white shadow-lg'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >✅ Да</button>
@@ -150,7 +149,7 @@ const TestQuestionnaire = () => {
               onClick={() => handleAnswer(false)}
               className={`py-4 px-6 rounded-xl font-semibold text-lg transition transform hover:scale-105 ${
                 answers[currentQuestion?.id] === false
-                  ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-lg'
+                  ? 'bg-primary text-white shadow-lg'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >❌ Нет</button>
@@ -168,7 +167,7 @@ const TestQuestionnaire = () => {
               onClick={handleNext}
               disabled={!hasAnswer || submitting}
               className={`flex-1 py-3 rounded-xl font-semibold transition ${
-                !hasAnswer || submitting ? 'bg-gray-200 text-gray-400' : 'bg-gradient-to-r from-primary to-secondary text-white hover:shadow-lg'
+                !hasAnswer || submitting ? 'bg-gray-200 text-gray-400' : 'bg-primary text-white hover:shadow-lg'
               }`}
             >
               {submitting ? 'Сохранение...' : currentIndex === questions.length - 1 ? 'Завершить' : 'Далее →'}

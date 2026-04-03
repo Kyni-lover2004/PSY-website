@@ -2,13 +2,14 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { authAPI } from '../api/api';
 import { useAuth } from '../context/AuthContext';
-import { usePhoneMask } from '../hooks/usePhoneMask';
 
 const Login = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const { phone, setPhone, handleChange, handleFocus, getCleanPhone } = usePhoneMask('+7');
-  const [password, setPassword] = useState('');
+  const [formData, setFormData] = useState({
+    login: '',
+    password: ''
+  });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -19,15 +20,13 @@ const Login = () => {
 
     try {
       const response = await authAPI.login({
-        phone: getCleanPhone(),
-        password: password
+        login: formData.login,
+        password: formData.password
       });
 
       const user = {
         id: response.data.user.id,
-        name: response.data.user.name,
-        surname: response.data.user.surname,
-        phone: response.data.user.phone,
+        login: response.data.user.login,
         gender: response.data.user.gender
       };
       localStorage.setItem('user', JSON.stringify(user));
@@ -44,22 +43,21 @@ const Login = () => {
   };
 
   return (
-    <div className="py-12 px-4">
+    <div className="py-12 px-4" style={{ background: 'linear-gradient(135deg, #6B8F8B 0%, #4A6B68 100%)', minHeight: '100vh' }}>
       <div className="max-w-md mx-auto bg-white rounded-3xl shadow-2xl p-8 fade-in">
         <h1 className="text-3xl font-bold text-center text-gray-800 mb-2">Вход</h1>
-        <p className="text-center text-gray-600 mb-8">Введите номер телефона и пароль</p>
+        <p className="text-center text-gray-600 mb-8">Введите логин и пароль</p>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-gray-700 font-semibold mb-2">Номер телефона</label>
+            <label className="block text-gray-700 font-semibold mb-2">Логин</label>
             <input
-              type="tel"
+              type="text"
               required
               className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition"
-              value={phone}
-              onChange={handleChange}
-              onFocus={handleFocus}
-              placeholder="+7 (999) 123-45-67"
+              value={formData.login}
+              onChange={(e) => setFormData({...formData, login: e.target.value})}
+              placeholder="Ваш логин"
             />
           </div>
 
@@ -69,8 +67,8 @@ const Login = () => {
               type="password"
               required
               className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              value={formData.password}
+              onChange={(e) => setFormData({...formData, password: e.target.value})}
               placeholder="Введите ваш пароль"
             />
           </div>
@@ -87,7 +85,7 @@ const Login = () => {
             className={`w-full py-4 rounded-xl font-semibold text-lg transition ${
               loading
                 ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                : 'bg-gradient-to-r from-primary to-secondary text-white hover:shadow-lg hover:scale-105'
+                : 'bg-primary text-white hover:shadow-lg hover:scale-105'
             }`}
           >
             {loading ? 'Вход...' : 'Войти'}

@@ -27,8 +27,7 @@ const TestAnketa = () => {
 
     // Сохраняем данные вместе с данными пользователя из кабинета
     const testData = {
-      name: user.name,
-      surname: user.surname,
+      login: user.login,
       gender: user.gender,
       orientation: formData.orientation,
       goal: formData.goal,
@@ -42,7 +41,7 @@ const TestAnketa = () => {
   };
 
   return (
-    <div className="py-12 px-4">
+    <div className="py-12 px-4" style={{ background: 'linear-gradient(135deg, #6B8F8B 0%, #4A6B68 100%)', minHeight: '100vh' }}>
       <div className="max-w-4xl mx-auto">
         {/* Заголовок */}
         <div className="text-center mb-8">
@@ -55,7 +54,7 @@ const TestAnketa = () => {
         {/* Инфо о пользователе */}
         <div className="max-w-2xl mx-auto bg-white/10 backdrop-blur-lg rounded-2xl p-6 mb-8 text-center">
           <p className="text-white/90">
-            👤 <span className="font-semibold">{user.surname} {user.name}</span> •{' '}
+            👤 <span className="font-semibold">@{user.login}</span> •{' '}
             {user.gender === 'female' ? 'Женский' : 'Мужской'} пол
           </p>
         </div>
@@ -176,7 +175,7 @@ const TestAnketa = () => {
               </button>
               <button
                 type="submit"
-                className="flex-1 bg-gradient-to-r from-primary to-secondary text-white py-4 rounded-xl font-semibold text-lg hover:shadow-lg hover:scale-105 transition transform"
+                className="flex-1 bg-primary text-white py-4 rounded-xl font-semibold text-lg hover:shadow-lg hover:scale-105 transition transform"
               >
                 Начать тест
               </button>

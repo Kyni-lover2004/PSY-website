@@ -41,9 +41,9 @@ const TestResultsTab = () => {
       <div className="text-center py-12">
         <div className="text-6xl mb-4">📊</div>
         <p className="text-gray-600 mb-4">Вы ещё не проходили тесты</p>
-        <Link 
-          to="/test" 
-          className="inline-block bg-gradient-to-r from-primary to-secondary text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition"
+        <Link
+          to="/test"
+          className="inline-block bg-primary text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition"
         >
           Пройти тест на архетипы
         </Link>
@@ -58,7 +58,7 @@ const TestResultsTab = () => {
   return (
     <div className="space-y-6">
       {/* Информация о тесте */}
-      <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-2xl p-6">
+      <div className="bg-primary/10 rounded-2xl p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-xl font-bold text-gray-800">🎭 Тест на архетипы</h3>
           <span className="text-sm text-gray-500">Код: {results.code}</span>

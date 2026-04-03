@@ -17,7 +17,7 @@ const Layout = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
-              <Link to="/" className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">
+              <Link to="/" className="text-2xl font-bold text-primary">
                 🔮 Психолог Ксения Панкратова
               </Link>
             </div>
@@ -35,7 +35,7 @@ const Layout = () => {
               ) : (
                 <>
                   <Link to="/login" className="text-gray-700 hover:text-primary transition">Войти</Link>
-                  <Link to="/register" className="bg-gradient-to-r from-primary to-secondary text-white px-4 py-2 rounded-lg hover:shadow-lg transition">
+                  <Link to="/register" className="bg-primary text-white px-4 py-2 rounded-lg hover:shadow-lg transition">
                     Регистрация
                   </Link>
                 </>

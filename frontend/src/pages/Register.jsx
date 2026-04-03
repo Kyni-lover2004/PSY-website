@@ -2,16 +2,13 @@ import { useState } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { authAPI } from '../api/api';
 import { useAuth } from '../context/AuthContext';
-import { usePhoneMask } from '../hooks/usePhoneMask';
 
 const Register = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { login } = useAuth();
-  const { phone, setPhone, handleChange, handleFocus, getCleanPhone } = usePhoneMask('+7');
   const [formData, setFormData] = useState({
-    surname: '',
-    name: '',
+    login: '',
     password: '',
     confirmPassword: '',
     gender: 'female'
@@ -34,13 +31,16 @@ const Register = () => {
       return;
     }
 
+    if (formData.login.length < 3) {
+      setError('Логин должен быть не менее 3 символов');
+      return;
+    }
+
     setLoading(true);
 
     try {
       const response = await authAPI.register({
-        surname: formData.surname,
-        name: formData.name,
-        phone: getCleanPhone(),
+        login: formData.login,
         password: formData.password,
         gender: formData.gender
       });
@@ -48,8 +48,7 @@ const Register = () => {
       // Сохраняем пользователя
       const user = {
         id: response.data.user_id,
-        name: response.data.name,
-        surname: response.data.surname,
+        login: response.data.login,
         gender: response.data.gender
       };
       localStorage.setItem('user', JSON.stringify(user));
@@ -64,58 +63,33 @@ const Register = () => {
       }
     } catch (err) {
       console.error('Registration error:', err);
-      setError(err.response?.data?.detail || 'Ошибка регистрации. Попробуйте другой номер телефона.');
+      setError(err.response?.data?.detail || 'Ошибка регистрации. Попробуйте другой логин.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="py-12 px-4">
+    <div className="py-12 px-4" style={{ background: 'linear-gradient(135deg, #6B8F8B 0%, #4A6B68 100%)', minHeight: '100vh' }}>
       <div className="max-w-md mx-auto bg-white rounded-3xl shadow-2xl p-8 fade-in">
         <h1 className="text-3xl font-bold text-center text-gray-800 mb-2">Регистрация</h1>
         <p className="text-center text-gray-600 mb-8">
-          {searchParams.get('redirect') === 'test' 
+          {searchParams.get('redirect') === 'test'
             ? 'Зарегистрируйтесь для прохождения теста'
             : 'Для сохранения результатов и кода совместимости'}
         </p>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-gray-700 font-semibold mb-2">Фамилия *</label>
-              <input
-                type="text"
-                required
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition"
-                value={formData.surname}
-                onChange={(e) => setFormData({...formData, surname: e.target.value})}
-                placeholder="Иванова"
-              />
-            </div>
-            <div>
-              <label className="block text-gray-700 font-semibold mb-2">Имя *</label>
-              <input
-                type="text"
-                required
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition"
-                value={formData.name}
-                onChange={(e) => setFormData({...formData, name: e.target.value})}
-                placeholder="Мария"
-              />
-            </div>
-          </div>
-
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-gray-700 font-semibold mb-2">Номер телефона *</label>
+            <label className="block text-gray-700 font-semibold mb-2">Логин *</label>
             <input
-              type="tel"
+              type="text"
               required
+              minLength={3}
               className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition"
-              value={phone}
-              onChange={handleChange}
-              onFocus={handleFocus}
-              placeholder="+7 (999) 123-45-67"
+              value={formData.login}
+              onChange={(e) => setFormData({...formData, login: e.target.value})}
+              placeholder="Придумайте логин"
             />
           </div>
 
@@ -169,7 +143,7 @@ const Register = () => {
             className={`w-full py-4 rounded-xl font-semibold text-lg transition ${
               loading
                 ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                : 'bg-gradient-to-r from-primary to-secondary text-white hover:shadow-lg hover:scale-105'
+                : 'bg-primary text-white hover:shadow-lg hover:scale-105'
             }`}
           >
             {loading ? 'Регистрация...' : 'Зарегистрироваться'}
@@ -177,7 +151,7 @@ const Register = () => {
         </form>
 
         <p className="text-center text-gray-600 mt-6">
-          Уже зарегистрированы?{' '}
+          Уже есть аккаунт?{' '}
           <Link to="/login" className="text-primary font-semibold hover:underline">Войти</Link>
         </p>
       </div>

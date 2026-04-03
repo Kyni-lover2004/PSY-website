@@ -8,7 +8,7 @@ const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('profile');
 
   return (
-    <div className="py-12 px-4">
+    <div className="py-12 px-4" style={{ background: 'linear-gradient(135deg, #6B8F8B 0%, #4A6B68 100%)', minHeight: '100vh' }}>
       <div className="max-w-6xl mx-auto">
         <h1 className="text-4xl font-bold text-white mb-8">Личный кабинет</h1>
 
@@ -54,16 +54,8 @@ const Dashboard = () => {
               {user ? (
                 <div className="space-y-4 max-w-md">
                   <div>
-                    <div className="text-gray-500 text-sm">Фамилия</div>
-                    <div className="text-gray-800 font-semibold">{user.surname}</div>
-                  </div>
-                  <div>
-                    <div className="text-gray-500 text-sm">Имя</div>
-                    <div className="text-gray-800 font-semibold">{user.name}</div>
-                  </div>
-                  <div>
-                    <div className="text-gray-500 text-sm">Телефон</div>
-                    <div className="text-gray-800 font-semibold">{user.phone}</div>
+                    <div className="text-gray-500 text-sm">Логин</div>
+                    <div className="text-gray-800 font-semibold">{user.login}</div>
                   </div>
                   <div>
                     <div className="text-gray-500 text-sm">Пол</div>
@@ -109,9 +101,9 @@ const CompatibilityTab = () => {
       <div className="text-center py-12">
         <div className="text-6xl mb-4">💕</div>
         <p className="text-gray-600 mb-4">Пройдите тест, чтобы получить код совместимости</p>
-        <Link 
-          to="/test" 
-          className="inline-block bg-gradient-to-r from-primary to-secondary text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition"
+        <Link
+          to="/test"
+          className="inline-block bg-primary text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition"
         >
           Пройти тест
         </Link>
@@ -121,7 +113,7 @@ const CompatibilityTab = () => {
 
   return (
     <div className="space-y-6">
-      <div className="bg-gradient-to-r from-primary to-secondary rounded-2xl p-8 text-white">
+      <div className="bg-primary rounded-2xl p-8 text-white">
         <h3 className="text-2xl font-bold mb-4">Ваш код совместимости</h3>
         <div className="bg-white/20 backdrop-blur-lg rounded-xl p-6 mb-4">
           <p className="text-3xl font-mono font-bold tracking-wider text-center">
@@ -149,9 +141,9 @@ const CompatibilityTab = () => {
             <span>Перейдите в раздел "Проверка совместимости" и введите оба кода</span>
           </li>
         </ol>
-        <Link 
-          to="/compatibility" 
-          className="mt-6 inline-block bg-gradient-to-r from-primary to-secondary text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition"
+        <Link
+          to="/compatibility"
+          className="mt-6 inline-block bg-primary text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition"
         >
           Проверить совместимость →
         </Link>

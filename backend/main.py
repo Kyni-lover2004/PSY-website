@@ -34,9 +34,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True)
-    surname = Column(String(100), nullable=True)
-    name = Column(String(100), nullable=True)
-    phone = Column(String(20), unique=True, nullable=True)
+    login = Column(String(100), unique=True, nullable=True)
     password_hash = Column(String(255), nullable=True)
     gender = Column(String(10), nullable=True)
     orientation = Column(String(20), nullable=True)
@@ -98,14 +96,12 @@ class Couple(Base):
 
 # === PYDANTIC ===
 class UserCreate(BaseModel):
-    surname: str
-    name: str
-    phone: str
+    login: str
     password: str
     gender: str
 
 class UserLogin(BaseModel):
-    phone: str
+    login: str
     password: str
 
 class AnswerSubmit(BaseModel):
@@ -116,8 +112,7 @@ class TestComplete(BaseModel):
     session_id: str
     answers: List[AnswerSubmit]
     gender: str
-    name: Optional[str] = None
-    surname: Optional[str] = None
+    login: Optional[str] = None
     orientation: Optional[str] = None
 
 class ConsultationCreate(BaseModel):
@@ -450,8 +445,7 @@ async def complete_test(data: TestComplete, db: Session = Depends(get_db)):
         if not user:
             code = generate_code()
             user = User(
-                surname=data.surname or "User",
-                name=data.name or "User",
+                login=data.login or "user",
                 gender=data.gender,
                 orientation=data.orientation,
                 session_id=data.session_id,
@@ -557,23 +551,21 @@ async def check_compatibility(data: CompatibilityCheck, db: Session = Depends(ge
     db.commit()
     
     return {
-        "user1": {"name": user1.name, "code": data.code1},
-        "user2": {"name": user2.name, "code": data.code2},
+        "user1": {"login": user1.login, "code": data.code1},
+        "user2": {"login": user2.login, "code": data.code2},
         **result
     }
 
 @app.post("/api/auth/register")
 async def register(data: UserCreate, db: Session = Depends(get_db)):
-    # Проверяем, существует ли пользователь с таким телефоном
-    existing_user = db.query(User).filter(User.phone == data.phone).first()
+    # Проверяем, существует ли пользователь с таким логином
+    existing_user = db.query(User).filter(User.login == data.login).first()
     if existing_user:
-        raise HTTPException(400, "Пользователь с таким номером телефона уже зарегистрирован")
-    
+        raise HTTPException(400, "Пользователь с таким логином уже зарегистрирован")
+
     code = generate_code()
     user = User(
-        surname=data.surname,
-        name=data.name,
-        phone=data.phone,
+        login=data.login,
         password_hash=hash_password(data.password),
         gender=data.gender,
         compatibility_code=code
@@ -582,21 +574,21 @@ async def register(data: UserCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(user)
 
-    return {"user_id": user.id, "name": user.name, "surname": user.surname, "gender": user.gender, "compatibility_code": code}
+    return {"user_id": user.id, "login": user.login, "gender": user.gender, "compatibility_code": code}
 
 @app.post("/api/auth/login")
 async def login(data: UserLogin, db: Session = Depends(get_db)):
-    # Находим пользователя по телефону
-    user = db.query(User).filter(User.phone == data.phone).first()
+    # Находим пользователя по логину
+    user = db.query(User).filter(User.login == data.login).first()
     if not user:
         raise HTTPException(404, "Пользователь не найден. Зарегистрируйтесь сначала.")
-    
+
     # Проверяем пароль
     if not verify_password(data.password, user.password_hash):
         raise HTTPException(401, "Неверный пароль")
 
     return {
-        "user": {"id": user.id, "name": user.name, "surname": user.surname, "phone": user.phone, "gender": user.gender},
+        "user": {"id": user.id, "login": user.login, "gender": user.gender},
         "compatibility_code": user.compatibility_code
     }
 

@@ -1,11 +1,9 @@
 import { useState } from 'react';
 import { consultationAPI } from '../api/api';
-import { usePhoneMask } from '../hooks/usePhoneMask';
 
 const Appointment = () => {
-  const { phone, setPhone, handleChange, handleFocus, getCleanPhone } = usePhoneMask('+7');
   const [formData, setFormData] = useState({
-    name: '',
+    login: '',
     telegram: '',
     date: '',
     time: '',
@@ -30,8 +28,7 @@ const Appointment = () => {
     try {
       const requestData = {
         request_text: `
-Имя: ${formData.name}
-Телефон: ${getCleanPhone()}
+Логин: ${formData.login}
 Telegram: ${formData.telegram ? '@' + formData.telegram : 'Не указан'}
 Желаемая дата: ${formData.date || 'Не указана'}
 Желаемое время: ${formData.time || 'Не указано'}
@@ -85,26 +82,27 @@ Telegram: ${formData.telegram ? '@' + formData.telegram : 'Не указан'}
 
   if (submitted) {
     return (
-      <div className="py-20 px-4">
+      <div className="py-20 px-4" style={{ background: 'linear-gradient(135deg, #6B8F8B 0%, #4A6B68 100%)', minHeight: '100vh' }}>
         <div className="max-w-2xl mx-auto bg-white rounded-3xl shadow-2xl p-8 text-center fade-in">
           <div className="text-6xl mb-4">✅</div>
           <h2 className="text-3xl font-bold text-gray-800 mb-4">Заявка отправлена!</h2>
           <p className="text-gray-600 mb-6">
             Спасибо! Ксения свяжется с вами в ближайшее время для обсуждения деталей.
           </p>
-          <div className="bg-blue-50 rounded-xl p-4 mb-6">
-            <p className="text-sm text-blue-800">
+          <div className="bg-primary-light/30 rounded-xl p-4 mb-6">
+            <p className="text-sm text-gray-700">
               📅 Желаемая дата: <strong>{formData.date || 'Не указана'}</strong><br/>
               🕐 Желаемое время: <strong>{formData.time || 'Не указано'}</strong><br/>
-              ✈️ Telegram: <strong>{formData.telegram ? '@' + formData.telegram : 'Не указан'}</strong>
+              ✈️ Telegram: <strong>{formData.telegram ? '@' + formData.telegram : 'Не указан'}</strong><br/>
+              👤 Логин: <strong>{formData.login}</strong>
             </p>
           </div>
           <button
             onClick={() => {
               setSubmitted(false);
-              setFormData({ name: '', phone: '', telegram: '', date: '', time: '', request: '' });
+              setFormData({ login: '', telegram: '', date: '', time: '', request: '' });
             }}
-            className="bg-gradient-to-r from-primary to-secondary text-white px-8 py-3 rounded-xl font-semibold hover:shadow-lg transition"
+            className="bg-primary text-white px-8 py-3 rounded-xl font-semibold hover:shadow-lg transition"
           >
             Отправить ещё одну заявку
           </button>
@@ -116,7 +114,7 @@ Telegram: ${formData.telegram ? '@' + formData.telegram : 'Не указан'}
   const availableDates = getAvailableDates();
 
   return (
-    <div className="py-20 px-4">
+    <div className="py-20 px-4" style={{ background: 'linear-gradient(135deg, #6B8F8B 0%, #4A6B68 100%)', minHeight: '100vh' }}>
       <div className="max-w-2xl mx-auto">
         {/* Заголовок */}
         <div className="text-center mb-8">
@@ -139,36 +137,19 @@ Telegram: ${formData.telegram ? '@' + formData.telegram : 'Не указан'}
 
         <div className="bg-white rounded-3xl shadow-2xl p-8 fade-in">
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Имя и телефон */}
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-gray-700 font-semibold mb-2">
-                  Ваше имя *
-                </label>
-                <input
-                  type="text"
-                  required
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition"
-                  value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
-                  placeholder="Как к вам обращаться"
-                />
-              </div>
-
-              <div>
-                <label className="block text-gray-700 font-semibold mb-2">
-                  Номер телефона *
-                </label>
-                <input
-                  type="tel"
-                  required
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition"
-                  value={phone}
-                  onChange={handleChange}
-                  onFocus={handleFocus}
-                  placeholder="+7 (___) ___-__-__"
-                />
-              </div>
+            {/* Логин */}
+            <div>
+              <label className="block text-gray-700 font-semibold mb-2">
+                Ваш логин *
+              </label>
+              <input
+                type="text"
+                required
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition"
+                value={formData.login}
+                onChange={(e) => setFormData({...formData, login: e.target.value})}
+                placeholder="Ваш логин"
+              />
             </div>
 
             {/* Telegram */}
@@ -207,8 +188,8 @@ Telegram: ${formData.telegram ? '@' + formData.telegram : 'Не указан'}
                 >
                   <option value="">Не выбрана</option>
                   {availableDates.map((date) => (
-                    <option 
-                      key={date.value} 
+                    <option
+                      key={date.value}
                       value={date.value}
                       disabled={date.isWeekend}
                     >
@@ -251,7 +232,7 @@ Telegram: ${formData.telegram ? '@' + formData.telegram : 'Не указан'}
                     onClick={() => setFormData({...formData, time})}
                     className={`py-2 px-3 rounded-lg text-sm font-semibold transition ${
                       formData.time === time
-                        ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-lg'
+                        ? 'bg-primary text-white shadow-lg'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
@@ -283,14 +264,14 @@ Telegram: ${formData.telegram ? '@' + formData.telegram : 'Не указан'}
               className={`w-full py-4 rounded-xl font-semibold text-lg transition ${
                 loading
                   ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-primary to-secondary text-white hover:shadow-lg hover:scale-105'
+                  : 'bg-primary text-white hover:shadow-lg hover:scale-105'
               }`}
             >
               {loading ? 'Отправка...' : 'Отправить заявку'}
             </button>
           </form>
 
-          <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4 mt-6">
+          <div className="bg-primary-light/30 rounded-xl p-4 mt-6">
             <p className="text-sm text-gray-700 text-center">
               ✨ После отправки заявки Ксения свяжется с вами в Telegram или по телефону для подтверждения времени встречи
             </p>
