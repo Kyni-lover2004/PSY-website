@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { Palette, Zap, Heart, Link2, Gem, MessageCircle, Lightbulb } from 'lucide-react';
 
 const TestsList = () => {
   const tests = [
@@ -6,7 +7,7 @@ const TestsList = () => {
       id: 'archetypes',
       title: 'Тест на архетипы',
       description: 'Узнайте свой ведущий архетип и узнайте, какие партнёры вам подходят',
-      icon: '🎭',
+      icon: Palette,
       link: '/test/archetypes',
       popular: true,
     },
@@ -14,7 +15,7 @@ const TestsList = () => {
       id: 'temperament',
       title: 'Тест на темперамент',
       description: 'Определите свой тип темперамента: сангвиник, холерик, флегматик или меланхолик',
-      icon: '⚡',
+      icon: Zap,
       link: '/test/temperament',
       popular: false,
     },
@@ -22,7 +23,7 @@ const TestsList = () => {
       id: 'love-language',
       title: 'Языки любви',
       description: 'Узнайте, как вы предпочитаете давать и получать любовь в отношениях',
-      icon: '💕',
+      icon: Heart,
       link: '/test/love-language',
       popular: false,
     },
@@ -30,7 +31,7 @@ const TestsList = () => {
       id: 'attachment',
       title: 'Тип привязанности',
       description: 'Определите свой стиль привязанности в близких отношениях',
-      icon: '🔗',
+      icon: Link2,
       link: '/test/attachment',
       popular: true,
     },
@@ -38,7 +39,7 @@ const TestsList = () => {
       id: 'values',
       title: 'Ценности в отношениях',
       description: 'Выясните, что для вас наиболее важно в партнёрстве',
-      icon: '💎',
+      icon: Gem,
       link: '/test/values',
       popular: false,
     },
@@ -46,7 +47,7 @@ const TestsList = () => {
       id: 'communication',
       title: 'Стиль коммуникации',
       description: 'Узнайте свой стиль общения и решения конфликтов',
-      icon: '💬',
+      icon: MessageCircle,
       link: '/test/communication',
       popular: false,
     },
@@ -70,8 +71,8 @@ const TestsList = () => {
               className="group bg-white rounded-3xl shadow-xl p-6 hover:shadow-2xl hover:scale-105 transition-all duration-300"
             >
               <div className="flex items-start justify-between mb-4">
-                <div className="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center text-3xl shadow-lg">
-                  {test.icon}
+                <div className="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center shadow-lg">
+                  {<test.icon className="w-8 h-8 text-white" />}
                 </div>
                 {test.popular && (
                   <span className="bg-primary text-white text-xs font-bold px-3 py-1 rounded-full">
@@ -98,10 +99,9 @@ const TestsList = () => {
           ))}
         </div>
 
-        {/* Блок с рекомендацией */}
         <div className="mt-12 bg-white/10 backdrop-blur-lg rounded-3xl p-8 text-center">
-          <h2 className="text-2xl font-bold text-white mb-4">
-            💡 Не знаете, с чего начать?
+          <h2 className="text-2xl font-bold text-white mb-4 flex items-center justify-center gap-2">
+            <Lightbulb className="w-6 h-6" /> Не знаете, с чего начать?
           </h2>
           <p className="text-white/80 mb-6 max-w-xl mx-auto">
             Рекомендуем начать с теста на архетипы — это основа для понимания себя и подбора совместимых партнёров

@@ -8,12 +8,9 @@ const TestAuthCheck = () => {
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    // Проверяем авторизацию
     if (!user) {
-      // Пользователь не авторизован - перенаправляем на регистрацию
       navigate('/register?redirect=test');
     } else {
-      // Пользователь авторизован - перенаправляем на анкету
       navigate('/test/archetypes/anketa');
     }
     setChecking(false);

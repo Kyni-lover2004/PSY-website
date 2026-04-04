@@ -9,7 +9,6 @@ from pydantic import BaseModel
 from passlib.context import CryptContext
 import uuid
 
-# === КОНФИГУРАЦИЯ ===
 SECRET_KEY = "psycho-secret-key-2024"
 DATABASE_URL = "sqlite:///./psycho.db"
 
@@ -23,14 +22,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# === БАЗА ДАННЫХ ===
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# === МОДЕЛИ ===
 class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -40,15 +37,14 @@ class User(Base):
     phone = Column(String(20), nullable=True)
     gender = Column(String(10), nullable=True)
     orientation = Column(String(20), nullable=True)
-    role = Column(String(20), default="user", nullable=False)  # "admin" або "user"
+    role = Column(String(20), default="user", nullable=False)
     session_id = Column(String(100), unique=True, default=lambda: str(uuid.uuid4()))
     created_at = Column(DateTime, default=datetime.utcnow)
     compatibility_code = Column(String(20), unique=True, nullable=True)
     archetype_scores = Column(JSON, nullable=True)
     active_archetypes = Column(JSON, nullable=True)
     is_active = Column(Boolean, default=True)
-    
-    # Relationships
+
     consultations = relationship("Consultation", back_populates="user")
     test_results = relationship("TestResult", back_populates="user")
 
@@ -77,7 +73,7 @@ class Consultation(Base):
     phone = Column(String(20), nullable=False)
     email = Column(String(120), nullable=True)
     request_text = Column(Text, nullable=False)
-    status = Column(String(20), default="new", nullable=False)  # new, in_progress, completed, cancelled
+    status = Column(String(20), default="new", nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -106,7 +102,6 @@ class Couple(Base):
     interpretation = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
-# === НОВІ МОДЕЛІ ДЛЯ ТЕСТІВ ===
 class Test(Base):
     __tablename__ = "tests"
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -156,7 +151,6 @@ class TestResult(Base):
     user = relationship("User", back_populates="test_results")
     test = relationship("Test", back_populates="results")
 
-# === PYDANTIC ===
 class UserCreate(BaseModel):
     login: str
     password: str
@@ -217,7 +211,6 @@ class ConsultationWithUser(BaseModel):
     email: Optional[str] = None
     request_text: str
 
-# === HELPER ===
 def get_db():
     db = SessionLocal()
     try:
@@ -235,7 +228,6 @@ def generate_code() -> str:
     return f"PSY-{datetime.now().strftime('%Y%m%d')}-{uuid.uuid4().hex[:8].upper()}"
 
 def check_admin(user_id: int, db: Session) -> User:
-    """Перевіряє чи користувач є адміном"""
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="Користувача не знайдено")
@@ -243,7 +235,6 @@ def check_admin(user_id: int, db: Session) -> User:
         raise HTTPException(status_code=403, detail="Доступ дозволено тільки адмінам")
     return user
 
-# === ТАБЛИЦА КОМПЛЕМЕНТАРНОСТИ ===
 COMPLEMENTARITY = {
     "1.1": ["2.7", "2.5"],
     "1.2": ["2.7", "2.4"],
@@ -263,54 +254,49 @@ COMPLEMENTARITY = {
 
 def calculate_status(score: int) -> str:
     if score >= 4:
-        return "A"  # Активный
+        return "A"
     elif score == 3:
-        return "M"  # Средний
+        return "M"
     elif score == 2:
-        return "N"  # Неопределенный
+        return "N"
     else:
-        return "P"  # Пассивный
+        return "P"
 
 def calculate_compatibility(scores1: Dict, scores2: Dict) -> Dict[str, Any]:
-    """Расчет совместимости по алгоритму из ТЗ"""
-    # Определяем статусы архетипов
     active1 = {code: calculate_status(score) for code, score in scores1.items()}
     active2 = {code: calculate_status(score) for code, score in scores2.items()}
-    
-    A_count = 0  # Активные совпадения
-    P_count = 0  # Пассивные конфликты
-    
-    # Проверяем все архетипы первого партнера
+
+    A_count = 0
+    P_count = 0
+
     for code1, status1 in active1.items():
-        if status1 != "A":  # Только активные архетипы
+        if status1 != "A":
             continue
-        
+
         complementary_codes = COMPLEMENTARITY.get(code1, [])
-        
+
         for comp_code in complementary_codes:
             status2 = active2.get(comp_code, "P")
-            
+
             if status2 in ["A", "M"]:
                 A_count += 1
             elif status2 == "P":
                 P_count += 1
-    
-    # Проверяем архетипы второго партнера
+
     for code2, status2 in active2.items():
         if status2 != "A":
             continue
-        
+
         complementary_codes = COMPLEMENTARITY.get(code2, [])
-        
+
         for comp_code in complementary_codes:
             status1 = active1.get(comp_code, "P")
-            
+
             if status1 in ["A", "M"]:
                 A_count += 1
             elif status1 == "P":
                 P_count += 1
-    
-    # Интерпретация по ТЗ
+
     if A_count == 7 and P_count == 0:
         interpretation = "Максимальная прочность союза"
     elif A_count == 0 and P_count == 7:
@@ -321,15 +307,14 @@ def calculate_compatibility(scores1: Dict, scores2: Dict) -> Dict[str, Any]:
         interpretation = "Союз временный (против больше чем за)"
     else:
         interpretation = "Средняя совместимость"
-    
-    # Правило спасения: если A >= 3
+
     if A_count >= 3:
         interpretation += ". Отношения имеют тенденцию к сохранению"
-    
+
     index_str = f"{A_count}/{P_count}"
     total = A_count + P_count
     score = (A_count / total * 100) if total > 0 else 50.0
-    
+
     return {
         "index": index_str,
         "A_count": A_count,
@@ -338,13 +323,11 @@ def calculate_compatibility(scores1: Dict, scores2: Dict) -> Dict[str, Any]:
         "interpretation": interpretation
     }
 
-# === INIT DB ===
 @app.on_event("startup")
 async def startup():
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
     try:
-        # Створюємо адміна за замовчуванням
         admin = db.query(User).filter(User.login == "admin").first()
         if not admin:
             admin = User(
@@ -358,7 +341,6 @@ async def startup():
             print("✅ Створено адміна: login='admin', password='admin123'")
         
         if db.query(ArchetypeDescription).count() == 0:
-            # Женские архетипы (2.x)
             female_archetypes = [
                 {"code": "2.1", "name": "Ксения (Сестра/Артемида)", "color": "#4169E1", "chakra": 6, 
                  "description": "Архетип сестры/охотницы. Независимая, целеустремленная, ценит свободу и дружбу.",
@@ -391,8 +373,7 @@ async def startup():
             ]
             for arch in female_archetypes:
                 db.add(ArchetypeDescription(**arch))
-            
-            # Мужские архетипы (1.x)
+
             male_archetypes = [
                 {"code": "1.1", "name": "Константин (Правитель/Зевс)", "color": "#4B0082",
                  "description": "Архетип правителя. Уверенный, лидер, стремится управлять и создавать своё царство.",
@@ -425,8 +406,7 @@ async def startup():
             ]
             for arch in male_archetypes:
                 db.add(ArchetypeDescription(**arch))
-            
-            # Женские вопросы (35) - точно из ТЗ
+
             female_q = [
                 ("Мне нравится быть в образе мамы, такой теплой и заботливой. Даже в детстве мне нравилось играть с куклами, купать их, одевать, кормить, лечить.", "2.5", 1),
                 ("Я с детства любила мечтать, я путешествовала в своих мирах и фантазиях. Они были яркими и заменяли мне скуку.", "2.6", 2),
@@ -466,8 +446,7 @@ async def startup():
             ]
             for text, code, order in female_q:
                 db.add(Question(gender_type="female", text=text, archetype_code=code, order_index=order))
-            
-            # Мужские вопросы (35) - точно из ТЗ
+
             male_q = [
                 ("Семья для меня – это система, мое царство. Я стремлюсь быть главой, как мой отец, и хочу, чтобы жена вела дом, пока я строю карьеру.", "1.1", 1),
                 ("Мои эмоции очень ярки: радость, гнев, страх – я проживаю их в полном объеме, даже если окружающим это кажется чрезмерным.", "1.2", 2),
@@ -513,7 +492,6 @@ async def startup():
     finally:
         db.close()
 
-# === API ===
 @app.get("/")
 async def root():
     return {"message": "Psycho Archetypes API", "status": "running"}
@@ -532,29 +510,24 @@ async def get_questions(gender: str, db: Session = Depends(get_db)):
 @app.post("/api/test/complete")
 async def complete_test(data: TestComplete, db: Session = Depends(get_db)):
     try:
-        # Сохраняем ответы
         for ans in data.answers:
             db.add(Answer(session_id=data.session_id, question_id=ans.question_id, value=ans.value))
 
-        # Считаем результаты по каждому архетипу
         scores = {}
         for ans in data.answers:
-            if ans.value:  # Если "Да"
+            if ans.value:
                 q = db.query(Question).filter(Question.id == ans.question_id).first()
                 if q:
                     scores[q.archetype_code] = scores.get(q.archetype_code, 0) + 1
 
-        # Добавляем нулевые значения для всех архетипов
         prefix = "1." if data.gender == "male" else "2."
         for i in range(1, 8):
             code = f"{prefix}{i}"
             if code not in scores:
                 scores[code] = 0
 
-        # Определяем статусы
         active_archetypes = {code: calculate_status(score) for code, score in scores.items()}
 
-        # Создаём/обновляем пользователя
         user = db.query(User).filter(User.session_id == data.session_id).first()
         if not user:
             code = generate_code()
@@ -611,12 +584,10 @@ async def get_profile(code: str, db: Session = Depends(get_db)):
     
     scores = user.archetype_scores or {}
     active = user.active_archetypes or {}
-    
-    # Получаем описания
+
     archetypes = db.query(ArchetypeDescription).all()
     arch_dict = {a.code: a for a in archetypes}
-    
-    # Сортируем по баллам
+
     result = []
     for code_a, score in sorted(scores.items(), key=lambda x: x[1], reverse=True):
         arch = arch_dict.get(code_a)
@@ -651,8 +622,7 @@ async def check_compatibility(data: CompatibilityCheck, db: Session = Depends(ge
     scores2 = user2.archetype_scores or {}
     
     result = calculate_compatibility(scores1, scores2)
-    
-    # Сохраняем результат
+
     couple = Couple(
         user1_code=data.code1,
         user2_code=data.code2,
@@ -673,7 +643,6 @@ async def check_compatibility(data: CompatibilityCheck, db: Session = Depends(ge
 
 @app.post("/api/auth/register")
 async def register(data: UserCreate, db: Session = Depends(get_db)):
-    # Проверяем, существует ли пользователь с таким логином
     existing_user = db.query(User).filter(User.login == data.login).first()
     if existing_user:
         raise HTTPException(400, "Пользователь с таким логином уже зарегистрирован")
@@ -684,7 +653,7 @@ async def register(data: UserCreate, db: Session = Depends(get_db)):
         password_hash=hash_password(data.password),
         gender=data.gender,
         compatibility_code=code,
-        role="user"  # За замовчуванням звичайний користувач
+        role="user"
     )
     db.add(user)
     db.commit()
@@ -694,12 +663,10 @@ async def register(data: UserCreate, db: Session = Depends(get_db)):
 
 @app.post("/api/auth/login")
 async def login(data: UserLogin, db: Session = Depends(get_db)):
-    # Находим пользователя по логину
     user = db.query(User).filter(User.login == data.login).first()
     if not user:
         raise HTTPException(404, "Пользователь не найден. Зарегистрируйтесь сначала.")
 
-    # Проверяем пароль
     if not verify_password(data.password, user.password_hash):
         raise HTTPException(401, "Неверный пароль")
 
@@ -757,11 +724,8 @@ async def admin_get_archetypes(user_id: int, db: Session = Depends(get_db)):
         for a in archetypes
     ]
 
-# === НОВІ API ENDPOINTS ДЛЯ ТЕСТІВ ===
-
 @app.get("/api/users/{user_id}/role")
 async def get_user_role(user_id: int, db: Session = Depends(get_db)):
-    """Отримати роль користувача"""
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="Користувача не знайдено")
@@ -770,20 +734,16 @@ async def get_user_role(user_id: int, db: Session = Depends(get_db)):
 
 @app.get("/api/admin/dashboard")
 async def get_admin_dashboard(user_id: int, db: Session = Depends(get_db)):
-    """Панель адміна - статистика"""
     check_admin(user_id, db)
-    
-    # Статистика
+
     total_users = db.query(User).count()
     total_consultations = db.query(Consultation).count()
     new_consultations = db.query(Consultation).filter(Consultation.status == "new").count()
     total_tests = db.query(Test).filter(Test.is_active == True).count()
     total_results = db.query(TestResult).count()
-    
-    # Останні консультації
+
     recent_consultations = db.query(Consultation).order_by(Consultation.created_at.desc()).limit(10).all()
-    
-    # Останні користувачі
+
     recent_users = db.query(User).order_by(User.created_at.desc()).limit(10).all()
     
     return {
@@ -817,7 +777,6 @@ async def get_admin_dashboard(user_id: int, db: Session = Depends(get_db)):
 
 @app.get("/api/admin/users")
 async def get_all_users(user_id: int, db: Session = Depends(get_db)):
-    """Отримати всіх користувачів (тільки для адмінів)"""
     check_admin(user_id, db)
     users = db.query(User).all()
     return [
@@ -841,9 +800,8 @@ async def update_user_role(
     user_id: int,
     db: Session = Depends(get_db)
 ):
-    """Оновити роль користувача (тільки для адмінів)"""
     check_admin(user_id, db)
-    
+
     if role not in ["admin", "user"]:
         raise HTTPException(status_code=400, detail="Роль має бути 'admin' або 'user'")
     
@@ -858,7 +816,6 @@ async def update_user_role(
 
 @app.delete("/api/admin/users/{user_id_target}")
 async def delete_user(user_id_target: int, user_id: int, db: Session = Depends(get_db)):
-    """Видалити користувача (тільки для адмінів)"""
     check_admin(user_id, db)
     
     user = db.query(User).filter(User.id == user_id_target).first()
@@ -870,10 +827,8 @@ async def delete_user(user_id_target: int, user_id: int, db: Session = Depends(g
     
     return {"message": "Користувача видалено", "user_id": user_id_target}
 
-# Тести
 @app.post("/api/tests")
 async def create_test(test: TestCreate, user_id: int, db: Session = Depends(get_db)):
-    """Створити новий тест (тільки для адмінів)"""
     check_admin(user_id, db)
     new_test = Test(
         title=test.title,
@@ -893,7 +848,6 @@ async def update_test(
     user_id: int,
     db: Session = Depends(get_db)
 ):
-    """Оновити тест (тільки для адмінів)"""
     check_admin(user_id, db)
     test_db = db.query(Test).filter(Test.id == test_id).first()
     if not test_db:
@@ -908,7 +862,6 @@ async def update_test(
 
 @app.delete("/api/tests/{test_id}")
 async def delete_test(test_id: int, user_id: int, db: Session = Depends(get_db)):
-    """Видалити тест (тільки для адмінів)"""
     check_admin(user_id, db)
     test = db.query(Test).filter(Test.id == test_id).first()
     if not test:
@@ -921,7 +874,6 @@ async def delete_test(test_id: int, user_id: int, db: Session = Depends(get_db))
 
 @app.get("/api/tests")
 async def get_all_tests(db: Session = Depends(get_db)):
-    """Отримати всі тести"""
     tests = db.query(Test).filter(Test.is_active == True).all()
     return [
         {
@@ -936,7 +888,6 @@ async def get_all_tests(db: Session = Depends(get_db)):
 
 @app.get("/api/tests/{test_id}")
 async def get_test(test_id: int, db: Session = Depends(get_db)):
-    """Отримати тест по ID"""
     test = db.query(Test).filter(Test.id == test_id).first()
     if not test:
         raise HTTPException(status_code=404, detail="Тест не знайдено")
@@ -949,10 +900,8 @@ async def get_test(test_id: int, db: Session = Depends(get_db)):
         "is_active": test.is_active
     }
 
-# Питання тестів
 @app.post("/api/tests/questions")
 async def create_question(question: TestQuestionCreate, user_id: int, db: Session = Depends(get_db)):
-    """Додати питання до тесту (тільки для адмінів)"""
     check_admin(user_id, db)
     new_question = TestQuestion(
         test_id=question.test_id,
@@ -967,7 +916,6 @@ async def create_question(question: TestQuestionCreate, user_id: int, db: Sessio
 
 @app.delete("/api/tests/questions/{question_id}")
 async def delete_question(question_id: int, user_id: int, db: Session = Depends(get_db)):
-    """Видалити питання (тільки для адмінів)"""
     check_admin(user_id, db)
     question = db.query(TestQuestion).filter(TestQuestion.id == question_id).first()
     if not question:
@@ -978,10 +926,8 @@ async def delete_question(question_id: int, user_id: int, db: Session = Depends(
     
     return {"message": "Питання видалено", "question_id": question_id}
 
-# Варіанти відповідей
 @app.post("/api/tests/answers")
 async def create_answer_option(answer: AnswerOptionCreate, user_id: int, db: Session = Depends(get_db)):
-    """Додати варіант відповіді з балами (тільки для адмінів)"""
     check_admin(user_id, db)
     new_answer = AnswerOption(
         question_id=answer.question_id,
@@ -1002,7 +948,6 @@ async def update_answer_option(
     user_id: int,
     db: Session = Depends(get_db)
 ):
-    """Оновити варіант відповіді (тільки для адмінів)"""
     check_admin(user_id, db)
     answer_db = db.query(AnswerOption).filter(AnswerOption.id == answer_id).first()
     if not answer_db:
@@ -1017,7 +962,6 @@ async def update_answer_option(
 
 @app.delete("/api/tests/answers/{answer_id}")
 async def delete_answer_option(answer_id: int, user_id: int, db: Session = Depends(get_db)):
-    """Видалити варіант відповіді (тільки для адмінів)"""
     check_admin(user_id, db)
     answer = db.query(AnswerOption).filter(AnswerOption.id == answer_id).first()
     if not answer:
@@ -1030,7 +974,6 @@ async def delete_answer_option(answer_id: int, user_id: int, db: Session = Depen
 
 @app.get("/api/tests/{test_id}/questions")
 async def get_test_questions(test_id: int, db: Session = Depends(get_db)):
-    """Отримати всі питання тесту"""
     questions = db.query(TestQuestion).filter(
         TestQuestion.test_id == test_id,
         TestQuestion.is_active == True
@@ -1045,10 +988,8 @@ async def get_test_questions(test_id: int, db: Session = Depends(get_db)):
         for q in questions
     ]
 
-# Варіанти відповідей
 @app.post("/api/tests/answers")
 async def create_answer_option(answer: AnswerOptionCreate, db: Session = Depends(get_db)):
-    """Додати варіант відповіді з балами"""
     new_answer = AnswerOption(
         question_id=answer.question_id,
         text=answer.text,
@@ -1063,7 +1004,6 @@ async def create_answer_option(answer: AnswerOptionCreate, db: Session = Depends
 
 @app.get("/api/questions/{question_id}/answers")
 async def get_answer_options(question_id: int, db: Session = Depends(get_db)):
-    """Отримати всі варіанти відповіді для питання"""
     answers = db.query(AnswerOption).filter(
         AnswerOption.question_id == question_id,
         AnswerOption.is_active == True
@@ -1079,10 +1019,8 @@ async def get_answer_options(question_id: int, db: Session = Depends(get_db)):
         for a in answers
     ]
 
-# Результати тестів
 @app.post("/api/test-results")
 async def save_test_result(result: TestResultCreate, db: Session = Depends(get_db)):
-    """Зберегти результат тесту"""
     import json
     new_result = TestResult(
         user_id=result.user_id,
@@ -1099,7 +1037,6 @@ async def save_test_result(result: TestResultCreate, db: Session = Depends(get_d
 
 @app.get("/api/users/{user_id}/results")
 async def get_user_results(user_id: int, db: Session = Depends(get_db)):
-    """Отримати всі результати користувача"""
     results = db.query(TestResult).filter(TestResult.user_id == user_id).all()
     return [
         {
@@ -1114,7 +1051,6 @@ async def get_user_results(user_id: int, db: Session = Depends(get_db)):
 
 @app.get("/api/tests/{test_id}/results")
 async def get_test_results(test_id: int, db: Session = Depends(get_db)):
-    """Отримати всі результати для конкретного тесту"""
     results = db.query(TestResult).filter(TestResult.test_id == test_id).all()
     return [
         {

@@ -15,7 +15,6 @@ body {
   min-height: 100vh;
 }
 
-/* Анимации */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
@@ -90,7 +89,6 @@ body {
   animation: glow 2s ease-in-out infinite;
 }
 
-/* Плавное появление при скролле */
 .reveal {
   opacity: 0;
   transform: translateY(30px);
@@ -102,7 +100,6 @@ body {
   transform: translateY(0);
 }
 
-/* Стили для скроллбара */
 ::-webkit-scrollbar {
   width: 8px;
 }
@@ -120,7 +117,6 @@ body {
   background: #4A6B68;
 }
 
-/* Бирюзовая обводка при фокусе для полей ввода */
 input:focus,
 textarea:focus,
 select:focus {

@@ -6,7 +6,6 @@ const PublicOffer = () => {
         <p className="text-center text-dark/60 mb-12">Дата вступления в силу: 3 апреля 2026 г.</p>
 
         <div className="space-y-10 text-dark/80 leading-relaxed">
-          {/* 1. Общие положения */}
           <section className="bg-card border border-primary/10 p-8 rounded-2xl shadow-sm">
             <h2 className="font-serif text-2xl text-dark mb-4">1. Общие положения</h2>
             <p className="mb-3">
@@ -29,7 +28,6 @@ const PublicOffer = () => {
             </p>
           </section>
 
-          {/* 2. Предмет договора */}
           <section className="bg-card border border-primary/10 p-8 rounded-2xl shadow-sm">
             <h2 className="font-serif text-2xl text-dark mb-4">2. Предмет договора</h2>
             <p className="mb-3">
@@ -54,7 +52,6 @@ const PublicOffer = () => {
             </p>
           </section>
 
-          {/* 3. Порядок оказания услуг */}
           <section className="bg-card border border-primary/10 p-8 rounded-2xl shadow-sm">
             <h2 className="font-serif text-2xl text-dark mb-4">3. Порядок оказания услуг</h2>
             <p className="mb-3">
@@ -81,7 +78,6 @@ const PublicOffer = () => {
             </p>
           </section>
 
-          {/* 4. Стоимость и порядок оплаты */}
           <section className="bg-card border border-primary/10 p-8 rounded-2xl shadow-sm">
             <h2 className="font-serif text-2xl text-dark mb-4">4. Стоимость услуг и порядок оплаты</h2>
             <p className="mb-3">
@@ -107,7 +103,6 @@ const PublicOffer = () => {
             </ul>
           </section>
 
-          {/* 5. Права и обязанности */}
           <section className="bg-card border border-primary/10 p-8 rounded-2xl shadow-sm">
             <h2 className="font-serif text-2xl text-dark mb-4">5. Права и обязанности сторон</h2>
 
@@ -151,7 +146,6 @@ const PublicOffer = () => {
             </ul>
           </section>
 
-          {/* 6. Ответственность сторон */}
           <section className="bg-card border border-primary/10 p-8 rounded-2xl shadow-sm">
             <h2 className="font-serif text-2xl text-dark mb-4">6. Ответственность сторон</h2>
             <p className="mb-3">
@@ -178,7 +172,6 @@ const PublicOffer = () => {
             </p>
           </section>
 
-          {/* 7. Конфиденциальность */}
           <section className="bg-card border border-primary/10 p-8 rounded-2xl shadow-sm">
             <h2 className="font-serif text-2xl text-dark mb-4">7. Конфиденциальность</h2>
             <p className="mb-3">
@@ -198,7 +191,6 @@ const PublicOffer = () => {
             </p>
           </section>
 
-          {/* 8. Отказ от услуг */}
           <section className="bg-card border border-primary/10 p-8 rounded-2xl shadow-sm">
             <h2 className="font-serif text-2xl text-dark mb-4">8. Отказ от услуг и возврат</h2>
             <p className="mb-3">
@@ -224,7 +216,6 @@ const PublicOffer = () => {
             </p>
           </section>
 
-          {/* 9. Особые условия */}
           <section className="bg-card border border-primary/10 p-8 rounded-2xl shadow-sm">
             <h2 className="font-serif text-2xl text-dark mb-4">9. Особые условия</h2>
             <p className="mb-3">
@@ -247,7 +238,6 @@ const PublicOffer = () => {
             </p>
           </section>
 
-          {/* 10. Реквизиты */}
           <section className="bg-card border border-primary/10 p-8 rounded-2xl shadow-sm">
             <h2 className="font-serif text-2xl text-dark mb-4">10. Реквизиты Исполнителя</h2>
             <p className="mb-2">
@@ -270,7 +260,6 @@ const PublicOffer = () => {
             </p>
           </section>
 
-          {/* Акцепт */}
           <section className="bg-primary-light/30 border-2 border-primary/30 p-8 rounded-2xl text-center">
             <h2 className="font-serif text-2xl text-dark mb-4">Акцепт оферты</h2>
             <p className="text-dark/80 leading-relaxed">

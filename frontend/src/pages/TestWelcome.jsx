@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Target, Clock, Heart, ArrowLeft } from 'lucide-react';
 
 const TestWelcome = () => {
   const navigate = useNavigate();
@@ -21,7 +22,6 @@ const TestWelcome = () => {
       return;
     }
 
-    // Сохраняем данные в sessionStorage для использования в тесте
     sessionStorage.setItem('testData', JSON.stringify(formData));
     navigate('/test/questionnaire');
   };
@@ -29,7 +29,6 @@ const TestWelcome = () => {
   return (
     <div className="py-12 px-4">
       <div className="max-w-4xl mx-auto">
-        {/* Заголовок */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-white mb-4">Тест на архетипы</h1>
           <p className="text-xl text-white/80">
@@ -38,27 +37,30 @@ const TestWelcome = () => {
         </div>
 
         <div className="grid md:grid-cols-3 gap-6 mb-8">
-          {/* Карточка 1 */}
           <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 text-center">
-            <div className="text-4xl mb-3">🎯</div>
+            <div className="w-12 h-12 mx-auto mb-3 bg-white/10 rounded-full flex items-center justify-center">
+              <Target className="w-6 h-6 text-white" />
+            </div>
             <h3 className="text-white font-semibold mb-2">12 архетипов</h3>
             <p className="text-white/70 text-sm">
               Классическая система К. Пирсон
             </p>
           </div>
 
-          {/* Карточка 2 */}
           <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 text-center">
-            <div className="text-4xl mb-3">⏱️</div>
+            <div className="w-12 h-12 mx-auto mb-3 bg-white/10 rounded-full flex items-center justify-center">
+              <Clock className="w-6 h-6 text-white" />
+            </div>
             <h3 className="text-white font-semibold mb-2">15 минут</h3>
             <p className="text-white/70 text-sm">
               Среднее время прохождения
             </p>
           </div>
 
-          {/* Карточка 3 */}
           <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 text-center">
-            <div className="text-4xl mb-3">💕</div>
+            <div className="w-12 h-12 mx-auto mb-3 bg-white/10 rounded-full flex items-center justify-center">
+              <Heart className="w-6 h-6 text-white" />
+            </div>
             <h3 className="text-white font-semibold mb-2">Совместимость</h3>
             <p className="text-white/70 text-sm">
               Подбор идеальных партнёров
@@ -185,9 +187,9 @@ const TestWelcome = () => {
               <button
                 type="button"
                 onClick={() => navigate('/tests')}
-                className="flex-1 bg-gray-200 text-gray-700 py-4 rounded-xl font-semibold hover:bg-gray-300 transition"
+                className="flex-1 bg-gray-200 text-gray-700 py-4 rounded-xl font-semibold hover:bg-gray-300 transition flex items-center justify-center gap-2"
               >
-                ← Все тесты
+                <ArrowLeft className="w-4 h-4" /> Все тесты
               </button>
               <button
                 type="submit"

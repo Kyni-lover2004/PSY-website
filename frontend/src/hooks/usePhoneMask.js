@@ -4,7 +4,6 @@ export const usePhoneMask = (initialValue = '') => {
   const [phone, setPhone] = useState(initialValue);
 
   const formatWithCode = (digits) => {
-    // Оставляем только цифры, максимум 10
     const cleanDigits = digits.slice(0, 10);
 
     let formatted = '+7';
@@ -28,15 +27,12 @@ export const usePhoneMask = (initialValue = '') => {
   const handleChange = (e) => {
     const value = e.target.value;
 
-    // Если пользователь стирает всё полностью
     if (value === '') {
       setPhone('+7');
       return;
     }
 
-    // Разрешаем стирать символы
     if (value.length < phone.length) {
-      // Если стираем до +7, оставляем +7
       if (value.length <= 2) {
         setPhone('+7');
         return;
@@ -45,22 +41,18 @@ export const usePhoneMask = (initialValue = '') => {
       return;
     }
 
-    // Получаем только цифры из введённого
     const inputDigits = value.replace(/\D/g, '');
 
-    // Если начинается с 7 или 8, убираем первую цифру
     let cleanDigits = inputDigits;
     if (inputDigits.startsWith('7') || inputDigits.startsWith('8')) {
       cleanDigits = inputDigits.slice(1);
     }
 
-    // Форматируем
     const formatted = formatWithCode(cleanDigits);
     setPhone(formatted);
   };
 
   const handleFocus = (e) => {
-    // При фокусе выделяем всё после +7 для удобного редактирования
     e.target.setSelectionRange(3, e.target.value.length);
   };
 

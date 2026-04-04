@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { authAPI } from '../api/api';
 import { useAuth } from '../context/AuthContext';
+import { AlertCircle } from 'lucide-react';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -34,8 +35,7 @@ const Login = () => {
       sessionStorage.setItem('compatibilityCode', response.data.compatibility_code);
 
       login(user);
-      
-      // Если админ - redirect на админку, иначе на dashboard
+
       if (user.role === 'admin') {
         navigate('/admin');
       } else {
@@ -81,8 +81,8 @@ const Login = () => {
           </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl">
-              ❌ {error}
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 flex-shrink-0" /> {error}
             </div>
           )}
 

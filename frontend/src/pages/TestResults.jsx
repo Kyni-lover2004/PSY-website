@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { profileAPI } from '../api/api';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
+import { Trophy, Shield, AlertTriangle, Heart, Copy, ArrowRight } from 'lucide-react';
 
 const TestResults = () => {
   const { code } = useParams();
@@ -42,7 +43,6 @@ const TestResults = () => {
     );
   }
 
-  // Данные для雷达图
   const chartData = profile.archetypes.map(arch => ({
     subject: arch.name.split(' ')[0],
     A: arch.score,
@@ -55,17 +55,17 @@ const TestResults = () => {
   return (
     <div className="py-12 px-4">
       <div className="max-w-6xl mx-auto">
-        {/* Заголовок */}
         <div className="text-center mb-8 fade-in">
           <h1 className="text-4xl font-bold text-white mb-2">Ваши результаты</h1>
           <p className="text-white/80">Код совместимости: <span className="font-mono font-bold">{code}</span></p>
         </div>
 
-        {/* Доминирующий архетип */}
         {dominantArchetype && (
           <div className="bg-white rounded-3xl shadow-2xl p-8 mb-8 fade-in">
             <div className="text-center mb-6">
-              <span className="text-5xl mb-4 block">🏆</span>
+              <div className="w-16 h-16 mx-auto mb-4 bg-yellow-50 rounded-full flex items-center justify-center">
+                <Trophy className="w-8 h-8 text-yellow-600" />
+              </div>
               <h2 className="text-3xl font-bold mb-2" style={{ color: dominantArchetype.color }}>
                 {dominantArchetype.name}
               </h2>
@@ -87,13 +87,13 @@ const TestResults = () => {
             <div className="grid md:grid-cols-2 gap-4">
               {dominantArchetype.strengths && (
                 <div className="bg-green-50 rounded-xl p-4">
-                  <h3 className="font-semibold text-green-800 mb-2">💪 Сильные стороны</h3>
+                  <h3 className="font-semibold text-green-800 mb-2 flex items-center gap-2"><Shield className="w-4 h-4" /> Сильные стороны</h3>
                   <p className="text-green-700">{dominantArchetype.strengths}</p>
                 </div>
               )}
               {dominantArchetype.weaknesses && (
                 <div className="bg-red-50 rounded-xl p-4">
-                  <h3 className="font-semibold text-red-800 mb-2">⚠️ Зоны роста</h3>
+                  <h3 className="font-semibold text-red-800 mb-2 flex items-center gap-2"><AlertTriangle className="w-4 h-4" /> Зоны роста</h3>
                   <p className="text-red-700">{dominantArchetype.weaknesses}</p>
                 </div>
               )}
@@ -101,7 +101,6 @@ const TestResults = () => {
           </div>
         )}
 
-        {/* Radar Chart */}
         <div className="bg-white rounded-3xl shadow-2xl p-8 mb-8 fade-in">
           <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">Профиль архетипов</h2>
           <div className="h-80">
@@ -123,7 +122,6 @@ const TestResults = () => {
           </div>
         </div>
 
-        {/* Все архетипы */}
         <div className="bg-white rounded-3xl shadow-2xl p-8 mb-8 fade-in">
           <h2 className="text-2xl font-bold text-gray-800 mb-6">Все архетипы</h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -163,9 +161,8 @@ const TestResults = () => {
           </div>
         </div>
 
-        {/* Код совместимости */}
         <div className="bg-gradient-to-r from-primary to-secondary rounded-3xl shadow-2xl p-8 text-white text-center fade-in">
-          <h2 className="text-2xl font-bold mb-4">💕 Ваш код совместимости</h2>
+          <h2 className="text-2xl font-bold mb-4 flex items-center justify-center gap-2"><Heart className="w-6 h-6" /> Ваш код совместимости</h2>
           <div className="bg-white/20 backdrop-blur-lg rounded-xl p-4 mb-4">
             <p className="text-3xl font-mono font-bold tracking-wider">{code}</p>
           </div>
@@ -177,13 +174,13 @@ const TestResults = () => {
               onClick={() => navigator.clipboard.writeText(code)}
               className="bg-white text-primary px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition"
             >
-              📋 Копировать код
+              <Copy className="w-4 h-4 inline mr-1" /> Копировать код
             </button>
             <a
               href="/compatibility"
               className="bg-transparent border-2 border-white text-white px-6 py-3 rounded-xl font-semibold hover:bg-white hover:text-primary transition"
             >
-              Проверить совместимость
+              Проверить совместимость <ArrowRight className="w-4 h-4 inline" />
             </a>
           </div>
         </div>

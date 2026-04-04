@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { questionsAPI, testAPI } from '../api/api';
+import { CheckCircle, XCircle, ArrowLeft, ArrowRight } from 'lucide-react';
 
 const TestQuestionnaire = () => {
   const navigate = useNavigate();
@@ -10,13 +11,11 @@ const TestQuestionnaire = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
-  // Получаем testData
   const testData = JSON.parse(sessionStorage.getItem('testData') || '{}');
-  
+
   console.log('TestQuestionnaire - testData:', testData);
   console.log('TestQuestionnaire - gender:', testData?.gender);
-  
-  // Генерируем session_id при загрузке
+
   const [sessionId] = useState(() => {
     let stored = sessionStorage.getItem('sessionId');
     if (!stored) {
@@ -144,7 +143,9 @@ const TestQuestionnaire = () => {
                   ? 'bg-primary text-white shadow-lg'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
-            >✅ Да</button>
+            >
+              <CheckCircle className="w-5 h-5 inline mr-2" /> Да
+            </button>
             <button
               onClick={() => handleAnswer(false)}
               className={`py-4 px-6 rounded-xl font-semibold text-lg transition transform hover:scale-105 ${
@@ -152,7 +153,9 @@ const TestQuestionnaire = () => {
                   ? 'bg-primary text-white shadow-lg'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
-            >❌ Нет</button>
+            >
+              <XCircle className="w-5 h-5 inline mr-2" /> Нет
+            </button>
           </div>
 
           <div className="flex gap-4">
@@ -162,7 +165,7 @@ const TestQuestionnaire = () => {
               className={`flex-1 py-3 rounded-xl font-semibold transition ${
                 currentIndex === 0 ? 'bg-gray-200 text-gray-400' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
-            >← Назад</button>
+            ><ArrowLeft className="w-4 h-4 inline" /> Назад</button>
             <button
               onClick={handleNext}
               disabled={!hasAnswer || submitting}
@@ -170,7 +173,8 @@ const TestQuestionnaire = () => {
                 !hasAnswer || submitting ? 'bg-gray-200 text-gray-400' : 'bg-primary text-white hover:shadow-lg'
               }`}
             >
-              {submitting ? 'Сохранение...' : currentIndex === questions.length - 1 ? 'Завершить' : 'Далее →'}
+              {submitting ? 'Сохранение...' : currentIndex === questions.length - 1 ? 'Завершить' : 'Далее '}
+              {!submitting && currentIndex !== questions.length - 1 && <ArrowRight className="w-4 h-4 inline" />}
             </button>
           </div>
         </div>

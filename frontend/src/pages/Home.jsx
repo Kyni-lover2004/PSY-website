@@ -3,15 +3,15 @@ import { useEffect } from 'react';
 import psychologistPhoto from '../assets/psychologist.jpg';
 import vkIcon from '../assets/vk-icon.avif';
 import maxIcon from '../assets/max-icon.jpg';
+import { Heart, Brain, Palette, Target, Shield, Search, ArrowRight, Flower2, Swords, Sparkles } from 'lucide-react';
 
 const Home = () => {
   useEffect(() => {
-    // Анимация при скролле
     const revealElements = document.querySelectorAll('.reveal');
     const revealOnScroll = () => {
       const windowHeight = window.innerHeight;
       const elementVisible = 100;
-      
+
       revealElements.forEach((reveal) => {
         const elementTop = reveal.getBoundingClientRect().top;
         if (elementTop < windowHeight - elementVisible) {
@@ -19,18 +19,16 @@ const Home = () => {
         }
       });
     };
-    
+
     window.addEventListener('scroll', revealOnScroll);
-    revealOnScroll(); // Проверить при загрузке
-    
+    revealOnScroll();
+
     return () => window.removeEventListener('scroll', revealOnScroll);
   }, []);
 
   return (
     <div>
-      {/* Hero секция */}
       <section className="relative py-20 px-4 overflow-hidden" style={{ background: 'linear-gradient(135deg, #6B8F8B 0%, #4A6B68 100%)' }}>
-        {/* Плавающие частицы на фоне */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-20 left-10 w-32 h-32 bg-white/10 rounded-full blur-3xl float" style={{ animationDelay: '0s' }}></div>
           <div className="absolute bottom-20 right-10 w-40 h-40 bg-white/10 rounded-full blur-3xl float" style={{ animationDelay: '1s' }}></div>
@@ -51,17 +49,16 @@ const Home = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center fade-in" style={{ animationDelay: '0.6s' }}>
             <Link to="/tests" className="group bg-white text-primary px-8 py-4 rounded-xl font-semibold text-lg hover:shadow-2xl hover:scale-105 transition transform">
               Все тесты
-              <span className="inline-block ml-2 group-hover:translate-x-1 transition-transform">→</span>
+              <ArrowRight className="inline-block ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Link>
             <Link to="/appointment" className="group bg-transparent border-2 border-white text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-white hover:text-primary transition hover:scale-105">
               Записаться на консультацию
-              <span className="inline-block ml-2 group-hover:translate-x-1 transition-transform">→</span>
+              <ArrowRight className="inline-block ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
         </div>
       </section>
 
-      {/* О психологе */}
       <section className="py-20 px-4 bg-white">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-4xl font-bold text-center text-gray-800 mb-12 reveal">Обо мне</h2>
@@ -79,7 +76,6 @@ const Home = () => {
                 дипломированный психолог с многолетним опытом практики.
               </p>
 
-              {/* Специализации столбиками */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4">
                 <div className="flex items-center gap-3 bg-primary-light/30 rounded-xl p-3">
                   <div className="w-2 h-2 bg-primary rounded-full flex-shrink-0"></div>
@@ -116,7 +112,6 @@ const Home = () => {
                   Записаться на первую встречу
                 </Link>
               </div>
-              {/* Соцсети и мессенджеры */}
               <div className="pt-6 border-t border-gray-200">
                 <p className="text-sm text-gray-500 mb-3">Я в соцсетях:</p>
                 <div className="flex flex-wrap gap-3">
@@ -151,7 +146,6 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Цитата Юнга */}
       <section className="py-16 px-4" style={{ background: 'linear-gradient(135deg, #6B8F8B 0%, #4A6B68 100%)' }}>
         <div className="max-w-3xl mx-auto reveal">
           <div className="flex items-center gap-4 mb-6">
@@ -173,7 +167,6 @@ const Home = () => {
         </div>
       </section>
 
-      {/* История */}
       <section className="py-20 px-4 reveal" style={{ background: 'linear-gradient(135deg, #6B8F8B 0%, #4A6B68 100%)' }}>
         <div className="max-w-7xl mx-auto">
           <h2 className="text-4xl font-bold text-center text-white mb-4">Моя история</h2>
@@ -181,7 +174,6 @@ const Home = () => {
             Более 17 лет практики в психологии и работе с детьми
           </p>
           <div className="relative">
-            {/* Вертикальная линия */}
             <div className="absolute left-1/2 transform -translate-x-1/2 h-full w-1 bg-white/30 hidden md:block"></div>
 
             <div className="space-y-8">
@@ -224,10 +216,7 @@ const Home = () => {
                 },
               ].map((item, i) => (
                 <div key={i} className={`relative flex items-center gap-8 md:gap-0 ${i % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'} ${i % 2 === 0 ? 'slide-in-left' : 'slide-in-right'}`} style={{ animationDelay: `${i * 0.1}s` }}>
-                  {/* Точка на линии */}
                   <div className="absolute left-0 md:left-1/2 transform md:-translate-x-1/2 w-4 h-4 bg-white border-4 border-primary rounded-full z-10 hidden md:block"></div>
-
-                  {/* Карточка */}
                   <div className={`ml-8 md:ml-0 md:w-1/2 ${i % 2 === 0 ? 'md:pr-12' : 'md:pl-12'}`}>
                     <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 hover:bg-white/20 transition transform hover:scale-105 duration-300 fade-in">
                       <div className="text-3xl font-bold text-white mb-2">{item.year}</div>
@@ -243,7 +232,6 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Услуги */}
       <section className="py-20 px-4 reveal">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-4xl font-bold text-center text-gray-800 mb-4">С чем я работаю</h2>
@@ -252,53 +240,63 @@ const Home = () => {
           </p>
           <div className="grid md:grid-cols-3 gap-8">
             <div className="bg-primary-light/20 rounded-2xl p-8 text-center hover:shadow-xl transition transform hover:-translate-y-2 reveal scale-in" style={{ animationDelay: '0.1s' }}>
-              <div className="text-5xl mb-4">💑</div>
+              <div className="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-full flex items-center justify-center">
+                <Heart className="w-8 h-8 text-primary" />
+              </div>
               <h3 className="text-xl font-semibold mb-3 text-gray-800">Отношения в паре</h3>
               <p className="text-gray-600 mb-4">Конфликты, недопонимание, потеря близости, поиск совместимости с партнёром.</p>
-              <Link to="/compatibility" className="text-primary font-semibold hover:underline">Проверить совместимость →</Link>
+              <Link to="/compatibility" className="text-primary font-semibold hover:underline inline-flex items-center gap-1">Проверить совместимость <ArrowRight className="w-4 h-4" /></Link>
             </div>
             <div className="bg-primary-light/20 rounded-2xl p-8 text-center hover:shadow-xl transition transform hover:-translate-y-2 reveal scale-in" style={{ animationDelay: '0.2s' }}>
-              <div className="text-5xl mb-4">💆</div>
+              <div className="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-full flex items-center justify-center">
+                <Brain className="w-8 h-8 text-primary" />
+              </div>
               <h3 className="text-xl font-semibold mb-3 text-gray-800">Тревога и стресс</h3>
               <p className="text-gray-600 mb-4">Постоянное беспокойство, панические атаки, эмоциональное выгорание, усталость.</p>
-              <Link to="/appointment" className="text-primary font-semibold hover:underline">Записаться на консультацию →</Link>
+              <Link to="/appointment" className="text-primary font-semibold hover:underline inline-flex items-center gap-1">Записаться на консультацию <ArrowRight className="w-4 h-4" /></Link>
             </div>
             <div className="bg-primary-light/20 rounded-2xl p-8 text-center hover:shadow-xl transition transform hover:-translate-y-2 reveal scale-in" style={{ animationDelay: '0.3s' }}>
-              <div className="text-5xl mb-4">🎭</div>
+              <div className="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-full flex items-center justify-center">
+                <Palette className="w-8 h-8 text-primary" />
+              </div>
               <h3 className="text-xl font-semibold mb-3 text-gray-800">Самопознание</h3>
               <p className="text-gray-600 mb-4">Поиск себя, принятие своих теневых сторон, понимание глубинных мотивов.</p>
-              <Link to="/tests" className="text-primary font-semibold hover:underline">Пройти тесты →</Link>
+              <Link to="/tests" className="text-primary font-semibold hover:underline inline-flex items-center gap-1">Пройти тесты <ArrowRight className="w-4 h-4" /></Link>
             </div>
             <div className="bg-primary-light/20 rounded-2xl p-8 text-center hover:shadow-xl transition transform hover:-translate-y-2 reveal scale-in" style={{ animationDelay: '0.4s' }}>
-              <div className="text-5xl mb-4">🎯</div>
+              <div className="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-full flex items-center justify-center">
+                <Target className="w-8 h-8 text-primary" />
+              </div>
               <h3 className="text-xl font-semibold mb-3 text-gray-800">Жизненные кризисы</h3>
               <p className="text-gray-600 mb-4">Потеря смысла, смена жизненного этапа, развод, утрата, переезд.</p>
-              <Link to="/appointment" className="text-primary font-semibold hover:underline">Записаться на консультацию →</Link>
+              <Link to="/appointment" className="text-primary font-semibold hover:underline inline-flex items-center gap-1">Записаться на консультацию <ArrowRight className="w-4 h-4" /></Link>
             </div>
             <div className="bg-primary-light/20 rounded-2xl p-8 text-center hover:shadow-xl transition transform hover:-translate-y-2 reveal scale-in" style={{ animationDelay: '0.5s' }}>
-              <div className="text-5xl mb-4">💪</div>
+              <div className="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-full flex items-center justify-center">
+                <Shield className="w-8 h-8 text-primary" />
+              </div>
               <h3 className="text-xl font-semibold mb-3 text-gray-800">Самооценка</h3>
               <p className="text-gray-600 mb-4">Неуверенность в себе, зависимость от чужого мнения, нарушение границ.</p>
-              <Link to="/appointment" className="text-primary font-semibold hover:underline">Записаться на консультацию →</Link>
+              <Link to="/appointment" className="text-primary font-semibold hover:underline inline-flex items-center gap-1">Записаться на консультацию <ArrowRight className="w-4 h-4" /></Link>
             </div>
             <div className="bg-primary-light/20 rounded-2xl p-8 text-center hover:shadow-xl transition transform hover:-translate-y-2 reveal scale-in" style={{ animationDelay: '0.6s' }}>
-              <div className="text-5xl mb-4">🔮</div>
+              <div className="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-full flex items-center justify-center">
+                <Search className="w-8 h-8 text-primary" />
+              </div>
               <h3 className="text-xl font-semibold mb-3 text-gray-800">Глубинная терапия</h3>
               <p className="text-gray-600 mb-4">Работа с бессознательным, архетипами, родовыми сценариями и повторами.</p>
-              <Link to="/tests" className="text-primary font-semibold hover:underline">Узнать свои архетипы →</Link>
+              <Link to="/tests" className="text-primary font-semibold hover:underline inline-flex items-center gap-1">Узнать свои архетипы <ArrowRight className="w-4 h-4" /></Link>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Архетипы */}
       <section className="py-20 px-4 reveal" style={{ background: 'linear-gradient(135deg, #6B8F8B 0%, #4A6B68 100%)' }}>
         <div className="max-w-7xl mx-auto">
           <h2 className="text-4xl font-bold text-center text-white mb-12">Архетипы</h2>
           <div className="grid md:grid-cols-2 gap-8">
-            {/* Женские */}
             <div className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 reveal scale-in">
-              <h3 className="text-2xl font-bold text-white mb-6 text-center">🌸 Женские архетипы</h3>
+              <h3 className="text-2xl font-bold text-white mb-6 text-center flex items-center justify-center gap-2"><Flower2 className="w-6 h-6" /> Женские архетипы</h3>
               <div className="space-y-3">
                 {[
                   { name: 'Ксения', desc: 'Сестра/Артемида' },
@@ -316,9 +314,8 @@ const Home = () => {
                 ))}
               </div>
             </div>
-            {/* Мужские */}
             <div className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 reveal scale-in" style={{ animationDelay: '0.2s' }}>
-              <h3 className="text-2xl font-bold text-white mb-6 text-center">⚔️ Мужские архетипы</h3>
+              <h3 className="text-2xl font-bold text-white mb-6 text-center flex items-center justify-center gap-2"><Swords className="w-6 h-6" /> Мужские архетипы</h3>
               <div className="space-y-3">
                 {[
                   { name: 'Константин', desc: 'Правитель/Зевс' },
@@ -340,7 +337,6 @@ const Home = () => {
         </div>
       </section>
 
-      {/* CTA */}
       <section className="py-20 px-4 reveal">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-4xl font-bold text-gray-800 mb-6 scale-in">Готовы узнать себя лучше?</h2>
@@ -350,11 +346,11 @@ const Home = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center reveal">
             <Link to="/tests" className="group bg-primary text-white px-10 py-4 rounded-xl font-semibold text-lg hover:shadow-2xl hover:scale-105 transition transform">
               Все тесты
-              <span className="inline-block ml-2 group-hover:translate-x-1 transition-transform">→</span>
+              <ArrowRight className="inline-block ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Link>
             <Link to="/appointment" className="group bg-gray-100 text-gray-800 px-10 py-4 rounded-xl font-semibold text-lg hover:shadow-lg hover:scale-105 transition transform">
               Записаться к психологу
-              <span className="inline-block ml-2 group-hover:translate-x-1 transition-transform">→</span>
+              <ArrowRight className="inline-block ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
         </div>

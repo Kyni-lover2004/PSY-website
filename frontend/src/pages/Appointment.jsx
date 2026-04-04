@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { consultationAPI } from '../api/api';
+import { CheckCircle, Calendar, Clock, Send, MessageCircle, Timer, User, Sparkles } from 'lucide-react';
 
 const Appointment = () => {
   const [formData, setFormData] = useState({
@@ -14,9 +15,7 @@ const Appointment = () => {
 
   const handleTelegramChange = (e) => {
     let value = e.target.value;
-    // Удаляем @ если пользователь ввёл
     value = value.replace('@', '');
-    // Разрешаем только буквы, цифры и подчёркивания
     value = value.replace(/[^a-zA-Z0-9_]/g, '');
     setFormData({...formData, telegram: value});
   };
@@ -46,7 +45,6 @@ Telegram: ${formData.telegram ? '@' + formData.telegram : 'Не указан'}
     }
   };
 
-  // Генерация доступных дат (следующие 14 дней)
   const getAvailableDates = () => {
     const dates = [];
     const today = new Date();
@@ -72,7 +70,6 @@ Telegram: ${formData.telegram ? '@' + formData.telegram : 'Не указан'}
     return dates;
   };
 
-  // Доступное время
   const timeSlots = [
     '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
     '12:00', '12:30', '13:00', '13:30', '14:00', '14:30',
@@ -84,17 +81,19 @@ Telegram: ${formData.telegram ? '@' + formData.telegram : 'Не указан'}
     return (
       <div className="py-20 px-4" style={{ background: 'linear-gradient(135deg, #6B8F8B 0%, #4A6B68 100%)', minHeight: '100vh' }}>
         <div className="max-w-2xl mx-auto bg-white rounded-3xl shadow-2xl p-8 text-center fade-in">
-          <div className="text-6xl mb-4">✅</div>
+          <div className="w-16 h-16 mx-auto mb-4 bg-green-100 rounded-full flex items-center justify-center">
+            <CheckCircle className="w-10 h-10 text-green-600" />
+          </div>
           <h2 className="text-3xl font-bold text-gray-800 mb-4">Заявка отправлена!</h2>
           <p className="text-gray-600 mb-6">
             Спасибо! Ксения свяжется с вами в ближайшее время для обсуждения деталей.
           </p>
           <div className="bg-primary-light/30 rounded-xl p-4 mb-6">
-            <p className="text-sm text-gray-700">
-              📅 Желаемая дата: <strong>{formData.date || 'Не указана'}</strong><br/>
-              🕐 Желаемое время: <strong>{formData.time || 'Не указано'}</strong><br/>
-              ✈️ Telegram: <strong>{formData.telegram ? '@' + formData.telegram : 'Не указан'}</strong><br/>
-              👤 Логин: <strong>{formData.login}</strong>
+            <p className="text-sm text-gray-700 space-y-1">
+              <span className="flex items-center gap-2 justify-center"><Calendar className="w-4 h-4" /> Желаемая дата: <strong>{formData.date || 'Не указана'}</strong></span>
+              <span className="flex items-center gap-2 justify-center"><Clock className="w-4 h-4" /> Желаемое время: <strong>{formData.time || 'Не указано'}</strong></span>
+              <span className="flex items-center gap-2 justify-center"><MessageCircle className="w-4 h-4" /> Telegram: <strong>{formData.telegram ? '@' + formData.telegram : 'Не указан'}</strong></span>
+              <span className="flex items-center gap-2 justify-center"><User className="w-4 h-4" /> Логин: <strong>{formData.login}</strong></span>
             </p>
           </div>
           <button
@@ -116,28 +115,27 @@ Telegram: ${formData.telegram ? '@' + formData.telegram : 'Не указан'}
   return (
     <div className="py-20 px-4" style={{ background: 'linear-gradient(135deg, #6B8F8B 0%, #4A6B68 100%)', minHeight: '100vh' }}>
       <div className="max-w-2xl mx-auto">
-        {/* Заголовок */}
         <div className="text-center mb-8">
-          <div className="text-5xl mb-4">🗓️</div>
+          <div className="w-16 h-16 mx-auto mb-4 bg-white/10 rounded-full flex items-center justify-center">
+            <Calendar className="w-8 h-8 text-white" />
+          </div>
           <h1 className="text-4xl font-bold text-white mb-4">Записаться на консультацию</h1>
           <p className="text-white/80 text-lg">
             Выберите удобное время, и я свяжусь с вами для подтверждения
           </p>
         </div>
 
-        {/* Инфо блок */}
         <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 mb-8 text-center">
-          <p className="text-white">
-            💬 <strong>Онлайн</strong> (Zoom, Telegram) или <strong>Очно</strong> (г. Рязань)
+          <p className="text-white flex items-center justify-center gap-2">
+            <MessageCircle className="w-5 h-5" /> <strong>Онлайн</strong> (Zoom, Telegram) или <strong>Очно</strong> (г. Рязань)
           </p>
-          <p className="text-white/80 text-sm mt-2">
-            ⏱️ Длительность сессии: 50 минут
+          <p className="text-white/80 text-sm mt-2 flex items-center justify-center gap-2">
+            <Timer className="w-4 h-4" /> Длительность сессии: 50 минут
           </p>
         </div>
 
         <div className="bg-white rounded-3xl shadow-2xl p-8 fade-in">
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Логин */}
             <div>
               <label className="block text-gray-700 font-semibold mb-2">
                 Ваш логин *
@@ -152,7 +150,6 @@ Telegram: ${formData.telegram ? '@' + formData.telegram : 'Не указан'}
               />
             </div>
 
-            {/* Telegram */}
             <div>
               <label className="block text-gray-700 font-semibold mb-2">
                 Telegram для связи
@@ -174,12 +171,10 @@ Telegram: ${formData.telegram ? '@' + formData.telegram : 'Не указан'}
               </p>
             </div>
 
-            {/* Дата и время */}
             <div className="grid md:grid-cols-2 gap-4">
-              {/* Дата */}
               <div>
-                <label className="block text-gray-700 font-semibold mb-2">
-                  📅 Желаемая дата
+                <label className="block text-gray-700 font-semibold mb-2 flex items-center gap-2">
+                  <Calendar className="w-4 h-4" /> Желаемая дата
                 </label>
                 <select
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition"
@@ -199,10 +194,9 @@ Telegram: ${formData.telegram ? '@' + formData.telegram : 'Не указан'}
                 </select>
               </div>
 
-              {/* Время */}
               <div>
-                <label className="block text-gray-700 font-semibold mb-2">
-                  🕐 Желаемое время
+                <label className="block text-gray-700 font-semibold mb-2 flex items-center gap-2">
+                  <Clock className="w-4 h-4" /> Желаемое время
                 </label>
                 <select
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition"
@@ -219,10 +213,9 @@ Telegram: ${formData.telegram ? '@' + formData.telegram : 'Не указан'}
               </div>
             </div>
 
-            {/* Быстрый выбор времени */}
             <div>
-              <label className="block text-gray-700 font-semibold mb-3">
-                🕐 Или выберите время быстро:
+              <label className="block text-gray-700 font-semibold mb-3 flex items-center gap-2">
+                <Clock className="w-4 h-4" /> Или выберите время быстро:
               </label>
               <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
                 {timeSlots.map((time) => (
@@ -242,7 +235,6 @@ Telegram: ${formData.telegram ? '@' + formData.telegram : 'Не указан'}
               </div>
             </div>
 
-            {/* Запрос */}
             <div>
               <label className="block text-gray-700 font-semibold mb-2">
                 Ваш запрос *
@@ -257,7 +249,6 @@ Telegram: ${formData.telegram ? '@' + formData.telegram : 'Не указан'}
               />
             </div>
 
-            {/* Кнопка отправки */}
             <button
               type="submit"
               disabled={loading}
@@ -272,8 +263,8 @@ Telegram: ${formData.telegram ? '@' + formData.telegram : 'Не указан'}
           </form>
 
           <div className="bg-primary-light/30 rounded-xl p-4 mt-6">
-            <p className="text-sm text-gray-700 text-center">
-              ✨ После отправки заявки Ксения свяжется с вами в Telegram или по телефону для подтверждения времени встречи
+            <p className="text-sm text-gray-700 text-center flex items-center justify-center gap-2">
+              <Sparkles className="w-4 h-4" /> После отправки заявки Ксения свяжется с вами в Telegram или по телефону для подтверждения времени встречи
             </p>
           </div>
         </div>

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { authAPI } from '../api/api';
 import { useAuth } from '../context/AuthContext';
+import { AlertCircle } from 'lucide-react';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -20,7 +21,6 @@ const Register = () => {
     e.preventDefault();
     setError('');
 
-    // Проверка паролей
     if (formData.password !== formData.confirmPassword) {
       setError('Пароли не совпадают');
       return;
@@ -45,7 +45,6 @@ const Register = () => {
         gender: formData.gender
       });
 
-      // Сохраняем пользователя
       const user = {
         id: response.data.user_id,
         login: response.data.login,
@@ -54,7 +53,6 @@ const Register = () => {
       localStorage.setItem('user', JSON.stringify(user));
       sessionStorage.setItem('compatibilityCode', response.data.compatibility_code);
 
-      // Проверяем, был ли редирект с теста
       const redirect = searchParams.get('redirect');
       if (redirect === 'test') {
         navigate('/test/archetypes/anketa');
@@ -132,8 +130,8 @@ const Register = () => {
           </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl">
-              ❌ {error}
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 flex-shrink-0" /> {error}
             </div>
           )}
 

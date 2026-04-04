@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import TestResultsTab from './TestResultsTab';
+import { User, BarChart3, Heart, ArrowRight } from 'lucide-react';
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
@@ -12,7 +13,6 @@ const Dashboard = () => {
       <div className="max-w-6xl mx-auto">
         <h1 className="text-4xl font-bold text-white mb-8">Личный кабинет</h1>
 
-        {/* Вкладки */}
         <div className="flex gap-2 mb-8 overflow-x-auto">
           <button
             onClick={() => setActiveTab('profile')}
@@ -22,7 +22,7 @@ const Dashboard = () => {
                 : 'bg-white/20 text-white hover:bg-white/30'
             }`}
           >
-            👤 Профиль
+            <User className="w-4 h-4 inline mr-1" /> Профиль
           </button>
           <button
             onClick={() => setActiveTab('results')}
@@ -32,7 +32,7 @@ const Dashboard = () => {
                 : 'bg-white/20 text-white hover:bg-white/30'
             }`}
           >
-            📊 Результаты тестов
+            <BarChart3 className="w-4 h-4 inline mr-1" /> Результаты тестов
           </button>
           <button
             onClick={() => setActiveTab('compatibility')}
@@ -42,15 +42,14 @@ const Dashboard = () => {
                 : 'bg-white/20 text-white hover:bg-white/30'
             }`}
           >
-            💕 Совместимость
+            <Heart className="w-4 h-4 inline mr-1" /> Совместимость
           </button>
         </div>
 
-        {/* Содержимое вкладок */}
         <div className="bg-white rounded-3xl shadow-2xl p-8 min-h-[400px]">
           {activeTab === 'profile' && (
             <div className="fade-in">
-              <h2 className="text-2xl font-bold text-gray-800 mb-6">👤 Профиль</h2>
+              <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2"><User className="w-6 h-6" /> Профиль</h2>
               {user ? (
                 <div className="space-y-4 max-w-md">
                   <div>
@@ -75,14 +74,14 @@ const Dashboard = () => {
 
           {activeTab === 'results' && (
             <div className="fade-in">
-              <h2 className="text-2xl font-bold text-gray-800 mb-6">📊 Результаты тестов</h2>
+              <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2"><BarChart3 className="w-6 h-6" /> Результаты тестов</h2>
               <TestResultsTab />
             </div>
           )}
 
           {activeTab === 'compatibility' && (
             <div className="fade-in">
-              <h2 className="text-2xl font-bold text-gray-800 mb-6">💕 Совместимость</h2>
+              <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2"><Heart className="w-6 h-6" /> Совместимость</h2>
               <CompatibilityTab />
             </div>
           )}
@@ -99,7 +98,9 @@ const CompatibilityTab = () => {
   if (!compatibilityCode) {
     return (
       <div className="text-center py-12">
-        <div className="text-6xl mb-4">💕</div>
+        <div className="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-full flex items-center justify-center">
+          <Heart className="w-8 h-8 text-primary" />
+        </div>
         <p className="text-gray-600 mb-4">Пройдите тест, чтобы получить код совместимости</p>
         <Link
           to="/test"
@@ -145,7 +146,7 @@ const CompatibilityTab = () => {
           to="/compatibility"
           className="mt-6 inline-block bg-primary text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition"
         >
-          Проверить совместимость →
+          Проверить совместимость <ArrowRight className="w-4 h-4 inline" />
         </Link>
       </div>
     </div>

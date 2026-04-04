@@ -6,7 +6,6 @@ const PrivacyPolicy = () => {
         <p className="text-center text-dark/60 mb-12">Дата вступления в силу: 3 апреля 2026 г.</p>
 
         <div className="space-y-10 text-dark/80 leading-relaxed">
-          {/* 1. Общие положения */}
           <section className="bg-card border border-primary/10 p-8 rounded-2xl shadow-sm">
             <h2 className="font-serif text-2xl text-dark mb-4">1. Общие положения</h2>
             <p className="mb-3">
@@ -20,7 +19,6 @@ const PrivacyPolicy = () => {
             </p>
           </section>
 
-          {/* 2. Персональные данные */}
           <section className="bg-card border border-primary/10 p-8 rounded-2xl shadow-sm">
             <h2 className="font-serif text-2xl text-dark mb-4">2. Состав обрабатываемых персональных данных</h2>
             <p className="mb-3">Оператор может обрабатывать следующие персональные данные Пользователя:</p>
@@ -40,7 +38,6 @@ const PrivacyPolicy = () => {
             </p>
           </section>
 
-          {/* 3. Цели обработки */}
           <section className="bg-card border border-primary/10 p-8 rounded-2xl shadow-sm">
             <h2 className="font-serif text-2xl text-dark mb-4">3. Цели обработки персональных данных</h2>
             <p className="mb-3">Персональные данные обрабатываются в следующих целях:</p>
@@ -57,7 +54,6 @@ const PrivacyPolicy = () => {
             </ul>
           </section>
 
-          {/* 4. Правовые основания */}
           <section className="bg-card border border-primary/10 p-8 rounded-2xl shadow-sm">
             <h2 className="font-serif text-2xl text-dark mb-4">4. Правовые основания обработки</h2>
             <p className="mb-3">Оператор обрабатывает персональные данные на следующих правовых основаниях:</p>
@@ -69,7 +65,6 @@ const PrivacyPolicy = () => {
             </ul>
           </section>
 
-          {/* 5. Условия обработки */}
           <section className="bg-card border border-primary/10 p-8 rounded-2xl shadow-sm">
             <h2 className="font-serif text-2xl text-dark mb-4">5. Условия обработки персональных данных</h2>
             <ul className="list-disc pl-6 space-y-2 mb-4">
@@ -82,7 +77,6 @@ const PrivacyPolicy = () => {
             </ul>
           </section>
 
-          {/* 6. Хранение и уничтожение */}
           <section className="bg-card border border-primary/10 p-8 rounded-2xl shadow-sm">
             <h2 className="font-serif text-2xl text-dark mb-4">6. Сроки хранения и порядок уничтожения</h2>
             <p className="mb-3">
@@ -96,7 +90,6 @@ const PrivacyPolicy = () => {
             </p>
           </section>
 
-          {/* 7. Права пользователя */}
           <section className="bg-card border border-primary/10 p-8 rounded-2xl shadow-sm">
             <h2 className="font-serif text-2xl text-dark mb-4">7. Права Пользователя</h2>
             <p className="mb-3">Пользователь имеет право:</p>
@@ -113,7 +106,6 @@ const PrivacyPolicy = () => {
             </p>
           </section>
 
-          {/* 8. Безопасность */}
           <section className="bg-card border border-primary/10 p-8 rounded-2xl shadow-sm">
             <h2 className="font-serif text-2xl text-dark mb-4">8. Обеспечение безопасности</h2>
             <p className="mb-3">
@@ -130,7 +122,6 @@ const PrivacyPolicy = () => {
             </ul>
           </section>
 
-          {/* 9. Cookie */}
           <section className="bg-card border border-primary/10 p-8 rounded-2xl shadow-sm">
             <h2 className="font-serif text-2xl text-dark mb-4">9. Использование файлов cookie</h2>
             <p className="mb-3">
@@ -149,7 +140,6 @@ const PrivacyPolicy = () => {
             </p>
           </section>
 
-          {/* 10. Контактные данные */}
           <section className="bg-card border border-primary/10 p-8 rounded-2xl shadow-sm">
             <h2 className="font-serif text-2xl text-dark mb-4">10. Контактные данные Оператора</h2>
             <p className="mb-2">
@@ -169,7 +159,6 @@ const PrivacyPolicy = () => {
             </p>
           </section>
 
-          {/* 11. Изменение политики */}
           <section className="bg-card border border-primary/10 p-8 rounded-2xl shadow-sm">
             <h2 className="font-serif text-2xl text-dark mb-4">11. Изменение Политики конфиденциальности</h2>
             <p className="mb-3">

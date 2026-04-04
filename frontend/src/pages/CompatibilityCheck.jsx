@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { compatibilityAPI } from '../api/api';
+import { Heart, AlertCircle, BookOpen } from 'lucide-react';
 
 const CompatibilityCheck = () => {
   const [code1, setCode1] = useState('');
@@ -28,7 +29,7 @@ const CompatibilityCheck = () => {
     <div className="py-12 px-4">
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-4">💕 Проверка совместимости</h1>
+          <h1 className="text-4xl font-bold text-white mb-4 flex items-center justify-center gap-2"><Heart className="w-8 h-8" /> Проверка совместимости</h1>
           <p className="text-white/80 text-lg">
             Введите коды совместимости обоих партнёров для расчёта индекса комплементарности
           </p>
@@ -79,15 +80,14 @@ const CompatibilityCheck = () => {
           </form>
 
           {error && (
-            <div className="mt-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl">
-              ❌ {error}
+            <div className="mt-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 flex-shrink-0" /> {error}
             </div>
           )}
         </div>
 
         {result && (
           <div className="fade-in">
-            {/* Основной результат */}
             <div className="bg-gradient-to-r from-primary to-secondary rounded-3xl shadow-2xl p-8 text-white mb-8">
               <div className="text-center mb-6">
                 <h2 className="text-3xl font-bold mb-2">Индекс комплементарности</h2>
@@ -111,9 +111,8 @@ const CompatibilityCheck = () => {
               </div>
             </div>
 
-            {/* Расшифровка */}
             <div className="bg-white rounded-3xl shadow-2xl p-8">
-              <h3 className="text-2xl font-bold text-gray-800 mb-6">📖 Расшифровка значений</h3>
+              <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2"><BookOpen className="w-6 h-6" /> Расшифровка значений</h3>
               <div className="space-y-4">
                 <div className="flex items-start gap-4">
                   <div className="text-2xl">7/0</div>

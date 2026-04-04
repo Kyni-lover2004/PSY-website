@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { Home, BarChart3, Users, ClipboardList, FileQuestion, TestTube2, CalendarDays, Phone, Mail, User, Trash2, X, MessageSquare, Plus, Clock, FolderOpen, ChevronRight, CheckCircle } from 'lucide-react';
 
 const AdminPanel = () => {
   const navigate = useNavigate();
@@ -13,8 +14,7 @@ const AdminPanel = () => {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(null);
   const [error, setError] = useState(null);
-  
-  // Состояния для форм
+
   const [showCreateTest, setShowCreateTest] = useState(false);
   const [showAddQuestion, setShowAddQuestion] = useState(false);
   const [showAddAnswer, setShowAddAnswer] = useState(false);
@@ -43,7 +43,6 @@ const AdminPanel = () => {
       const userId = user.id;
       const API = 'http://localhost:8000/api';
 
-      // Загружаем всё параллельно
       const [dashboardRes, usersRes, consultationsRes, testsRes, questionsRes] = await Promise.allSettled([
         fetch(`${API}/admin/dashboard?user_id=${userId}`),
         fetch(`${API}/admin/users?user_id=${userId}`),
@@ -52,31 +51,26 @@ const AdminPanel = () => {
         fetch(`${API}/admin/questions?user_id=${userId}`)
       ]);
 
-      // Статистика
       if (dashboardRes.status === 'fulfilled' && dashboardRes.value.ok) {
         const data = await dashboardRes.value.json();
         setStats(data.stats);
       }
 
-      // Пользователи
       if (usersRes.status === 'fulfilled' && usersRes.value.ok) {
         const data = await usersRes.value.json();
         setUsers(data);
       }
 
-      // Консультации
       if (consultationsRes.status === 'fulfilled' && consultationsRes.value.ok) {
         const data = await consultationsRes.value.json();
         setConsultations(data);
       }
 
-      // Тесты
       if (testsRes.status === 'fulfilled' && testsRes.value.ok) {
         const data = await testsRes.value.json();
         setTests(data);
       }
 
-      // Вопросы
       if (questionsRes.status === 'fulfilled' && questionsRes.value.ok) {
         const data = await questionsRes.value.json();
         setQuestions(data);
@@ -153,7 +147,6 @@ const AdminPanel = () => {
     }
   };
 
-  // === УПРАВЛЕНИЕ ТЕСТАМИ ===
   const handleCreateTest = async (e) => {
     e.preventDefault();
     try {
@@ -167,7 +160,7 @@ const AdminPanel = () => {
       );
       
       if (response.ok) {
-        alert('✅ Тест создан!');
+        alert('Тест создан!');
         setTestForm({ title: '', description: '', category: '' });
         setShowCreateTest(false);
         fetchData();
@@ -189,7 +182,7 @@ const AdminPanel = () => {
       );
       
       if (response.ok) {
-        alert('✅ Тест удален');
+        alert('Тест удален');
         fetchData();
       } else {
         alert('Ошибка удаления теста');
@@ -213,7 +206,6 @@ const AdminPanel = () => {
     }
   };
 
-  // === УПРАВЛЕНИЕ ВОПРОСАМИ ===
   const handleAddQuestion = async (e) => {
     e.preventDefault();
     try {
@@ -230,7 +222,7 @@ const AdminPanel = () => {
       );
       
       if (response.ok) {
-        alert('✅ Вопрос добавлен!');
+        alert('Вопрос добавлен!');
         setQuestionForm({ text: '', order_index: questionForm.order_index + 1 });
         loadTestQuestions(selectedTestId);
       } else {
@@ -251,7 +243,7 @@ const AdminPanel = () => {
       );
       
       if (response.ok) {
-        alert('✅ Вопрос удален');
+        alert('Вопрос удален');
         loadTestQuestions(selectedTestId);
         fetchData();
       } else {
@@ -262,7 +254,6 @@ const AdminPanel = () => {
     }
   };
 
-  // === УПРАВЛЕНИЕ ВАРИАНТАМИ ОТВЕТОВ ===
   const loadQuestionAnswers = async (questionId) => {
     try {
       const response = await fetch(`http://localhost:8000/api/questions/${questionId}/answers`);
@@ -293,7 +284,7 @@ const AdminPanel = () => {
       );
       
       if (response.ok) {
-        alert('✅ Вариант ответа добавлен!');
+        alert('Вариант ответа добавлен!');
         setAnswerForm({ text: '', score: 0, order_index: answerForm.order_index + 1 });
         loadQuestionAnswers(selectedQuestionId);
       } else {
@@ -314,7 +305,7 @@ const AdminPanel = () => {
       );
       
       if (response.ok) {
-        alert('✅ Вариант удален');
+        alert('Вариант удален');
         loadQuestionAnswers(selectedQuestionId);
       } else {
         alert('Ошибка удаления варианта');
@@ -335,10 +326,12 @@ const AdminPanel = () => {
   return (
     <div className="py-12 px-4" style={{ background: 'linear-gradient(135deg, #6B8F8B 0%, #4A6B68 100%)', minHeight: '100vh' }}>
       <div className="max-w-7xl mx-auto">
-        {/* Заголовок с навигацией */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
-            <h1 className="text-4xl font-bold text-white mb-2">🔧 Админ-панель</h1>
+            <h1 className="text-4xl font-bold text-white mb-2">
+              <TestTube2 className="w-8 h-8 inline mr-2" />
+              Админ-панель
+            </h1>
             <p className="text-white/80">Администратор: {user?.login}</p>
           </div>
           <div className="flex gap-3">
@@ -346,7 +339,8 @@ const AdminPanel = () => {
               to="/"
               className="bg-white/20 text-white px-6 py-3 rounded-xl hover:bg-white/30 transition font-semibold"
             >
-              🏠 На главную
+              <Home className="w-4 h-4 inline mr-1" />
+              На главную
             </Link>
             <button
               onClick={handleLogout}
@@ -357,14 +351,12 @@ const AdminPanel = () => {
           </div>
         </div>
 
-        {/* Ошибка */}
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-xl mb-6">
-            ❌ {error}
+            <X className="w-4 h-4 inline mr-1 text-red-700" /> {error}
           </div>
         )}
 
-        {/* Статистика */}
         {stats && (
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
             <div className="bg-white rounded-2xl p-6 shadow-lg">
@@ -390,7 +382,6 @@ const AdminPanel = () => {
           </div>
         )}
 
-        {/* Табы */}
         <div className="flex gap-3 mb-8 flex-wrap">
           <button
             onClick={() => setActiveTab('dashboard')}
@@ -400,7 +391,8 @@ const AdminPanel = () => {
                 : 'bg-white/20 text-white hover:bg-white/30'
             }`}
           >
-            📊 Обзор
+            <BarChart3 className="w-4 h-4 inline mr-1" />
+            Обзор
           </button>
           <button
             onClick={() => setActiveTab('users')}
@@ -410,7 +402,8 @@ const AdminPanel = () => {
                 : 'bg-white/20 text-white hover:bg-white/30'
             }`}
           >
-            👥 Пользователи
+            <Users className="w-4 h-4 inline mr-1" />
+            Пользователи
           </button>
           <button
             onClick={() => setActiveTab('consultations')}
@@ -420,7 +413,8 @@ const AdminPanel = () => {
                 : 'bg-white/20 text-white hover:bg-white/30'
             }`}
           >
-            📝 Заявки ({consultations.filter(c => c.status === 'new').length})
+            <ClipboardList className="w-4 h-4 inline mr-1" />
+            Заявки ({consultations.filter(c => c.status === 'new').length})
           </button>
           <button
             onClick={() => setActiveTab('tests')}
@@ -430,7 +424,8 @@ const AdminPanel = () => {
                 : 'bg-white/20 text-white hover:bg-white/30'
             }`}
           >
-            📋 Тесты ({tests.length})
+            <FileQuestion className="w-4 h-4 inline mr-1" />
+            Тесты ({tests.length})
           </button>
           <button
             onClick={() => setActiveTab('questions')}
@@ -440,20 +435,21 @@ const AdminPanel = () => {
                 : 'bg-white/20 text-white hover:bg-white/30'
             }`}
           >
-            ❓ Вопросы ({questions.length})
+            <FileQuestion className="w-4 h-4 inline mr-1" />
+            Вопросы ({questions.length})
           </button>
         </div>
 
-        {/* Содержимое вкладок */}
         <div className="bg-white rounded-3xl shadow-2xl p-8 min-h-[400px]">
-          
-          {/* Обзор */}
+
           {activeTab === 'dashboard' && (
             <div>
-              <h2 className="text-2xl font-bold text-gray-800 mb-6">📊 Обзор системы</h2>
+              <h2 className="text-2xl font-bold text-gray-800 mb-6">
+                <BarChart3 className="w-6 h-6 inline mr-2" />
+                Обзор системы
+              </h2>
               
               <div className="grid md:grid-cols-2 gap-6">
-                {/* Последние пользователи */}
                 <div>
                   <h3 className="text-lg font-semibold text-gray-700 mb-4">Последние пользователи</h3>
                   <div className="space-y-3">
@@ -474,7 +470,6 @@ const AdminPanel = () => {
                   </div>
                 </div>
 
-                {/* Последние заявки */}
                 <div>
                   <h3 className="text-lg font-semibold text-gray-700 mb-4">Последние заявки</h3>
                   <div className="space-y-3">
@@ -501,10 +496,12 @@ const AdminPanel = () => {
             </div>
           )}
 
-          {/* Пользователи */}
           {activeTab === 'users' && (
             <div>
-              <h2 className="text-2xl font-bold text-gray-800 mb-6">👥 Пользователи</h2>
+              <h2 className="text-2xl font-bold text-gray-800 mb-6">
+                <Users className="w-6 h-6 inline mr-2" />
+                Пользователи
+              </h2>
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
@@ -558,10 +555,12 @@ const AdminPanel = () => {
             </div>
           )}
 
-          {/* Заявки */}
           {activeTab === 'consultations' && (
             <div>
-              <h2 className="text-2xl font-bold text-gray-800 mb-6">📝 Заявки на консультацию</h2>
+              <h2 className="text-2xl font-bold text-gray-800 mb-6">
+                <ClipboardList className="w-6 h-6 inline mr-2" />
+                Заявки на консультацию
+              </h2>
               <div className="space-y-4">
                 {consultations.map(c => (
                   <div key={c.id} className="border-2 border-gray-200 rounded-xl p-5 hover:border-primary transition">
@@ -582,9 +581,9 @@ const AdminPanel = () => {
                       </span>
                     </div>
                     <div className="grid md:grid-cols-2 gap-3 mb-3 text-sm text-gray-600">
-                      <div>📞 {c.phone}</div>
-                      <div>✉️ {c.email || 'Нет email'}</div>
-                      {c.user_id && <div>👤 User ID: {c.user_id}</div>}
+                      <div><Phone className="w-4 h-4 inline mr-1" /> {c.phone}</div>
+                      <div><Mail className="w-4 h-4 inline mr-1" /> {c.email || 'Нет email'}</div>
+                      {c.user_id && <div><User className="w-4 h-4 inline mr-1" /> User ID: {c.user_id}</div>}
                     </div>
                     <p className="text-gray-700 mb-4 p-3 bg-gray-50 rounded-lg">{c.request}</p>
                     <div className="flex gap-2">
@@ -610,20 +609,22 @@ const AdminPanel = () => {
             </div>
           )}
 
-          {/* Тесты */}
           {activeTab === 'tests' && (
             <div>
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-gray-800">📋 Тесты</h2>
+                <h2 className="text-2xl font-bold text-gray-800">
+                  <FileQuestion className="w-6 h-6 inline mr-2" />
+                  Тесты
+                </h2>
                 <button
                   onClick={() => setShowCreateTest(true)}
                   className="bg-primary text-white px-6 py-3 rounded-xl hover:shadow-lg transition font-semibold"
                 >
-                  + Создать тест
+                  <Plus className="w-4 h-4 inline mr-1" />
+                  Создать тест
                 </button>
               </div>
 
-              {/* Форма создания теста */}
               {showCreateTest && (
                 <div className="mb-8 p-6 bg-gradient-to-r from-primary/10 to-primary/5 rounded-2xl border-2 border-primary/20">
                   <h3 className="text-xl font-bold text-gray-800 mb-4">Новый тест</h3>
@@ -661,7 +662,8 @@ const AdminPanel = () => {
                     </div>
                     <div className="flex gap-3">
                       <button type="submit" className="bg-primary text-white px-6 py-3 rounded-xl hover:shadow-lg transition font-semibold">
-                        ✅ Создать тест
+                        <CheckCircle className="w-4 h-4 inline mr-1" />
+                        Создать тест
                       </button>
                       <button
                         type="button"
@@ -675,7 +677,6 @@ const AdminPanel = () => {
                 </div>
               )}
 
-              {/* Список тестов */}
               <div className="space-y-4">
                 {tests.map(t => (
                   <div key={t.id} className="border-2 border-gray-200 rounded-xl p-5 hover:border-primary transition">
@@ -684,8 +685,8 @@ const AdminPanel = () => {
                         <h3 className="font-bold text-lg text-gray-800 mb-2">{t.title}</h3>
                         <p className="text-gray-600 text-sm mb-2">{t.description || 'Нет описания'}</p>
                         <div className="flex gap-4 text-sm text-gray-500">
-                          <span>📁 {t.category || 'Без категории'}</span>
-                          <span>📅 {new Date(t.created_at).toLocaleDateString('ru-RU')}</span>
+                          <span><FolderOpen className="w-4 h-4 inline mr-1" /> {t.category || 'Без категории'}</span>
+                          <span><CalendarDays className="w-4 h-4 inline mr-1" /> {new Date(t.created_at).toLocaleDateString('ru-RU')}</span>
                         </div>
                       </div>
                       <div className="flex gap-2">
@@ -693,13 +694,15 @@ const AdminPanel = () => {
                           onClick={() => loadTestQuestions(t.id)}
                           className="px-4 py-2 bg-blue-100 text-blue-800 rounded-lg text-sm hover:bg-blue-200 transition font-semibold"
                         >
-                          ❓ Вопросы
+                          <FileQuestion className="w-4 h-4 inline mr-1" />
+                          Вопросы
                         </button>
                         <button
                           onClick={() => handleDeleteTest(t.id)}
                           className="px-4 py-2 bg-red-100 text-red-800 rounded-lg text-sm hover:bg-red-200 transition font-semibold"
                         >
-                          🗑️ Удалить
+                          <Trash2 className="w-4 h-4 inline mr-1" />
+                          Удалить
                         </button>
                       </div>
                     </div>
@@ -710,7 +713,6 @@ const AdminPanel = () => {
                 )}
               </div>
 
-              {/* Модальное окно добавления вопросов */}
               {showAddQuestion && (
                 <div className="mt-8 p-6 bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl border-2 border-blue-200">
                   <div className="flex justify-between items-center mb-4">
@@ -721,11 +723,10 @@ const AdminPanel = () => {
                       onClick={() => setShowAddQuestion(false)}
                       className="text-gray-500 hover:text-gray-700 text-2xl"
                     >
-                      ✕
+                      <X className="w-5 h-5" />
                     </button>
                   </div>
 
-                  {/* Форма добавления вопроса */}
                   <form onSubmit={handleAddQuestion} className="mb-6 p-4 bg-white rounded-xl">
                     <h4 className="font-semibold text-gray-700 mb-3">Добавить вопрос</h4>
                     <div className="space-y-3">
@@ -752,12 +753,12 @@ const AdminPanel = () => {
                         />
                       </div>
                       <button type="submit" className="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition font-semibold">
-                        + Добавить вопрос
+                        <Plus className="w-4 h-4 inline mr-1" />
+                        Добавить вопрос
                       </button>
                     </div>
                   </form>
 
-                  {/* Список вопросов */}
                   <div className="space-y-3">
                     <h4 className="font-semibold text-gray-700">Вопросы ({testQuestions.length})</h4>
                     {testQuestions.map(q => (
@@ -776,13 +777,14 @@ const AdminPanel = () => {
                               onClick={() => loadQuestionAnswers(q.id)}
                               className="px-3 py-1 bg-green-100 text-green-800 rounded-lg text-sm hover:bg-green-200 transition"
                             >
-                              💬 Ответы
+                              <MessageSquare className="w-4 h-4 inline mr-1" />
+                              Ответы
                             </button>
                             <button
                               onClick={() => handleDeleteQuestion(q.id)}
                               className="px-3 py-1 bg-red-100 text-red-800 rounded-lg text-sm hover:bg-red-200 transition"
                             >
-                              🗑️
+                              <Trash2 className="w-4 h-4" />
                             </button>
                           </div>
                         </div>
@@ -795,7 +797,6 @@ const AdminPanel = () => {
                 </div>
               )}
 
-              {/* Модальное окно добавления вариантов ответов */}
               {showAddAnswer && (
                 <div className="mt-8 p-6 bg-gradient-to-r from-green-50 to-green-100 rounded-2xl border-2 border-green-200">
                   <div className="flex justify-between items-center mb-4">
@@ -806,11 +807,10 @@ const AdminPanel = () => {
                       onClick={() => setShowAddAnswer(false)}
                       className="text-gray-500 hover:text-gray-700 text-2xl"
                     >
-                      ✕
+                      <X className="w-5 h-5" />
                     </button>
                   </div>
 
-                  {/* Форма добавления ответа */}
                   <form onSubmit={handleAddAnswer} className="mb-6 p-4 bg-white rounded-xl">
                     <h4 className="font-semibold text-gray-700 mb-3">Добавить вариант ответа</h4>
                     <div className="space-y-3">
@@ -851,12 +851,12 @@ const AdminPanel = () => {
                         </div>
                       </div>
                       <button type="submit" className="bg-green-600 text-white px-6 py-3 rounded-xl hover:bg-green-700 transition font-semibold">
-                        + Добавить вариант
+                        <Plus className="w-4 h-4 inline mr-1" />
+                        Добавить вариант
                       </button>
                     </div>
                   </form>
 
-                  {/* Список ответов */}
                   <div className="space-y-3">
                     <h4 className="font-semibold text-gray-700">Варианты ({questionAnswers.length})</h4>
                     {questionAnswers.map(a => (
@@ -867,7 +867,7 @@ const AdminPanel = () => {
                               #{a.order_index}
                             </span>
                             <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs font-semibold">
-                              ⭐ {a.score} баллов
+                              <BarChart3 className="w-3 h-3 inline mr-1" /> {a.score} баллов
                             </span>
                           </div>
                           <p className="text-gray-700">{a.text}</p>
@@ -876,7 +876,7 @@ const AdminPanel = () => {
                           onClick={() => handleDeleteAnswer(a.id)}
                           className="px-3 py-1 bg-red-100 text-red-800 rounded-lg text-sm hover:bg-red-200 transition ml-4"
                         >
-                          🗑️
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     ))}
@@ -889,10 +889,12 @@ const AdminPanel = () => {
             </div>
           )}
 
-          {/* Вопросы */}
           {activeTab === 'questions' && (
             <div>
-              <h2 className="text-2xl font-bold text-gray-800 mb-6">❓ Вопросы</h2>
+              <h2 className="text-2xl font-bold text-gray-800 mb-6">
+                <FileQuestion className="w-6 h-6 inline mr-2" />
+                Вопросы
+              </h2>
               <div className="space-y-4">
                 {questions.map(q => (
                   <div key={q.id} className="border-2 border-gray-200 rounded-xl p-5">
