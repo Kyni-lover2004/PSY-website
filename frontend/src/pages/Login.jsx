@@ -27,13 +27,20 @@ const Login = () => {
       const user = {
         id: response.data.user.id,
         login: response.data.user.login,
-        gender: response.data.user.gender
+        gender: response.data.user.gender,
+        role: response.data.user.role
       };
       localStorage.setItem('user', JSON.stringify(user));
       sessionStorage.setItem('compatibilityCode', response.data.compatibility_code);
 
       login(user);
-      navigate('/dashboard');
+      
+      // Если админ - redirect на админку, иначе на dashboard
+      if (user.role === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (err) {
       console.error('Login error:', err);
       setError(err.response?.data?.detail || 'Пользователь не найден. Зарегистрируйтесь сначала.');

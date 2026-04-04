@@ -26,9 +26,12 @@ const Layout = () => {
               <Link to="/" className="text-gray-700 hover:text-primary transition">Главная</Link>
               <Link to="/tests" className="text-gray-700 hover:text-primary transition">Тесты</Link>
               <Link to="/appointment" className="text-gray-700 hover:text-primary transition">Записаться</Link>
-              
+
               {user ? (
                 <>
+                  {user.role === 'admin' && (
+                    <Link to="/admin" className="text-red-600 hover:text-red-700 font-semibold transition">🔧 Админка</Link>
+                  )}
                   <Link to="/dashboard" className="text-gray-700 hover:text-primary transition">Кабинет</Link>
                   <button onClick={handleLogout} className="text-gray-700 hover:text-primary transition">Выйти</button>
                 </>
