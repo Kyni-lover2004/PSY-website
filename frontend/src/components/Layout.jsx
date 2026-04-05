@@ -72,6 +72,9 @@ const Layout = () => {
             <Link to="/practices" onClick={closeDrawer} className={navLinkClass()}>
               Практики
             </Link>
+            <Link to="/reading-list" onClick={closeDrawer} className={navLinkClass()}>
+              Список литературы
+            </Link>
 
             {user && (
               <>
@@ -118,7 +121,7 @@ const Layout = () => {
 
       <footer className="bg-gray-900 text-white py-8">
         <div className="max-w-7xl mx-auto px-4 text-center">
-          <p>&copy; 2024 Психолог Ксения Панкратова. Все права защищены.</p>
+          <p>&copy; 2026 Психолог Ксения Панкратова. Все права защищены.</p>
         </div>
       </footer>
     </div>

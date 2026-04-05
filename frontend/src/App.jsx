@@ -11,6 +11,7 @@ import TestResults from './pages/TestResults';
 import CompatibilityCheck from './pages/CompatibilityCheck';
 import Appointment from './pages/Appointment';
 import Practices from './pages/Practices';
+import ReadingList from './pages/ReadingList';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
@@ -37,6 +38,7 @@ function App() {
           <Route path="compatibility" element={<CompatibilityCheck />} />
           <Route path="appointment" element={<Appointment />} />
           <Route path="practices" element={<Practices />} />
+          <Route path="reading-list" element={<ReadingList />} />
           <Route path="login" element={<Login />} />
           <Route path="register" element={<Register />} />
           <Route path="dashboard" element={<Dashboard />} />

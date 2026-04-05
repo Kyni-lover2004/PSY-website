@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import psychologistPhoto from '../assets/psychologist.jpg';
 import vkIcon from '../assets/vk-icon.avif';
 import maxIcon from '../assets/max-icon.jpg';
-import { ArrowRight, Flower2, Swords, User, Baby, Users, MessageCircle, UsersRound, Waves, AlertTriangle, Flame, Frown, Lightbulb, Compass, Lock, Shield, BookOpen, Tablet, Moon, HeartHandshake, GraduationCap, Droplets, Stethoscope, Scale, HeartCrack, KeyRound, BabyIcon, MessageSquare, Building2, DoorOpen } from 'lucide-react';
+import { ArrowRight, Flower2, Swords, User, Baby, Users, MessageCircle, UsersRound, Waves, AlertTriangle, Flame, Frown, Lightbulb, Compass, Lock, Shield, BookOpen, Tablet, Moon, HeartHandshake, GraduationCap, Droplets, Stethoscope, Scale, HeartCrack, KeyRound, BabyIcon, MessageSquare, Building2, DoorOpen, PersonStanding } from 'lucide-react';
 
 const Home = () => {
   const [activeTab, setActiveTab] = useState('personal');
@@ -45,11 +45,24 @@ const Home = () => {
       { icon: Building2, title: 'Семейная структура и система', desc: 'Консультирование по вопросам семейной структуры и ролей.', link: '/appointment', linkText: 'Записаться на консультацию' },
       { icon: BabyIcon, title: 'Незавершённая сепарация', desc: 'Работа с незавершённой сепарацией с родителями.', link: '/appointment', linkText: 'Записаться на консультацию' },
     ],
+    teenagers: [
+      { icon: Waves, title: 'Тревожность', desc: 'Повышенная тревожность, беспокойство, неуверенность у подростка.', link: '/appointment', linkText: 'Записаться на консультацию' },
+      { icon: Flame, title: 'Агрессивность', desc: 'Агрессивное поведение, вспышки гнева, проблемы с контролем эмоций.', link: '/appointment', linkText: 'Записаться на консультацию' },
+      { icon: BookOpen, title: 'Школьная неуспеваемость', desc: 'Трудности в обучении, снижение успеваемости, нежелание учиться.', link: '/appointment', linkText: 'Записаться на консультацию' },
+      { icon: UsersRound, title: 'Нарушения общения', desc: 'Трудности в общении со сверстниками, замкнутость, конфликты.', link: '/appointment', linkText: 'Записаться на консультацию' },
+      { icon: Tablet, title: 'Зависимость от гаджетов', desc: 'Чрезмерное увлечение экранами, играми, социальными сетями.', link: '/appointment', linkText: 'Записаться на консультацию' },
+      { icon: Moon, title: 'Страхи и кошмары', desc: 'Ночные кошмары, страхи, панические атаки.', link: '/appointment', linkText: 'Записаться на консультацию' },
+      { icon: AlertTriangle, title: 'Травмы и переживания', desc: 'Помощь подростку после травмирующих событий и тяжёлых переживаний.', link: '/appointment', linkText: 'Записаться на консультацию' },
+      { icon: GraduationCap, title: 'Готовность к школе', desc: 'Психологическая диагностика и подготовка к учебному процессу.', link: '/appointment', linkText: 'Записаться на консультацию' },
+      { icon: HeartHandshake, title: 'Адаптация в коллективе', desc: 'Помощь в адаптации подростка в новом коллективе или школе.', link: '/appointment', linkText: 'Записаться на консультацию' },
+      { icon: Droplets, title: 'Энурез, энкопрез', desc: 'Психологическая помощь при недержании мочи и кала.', link: '/appointment', linkText: 'Записаться на консультацию' },
+    ],
   };
 
   const tabs = [
     { key: 'personal', label: 'Личные запросы', icon: User },
     { key: 'children', label: 'Детские запросы', icon: Baby },
+    { key: 'teenagers', label: 'Подростковые запросы', icon: PersonStanding },
     { key: 'family', label: 'Семейные запросы', icon: Users },
   ];
 
