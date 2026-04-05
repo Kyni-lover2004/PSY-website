@@ -10,6 +10,7 @@ import TestQuestionnaire from './pages/TestQuestionnaire';
 import TestResults from './pages/TestResults';
 import CompatibilityCheck from './pages/CompatibilityCheck';
 import Appointment from './pages/Appointment';
+import Price from './pages/Price';
 import Practices from './pages/Practices';
 import ReadingList from './pages/ReadingList';
 import Login from './pages/Login';
@@ -37,6 +38,7 @@ function App() {
           <Route path="test/communication" element={<TestsList />} />
           <Route path="compatibility" element={<CompatibilityCheck />} />
           <Route path="appointment" element={<Appointment />} />
+          <Route path="price" element={<Price />} />
           <Route path="practices" element={<Practices />} />
           <Route path="reading-list" element={<ReadingList />} />
           <Route path="login" element={<Login />} />

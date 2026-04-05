@@ -72,9 +72,17 @@ const Layout = () => {
             <Link to="/practices" onClick={closeDrawer} className={navLinkClass()}>
               Практики
             </Link>
+            <Link to="/price" onClick={closeDrawer} className={navLinkClass()}>
+              Прайс
+            </Link>
             <Link to="/reading-list" onClick={closeDrawer} className={navLinkClass()}>
               Список литературы
             </Link>
+            <div className="px-4 py-3 opacity-50 cursor-not-allowed">
+              <span className="text-gray-400 text-lg flex items-center gap-2">
+                Курсы <span className="text-xs bg-gray-200 text-gray-500 px-2 py-0.5 rounded-full">скоро</span>
+              </span>
+            </div>
 
             {user && (
               <>

@@ -25,6 +25,9 @@ const TestQuestionnaire = () => {
     return stored;
   });
 
+  // Формируем login из имени и фамилии, если он не был установлен
+  const login = testData.login || `${testData.name}_${testData.surname}`.toLowerCase().replace(/\s+/g, '_').replace(/[^a-zа-яё0-9_]/gi, '') || `user_${sessionId}`;
+
   useEffect(() => {
     console.log('Fetching questions for gender:', testData?.gender);
     
@@ -76,19 +79,43 @@ const TestQuestionnaire = () => {
         value
       }));
 
+      console.log('Отправка данных на сервер:', {
+        session_id: sessionId,
+        answers_count: answersArray.length,
+        gender: testData.gender,
+        login: login,
+        orientation: testData.orientation
+      });
+
       const response = await testAPI.complete({
         session_id: sessionId,
         answers: answersArray,
         gender: testData.gender,
-        login: testData.login,
+        login: login,
         orientation: testData.orientation
       });
 
+      console.log('Ответ от сервера:', response.data);
+      
       const code = response.data.compatibility_code;
+      console.log('Получен compatibility_code:', code);
+      
+      if (!code) {
+        console.error('Сервер не вернул compatibility_code!');
+        alert('Ошибка: сервер не вернул код совместимости. Попробуйте ещё раз.');
+        return;
+      }
+      
       sessionStorage.setItem('compatibilityCode', code);
+      
+      // Показываем код пользователю перед навигацией
+      alert(`✅ Тест успешно завершён!\n\nВаш код совместимости: ${code}\n\nСохраните его — он понадобится для проверки совместимости.\n\nСейчас вы перейдёте к результатам.`);
+      
+      console.log('Навигация на:', `/test/results/${code}`);
       navigate(`/test/results/${code}`);
     } catch (error) {
       console.error('Ошибка отправки:', error);
+      console.error('Error details:', error.response?.data || error.message);
       alert('Ошибка при сохранении результатов: ' + (error.response?.data?.detail || error.message));
     } finally {
       setSubmitting(false);

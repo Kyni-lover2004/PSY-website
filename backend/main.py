@@ -234,6 +234,7 @@ class User(Base):
     password_hash = Column(String(255), nullable=False)
     email = Column(String(120), unique=True, nullable=True)
     phone = Column(String(20), nullable=True)
+    telegram = Column(String(100), nullable=True)
     gender = Column(String(10), nullable=True)
     orientation = Column(String(20), nullable=True)
     role = Column(String(20), default="user", nullable=False, index=True)
@@ -243,7 +244,7 @@ class User(Base):
     archetype_scores = Column(JSON, nullable=True)
     active_archetypes = Column(JSON, nullable=True)
     is_active = Column(Boolean, default=True)
-    
+
     consultations = relationship("Consultation", back_populates="user")
     test_results = relationship("TestResult", back_populates="user")
 
@@ -356,8 +357,9 @@ class UserCreate(BaseModel):
     password: str = Field(..., min_length=8, max_length=128)
     email: Optional[str] = None
     phone: Optional[str] = None
+    telegram: Optional[str] = None
     gender: Optional[str] = None
-    
+
     @validator('login')
     def validate_login(cls, v):
         if not re.match(r'^[a-zA-Z0-9_]+$', v):
@@ -677,6 +679,7 @@ async def register(data: UserCreate, db: Session = Depends(get_db)):
         gender=data.gender,
         email=data.email,
         phone=data.phone,
+        telegram=data.telegram,
         compatibility_code=code,
         role="user"
     )
@@ -686,11 +689,11 @@ async def register(data: UserCreate, db: Session = Depends(get_db)):
 
     token = create_access_token(data={"sub": user.id, "role": user.role})
     logger.info(f"Новый пользователь: {user.login} (ID: {user.id})")
-    
+
     return {
         "access_token": token,
         "token_type": "bearer",
-        "user": {"id": user.id, "login": user.login, "gender": user.gender, "role": user.role},
+        "user": {"id": user.id, "login": user.login, "telegram": user.telegram, "email": user.email, "name": user.login, "gender": user.gender, "role": user.role, "created_at": str(user.created_at)},
         "compatibility_code": code
     }
 
@@ -718,7 +721,7 @@ async def login(data: UserLogin, request: Request, db: Session = Depends(get_db)
     return {
         "access_token": token,
         "token_type": "bearer",
-        "user": {"id": user.id, "login": user.login, "gender": user.gender, "role": user.role},
+        "user": {"id": user.id, "login": user.login, "telegram": user.telegram, "email": user.email, "name": user.login, "gender": user.gender, "role": user.role, "created_at": str(user.created_at)},
         "compatibility_code": user.compatibility_code
     }
 
@@ -766,7 +769,7 @@ async def complete_test(data: TestComplete, db: Session = Depends(get_db)):
         # Если пользователь не найден по session_id, ищем по логину
         if not user and data.login:
             user = db.query(User).filter(User.login == sanitize_string(data.login, 50)).first()
-        
+
         if not user:
             code = generate_code()
             temp_password = secrets.token_urlsafe(16)
@@ -784,9 +787,30 @@ async def complete_test(data: TestComplete, db: Session = Depends(get_db)):
         else:
             user.archetype_scores = scores
             user.active_archetypes = active_archetypes
+            user.gender = data.gender
+            user.orientation = data.orientation
+            user.session_id = data.session_id
+            # Если у пользователя нет compatibility_code, генерируем
+            if not user.compatibility_code:
+                user.compatibility_code = generate_code()
 
-        db.commit()
-        db.refresh(user)
+        try:
+            db.commit()
+            db.refresh(user)
+        except Exception as commit_error:
+            db.rollback()
+            # Если ошибка из-за уникальности login, добавляем суффикс
+            if "UNIQUE constraint failed" in str(commit_error) and "login" in str(commit_error):
+                unique_login = f"{sanitize_string(data.login or 'user', 40)}_{uuid.uuid4().hex[:6]}"
+                if not user.id:  # Новый пользователь
+                    user.login = unique_login
+                else:  # Существующий пользователь
+                    user.login = unique_login
+                db.commit()
+                db.refresh(user)
+            else:
+                logger.error(f"Ошибка commit: {commit_error}", exc_info=True)
+                raise HTTPException(status_code=500, detail=f"Ошибка при сохранении: {str(commit_error)}")
         
         logger.info(f"Тест завершен для session_id={data.session_id}, gender={data.gender}")
 
@@ -796,6 +820,48 @@ async def complete_test(data: TestComplete, db: Session = Depends(get_db)):
     except Exception as e:
         db.rollback()
         logger.error(f"Ошибка complete_test: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Ошибка при сохранении: {str(e)}")
+
+# === SAVE RESULTS TO AUTHORIZED USER ===
+@app.post("/api/test/save-to-account")
+async def save_results_to_account(
+    data: dict,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Привязка результатов теста к авторизованному пользователю"""
+    try:
+        code = data.get('compatibility_code')
+        if not code:
+            raise HTTPException(400, "Требуется compatibility_code")
+        
+        # Проверяем что код существует
+        existing_user = db.query(User).filter(User.compatibility_code == code).first()
+        if not existing_user:
+            raise HTTPException(404, "Результаты теста не найдены по указанному коду")
+        
+        # Привязываем результаты к авторизованному пользователю
+        current_user.compatibility_code = existing_user.compatibility_code
+        current_user.archetype_scores = existing_user.archetype_scores
+        current_user.active_archetypes = existing_user.active_archetypes
+        current_user.gender = existing_user.gender
+        current_user.orientation = existing_user.orientation
+        
+        db.commit()
+        db.refresh(current_user)
+        
+        logger.info(f"Результаты {code} сохранены в аккаунт {current_user.login}")
+        
+        return {
+            "success": True,
+            "compatibility_code": code,
+            "archetype_scores": current_user.archetype_scores
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Ошибка save_results_to_account: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Ошибка при сохранении: {str(e)}")
 
 # === CONSULTATION ===
@@ -829,7 +895,7 @@ async def create_consultation(data: ConsultationCreate, db: Session = Depends(ge
 # === PROFILE ===
 @app.get("/api/profile/{code}")
 async def get_profile(code: str, db: Session = Depends(get_db)):
-    if not re.match(r'^PSY-\d{8}-[A-Z0-9]{12}$', code):
+    if not re.match(r'^PSY-\d{8}-[A-Z0-9]{8,12}$', code):
         raise HTTPException(400, "Неверный формат кода")
     
     user = db.query(User).filter(User.compatibility_code == code).first()

@@ -3,59 +3,59 @@ import { useEffect, useState } from 'react';
 import psychologistPhoto from '../assets/psychologist.jpg';
 import vkIcon from '../assets/vk-icon.avif';
 import maxIcon from '../assets/max-icon.jpg';
-import { ArrowRight, Flower2, Swords, User, Baby, Users, MessageCircle, UsersRound, Waves, AlertTriangle, Flame, Frown, Lightbulb, Compass, Lock, Shield, BookOpen, Tablet, Moon, HeartHandshake, GraduationCap, Droplets, Stethoscope, Scale, HeartCrack, KeyRound, BabyIcon, MessageSquare, Building2, DoorOpen, PersonStanding } from 'lucide-react';
+import { ArrowRight, User, Baby, Users, MessageCircle, UsersRound, Waves, AlertTriangle, Flame, Frown, Lightbulb, Compass, Lock, Shield, BookOpen, Tablet, Moon, HeartHandshake, GraduationCap, Droplets, Stethoscope, Scale, HeartCrack, KeyRound, BabyIcon, MessageSquare, Building2, DoorOpen, PersonStanding } from 'lucide-react';
 
 const Home = () => {
   const [activeTab, setActiveTab] = useState('personal');
 
   const requestsData = {
     personal: [
-      { icon: MessageCircle, title: 'Контакт с ребёнком или родителем', desc: 'Наладить отношения с ребёнком или со своим родителем.', link: '/appointment', linkText: 'Записаться на консультацию' },
-      { icon: UsersRound, title: 'Отношения в паре', desc: 'Наладить отношения в паре.', link: '/compatibility', linkText: 'Проверить совместимость' },
-      { icon: Waves, title: 'Тревожность и ПА', desc: 'Тревожность, панические атаки, постоянное беспокойство.', link: '/appointment', linkText: 'Записаться на консультацию' },
-      { icon: Flame, title: 'Переживания утраты', desc: 'Помощь в проживании горя и утраты.', link: '/appointment', linkText: 'Записаться на консультацию' },
-      { icon: AlertTriangle, title: 'Травмы и тяжёлые переживания', desc: 'Работа с травмирующим опытом и сложными переживаниями.', link: '/appointment', linkText: 'Записаться на консультацию' },
-      { icon: Frown, title: 'Страхи', desc: 'Помощь в работе со страхами и фобиями.', link: '/appointment', linkText: 'Записаться на консультацию' },
-      { icon: Lightbulb, title: 'Трудности в принятии решения', desc: 'Поддержка в сложных выборах и жизненных решениях.', link: '/appointment', linkText: 'Записаться на консультацию' },
-      { icon: Shield, title: 'Самоценность и самоопределение', desc: 'Работа с самооценкой и определением себя.', link: '/appointment', linkText: 'Записаться на консультацию' },
-      { icon: Compass, title: 'Профессиональное развитие', desc: 'Помощь в профессиональном самоопределении и росте.', link: '/appointment', linkText: 'Записаться на консультацию' },
-      { icon: Lock, title: 'Сексологические вопросы', desc: 'Деликатная работа с интимными вопросами.', link: '/appointment', linkText: 'Записаться на консультацию' },
+      { icon: MessageCircle, title: 'Контакт с ребёнком или родителем', desc: 'Наладить отношения с ребёнком или со своим родителем.', link: '/appointment?category=Личные запросы&topic=Контакт с ребёнком или родителем', linkText: 'Записаться на консультацию' },
+      { icon: UsersRound, title: 'Отношения в паре', desc: 'Наладить отношения в паре.', link: '/appointment?category=Личные запросы&topic=Отношения в паре', linkText: 'Проверить совместимость' },
+      { icon: Waves, title: 'Тревожность и ПА', desc: 'Тревожность, панические атаки, постоянное беспокойство.', link: '/appointment?category=Личные запросы&topic=Тревожность и ПА', linkText: 'Записаться на консультацию' },
+      { icon: Flame, title: 'Переживание утраты', desc: 'Помощь в проживании горя и утраты.', link: '/appointment?category=Личные запросы&topic=Переживания утраты', linkText: 'Записаться на консультацию' },
+      { icon: AlertTriangle, title: 'Травмы и тяжёлые переживания', desc: 'Работа с травмирующим опытом и сложными переживаниями.', link: '/appointment?category=Личные запросы&topic=Травмы и тяжёлые переживания', linkText: 'Записаться на консультацию' },
+      { icon: Frown, title: 'Страхи', desc: 'Помощь в работе со страхами и фобиями.', link: '/appointment?category=Личные запросы&topic=Страхи', linkText: 'Записаться на консультацию' },
+      { icon: Lightbulb, title: 'Трудности в принятии решения', desc: 'Поддержка в сложных выборах и жизненных решениях.', link: '/appointment?category=Личные запросы&topic=Трудности в принятии решения', linkText: 'Записаться на консультацию' },
+      { icon: Shield, title: 'Самоценность и самоопределение', desc: 'Работа с самооценкой и определением себя.', link: '/appointment?category=Личные запросы&topic=Самоценность и самоопределение', linkText: 'Записаться на консультацию' },
+      { icon: Compass, title: 'Профессиональное развитие', desc: 'Помощь в профессиональном самоопределении и росте.', link: '/appointment?category=Личные запросы&topic=Профессиональное развитие', linkText: 'Записаться на консультацию' },
+      { icon: Lock, title: 'Сексологические вопросы', desc: 'Деликатная работа с интимными вопросами.', link: '/appointment?category=Личные запросы&topic=Сексологические вопросы', linkText: 'Записаться на консультацию' },
     ],
     children: [
-      { icon: Waves, title: 'Тревожность', desc: 'Повышенная тревожность, беспокойство, неуверенность у ребёнка.', link: '/appointment', linkText: 'Записаться на консультацию' },
-      { icon: Flame, title: 'Агрессивность', desc: 'Агрессивное поведение, вспышки гнева, проблемы с контролем эмоций.', link: '/appointment', linkText: 'Записаться на консультацию' },
-      { icon: BookOpen, title: 'Школьная неуспеваемость', desc: 'Трудности в обучении, снижение успеваемости, нежелание учиться.', link: '/appointment', linkText: 'Записаться на консультацию' },
-      { icon: UsersRound, title: 'Нарушения общения', desc: 'Трудности в общении со сверстниками, замкнутость, конфликты.', link: '/appointment', linkText: 'Записаться на консультацию' },
-      { icon: Tablet, title: 'Зависимость от гаджетов', desc: 'Чрезмерное увлечение экранами, играми, социальными сетями.', link: '/appointment', linkText: 'Записаться на консультацию' },
-      { icon: Moon, title: 'Страхи и кошмары', desc: 'Ночные кошмары, страхи темноты, одиночества и другие.', link: '/appointment', linkText: 'Записаться на консультацию' },
-      { icon: AlertTriangle, title: 'Травмы и переживания', desc: 'Помощь ребёнку после травмирующих событий и тяжёлых переживаний.', link: '/appointment', linkText: 'Записаться на консультацию' },
-      { icon: GraduationCap, title: 'Готовность к школе', desc: 'Психологическая диагностика и подготовка к школьному обучению.', link: '/appointment', linkText: 'Записаться на консультацию' },
-      { icon: HeartHandshake, title: 'Адаптация в саду', desc: 'Помощь в адаптации ребёнка к детскому саду.', link: '/appointment', linkText: 'Записаться на консультацию' },
-      { icon: Scale, title: 'Представительство в суде', desc: 'Представление интересов ребёнка в судебных разбирательствах.', link: '/appointment', linkText: 'Записаться на консультацию' },
-      { icon: Droplets, title: 'Энурез, энкопрез', desc: 'Психологическая помощь при недержании мочи и кала.', link: '/appointment', linkText: 'Записаться на консультацию' },
-      { icon: Stethoscope, title: 'Сопровождение развития', desc: 'Психологическое сопровождение развития детей от 1 месяца.', link: '/appointment', linkText: 'Записаться на консультацию' },
+      { icon: Waves, title: 'Тревожность', desc: 'Повышенная тревожность, беспокойство, неуверенность у ребёнка.', link: '/appointment?category=Детские запросы&topic=Тревожность', linkText: 'Записаться на консультацию' },
+      { icon: Flame, title: 'Агрессивность', desc: 'Агрессивное поведение, вспышки гнева, проблемы с контролем эмоций.', link: '/appointment?category=Детские запросы&topic=Агрессивность', linkText: 'Записаться на консультацию' },
+      { icon: BookOpen, title: 'Школьная неуспеваемость', desc: 'Трудности в обучении, снижение успеваемости, нежелание учиться.', link: '/appointment?category=Детские запросы&topic=Школьная неуспеваемость', linkText: 'Записаться на консультацию' },
+      { icon: UsersRound, title: 'Нарушения общения', desc: 'Трудности в общении со сверстниками, замкнутость, конфликты.', link: '/appointment?category=Детские запросы&topic=Нарушения общения', linkText: 'Записаться на консультацию' },
+      { icon: Tablet, title: 'Зависимость от гаджетов', desc: 'Чрезмерное увлечение экранами, играми, социальными сетями.', link: '/appointment?category=Детские запросы&topic=Зависимость от гаджетов', linkText: 'Записаться на консультацию' },
+      { icon: Moon, title: 'Страхи и кошмары', desc: 'Ночные кошмары, страхи темноты, одиночества и другие.', link: '/appointment?category=Детские запросы&topic=Страхи и кошмары', linkText: 'Записаться на консультацию' },
+      { icon: AlertTriangle, title: 'Травмы и переживания', desc: 'Помощь ребёнку после травмирующих событий и тяжёлых переживаний.', link: '/appointment?category=Детские запросы&topic=Травмы и переживания', linkText: 'Записаться на консультацию' },
+      { icon: GraduationCap, title: 'Готовность к школе', desc: 'Психологическая диагностика и подготовка к школьному обучению.', link: '/appointment?category=Детские запросы&topic=Готовность к школе', linkText: 'Записаться на консультацию' },
+      { icon: HeartHandshake, title: 'Адаптация в саду', desc: 'Помощь в адаптации ребёнка к детскому саду.', link: '/appointment?category=Детские запросы&topic=Адаптация в саду', linkText: 'Записаться на консультацию' },
+      { icon: Scale, title: 'Представительство в суде', desc: 'Представление интересов ребёнка в судебных разбирательствах.', link: '/appointment?category=Детские запросы&topic=Представительство в суде', linkText: 'Записаться на консультацию' },
+      { icon: Droplets, title: 'Энурез, энкопрез', desc: 'Психологическая помощь при недержании мочи и кала.', link: '/appointment?category=Детские запросы&topic=Энурез, энкопрез', linkText: 'Записаться на консультацию' },
+      { icon: Stethoscope, title: 'Сопровождение развития', desc: 'Психологическое сопровождение развития детей от 1 месяца.', link: '/appointment?category=Детские запросы&topic=Сопровождение развития', linkText: 'Записаться на консультацию' },
     ],
     family: [
-      { icon: Waves, title: 'Кризисы семейной жизни', desc: 'Помощь в преодолении кризисов в отношениях и восстановлении близости.', link: '/appointment', linkText: 'Записаться на консультацию' },
-      { icon: Lock, title: 'Сексологические запросы', desc: 'Деликатная работа с интимными вопросами в паре.', link: '/appointment', linkText: 'Записаться на консультацию' },
-      { icon: HeartCrack, title: 'Измены и потеря доверия', desc: 'Восстановление доверия и работы с последствиями измены.', link: '/appointment', linkText: 'Записаться на консультацию' },
-      { icon: KeyRound, title: 'Начало семьи и добрачное консультирование', desc: 'Подготовка к совместной жизни и осознанный выбор партнёра.', link: '/appointment', linkText: 'Записаться на консультацию' },
-      { icon: DoorOpen, title: 'Развод', desc: 'Психологическая поддержка в процессе развода.', link: '/appointment', linkText: 'Записаться на консультацию' },
-      { icon: MessageSquare, title: 'Коммуникация в семье', desc: 'Организация эффективной коммуникации между членами семьи.', link: '/appointment', linkText: 'Записаться на консультацию' },
-      { icon: Building2, title: 'Семейная структура и система', desc: 'Консультирование по вопросам семейной структуры и ролей.', link: '/appointment', linkText: 'Записаться на консультацию' },
-      { icon: BabyIcon, title: 'Незавершённая сепарация', desc: 'Работа с незавершённой сепарацией с родителями.', link: '/appointment', linkText: 'Записаться на консультацию' },
+      { icon: Waves, title: 'Кризисы семейной жизни', desc: 'Помощь в преодолении кризисов в отношениях и восстановлении близости.', link: '/appointment?category=Семейные запросы&topic=Кризисы семейной жизни', linkText: 'Записаться на консультацию' },
+      { icon: Lock, title: 'Сексологические запросы', desc: 'Деликатная работа с интимными вопросами в паре.', link: '/appointment?category=Семейные запросы&topic=Сексологические запросы', linkText: 'Записаться на консультацию' },
+      { icon: HeartCrack, title: 'Измены и потеря доверия', desc: 'Восстановление доверия и работы с последствиями измены.', link: '/appointment?category=Семейные запросы&topic=Измены и потеря доверия', linkText: 'Записаться на консультацию' },
+      { icon: KeyRound, title: 'Начало семьи и добрачное консультирование', desc: 'Подготовка к совместной жизни и осознанный выбор партнёра.', link: '/appointment?category=Семейные запросы&topic=Начало семьи и добрачное консультирование', linkText: 'Записаться на консультацию' },
+      { icon: DoorOpen, title: 'Развод', desc: 'Психологическая поддержка в процессе развода.', link: '/appointment?category=Семейные запросы&topic=Развод', linkText: 'Записаться на консультацию' },
+      { icon: MessageSquare, title: 'Коммуникация в семье', desc: 'Организация эффективной коммуникации между членами семьи.', link: '/appointment?category=Семейные запросы&topic=Коммуникация в семье', linkText: 'Записаться на консультацию' },
+      { icon: Building2, title: 'Семейная структура и система', desc: 'Консультирование по вопросам семейной структуры и ролей.', link: '/appointment?category=Семейные запросы&topic=Семейная структура и система', linkText: 'Записаться на консультацию' },
+      { icon: BabyIcon, title: 'Незавершённая сепарация', desc: 'Работа с незавершённой сепарацией с родителями.', link: '/appointment?category=Семейные запросы&topic=Незавершённая сепарация', linkText: 'Записаться на консультацию' },
     ],
     teenagers: [
-      { icon: Waves, title: 'Тревожность', desc: 'Повышенная тревожность, беспокойство, неуверенность у подростка.', link: '/appointment', linkText: 'Записаться на консультацию' },
-      { icon: Flame, title: 'Агрессивность', desc: 'Агрессивное поведение, вспышки гнева, проблемы с контролем эмоций.', link: '/appointment', linkText: 'Записаться на консультацию' },
-      { icon: BookOpen, title: 'Школьная неуспеваемость', desc: 'Трудности в обучении, снижение успеваемости, нежелание учиться.', link: '/appointment', linkText: 'Записаться на консультацию' },
-      { icon: UsersRound, title: 'Нарушения общения', desc: 'Трудности в общении со сверстниками, замкнутость, конфликты.', link: '/appointment', linkText: 'Записаться на консультацию' },
-      { icon: Tablet, title: 'Зависимость от гаджетов', desc: 'Чрезмерное увлечение экранами, играми, социальными сетями.', link: '/appointment', linkText: 'Записаться на консультацию' },
-      { icon: Moon, title: 'Страхи и кошмары', desc: 'Ночные кошмары, страхи, панические атаки.', link: '/appointment', linkText: 'Записаться на консультацию' },
-      { icon: AlertTriangle, title: 'Травмы и переживания', desc: 'Помощь подростку после травмирующих событий и тяжёлых переживаний.', link: '/appointment', linkText: 'Записаться на консультацию' },
-      { icon: GraduationCap, title: 'Готовность к школе', desc: 'Психологическая диагностика и подготовка к учебному процессу.', link: '/appointment', linkText: 'Записаться на консультацию' },
-      { icon: HeartHandshake, title: 'Адаптация в коллективе', desc: 'Помощь в адаптации подростка в новом коллективе или школе.', link: '/appointment', linkText: 'Записаться на консультацию' },
-      { icon: Droplets, title: 'Энурез, энкопрез', desc: 'Психологическая помощь при недержании мочи и кала.', link: '/appointment', linkText: 'Записаться на консультацию' },
+      { icon: Waves, title: 'Тревожность', desc: 'Повышенная тревожность, беспокойство, неуверенность у подростка.', link: '/appointment?category=Подростковые запросы&topic=Тревожность', linkText: 'Записаться на консультацию' },
+      { icon: Flame, title: 'Агрессивность', desc: 'Агрессивное поведение, вспышки гнева, проблемы с контролем эмоций.', link: '/appointment?category=Подростковые запросы&topic=Агрессивность', linkText: 'Записаться на консультацию' },
+      { icon: BookOpen, title: 'Школьная неуспеваемость', desc: 'Трудности в обучении, снижение успеваемости, нежелание учиться.', link: '/appointment?category=Подростковые запросы&topic=Школьная неуспеваемость', linkText: 'Записаться на консультацию' },
+      { icon: UsersRound, title: 'Нарушения общения', desc: 'Трудности в общении со сверстниками, замкнутость, конфликты.', link: '/appointment?category=Подростковые запросы&topic=Нарушения общения', linkText: 'Записаться на консультацию' },
+      { icon: Tablet, title: 'Зависимость от гаджетов', desc: 'Чрезмерное увлечение экранами, играми, социальными сетями.', link: '/appointment?category=Подростковые запросы&topic=Зависимость от гаджетов', linkText: 'Записаться на консультацию' },
+      { icon: Moon, title: 'Страхи и кошмары', desc: 'Ночные кошмары, страхи, панические атаки.', link: '/appointment?category=Подростковые запросы&topic=Страхи и кошмары', linkText: 'Записаться на консультацию' },
+      { icon: AlertTriangle, title: 'Травмы и переживания', desc: 'Помощь подростку после травмирующих событий и тяжёлых переживаний.', link: '/appointment?category=Подростковые запросы&topic=Травмы и переживания', linkText: 'Записаться на консультацию' },
+      { icon: GraduationCap, title: 'Готовность к школе', desc: 'Психологическая диагностика и подготовка к учебному процессу.', link: '/appointment?category=Подростковые запросы&topic=Готовность к школе', linkText: 'Записаться на консультацию' },
+      { icon: HeartHandshake, title: 'Адаптация в коллективе', desc: 'Помощь в адаптации подростка в новом коллективе или школе.', link: '/appointment?category=Подростковые запросы&topic=Адаптация в коллективе', linkText: 'Записаться на консультацию' },
+      { icon: Droplets, title: 'Энурез, энкопрез', desc: 'Психологическая помощь при недержании мочи и кала.', link: '/appointment?category=Подростковые запросы&topic=Энурез, энкопрез', linkText: 'Записаться на консультацию' },
     ],
   };
 
@@ -346,9 +346,9 @@ const Home = () => {
                 </div>
                 <h3 className="text-xl font-semibold mb-3 text-gray-800">{item.title}</h3>
                 <p className="text-gray-600 mb-4">{item.desc}</p>
-                <Link to={item.link} className="text-primary font-semibold hover:underline inline-flex items-center gap-1">
+                <a href={item.link} className="text-primary font-semibold hover:underline inline-flex items-center gap-1">
                   {item.linkText} <ArrowRight className="w-4 h-4" />
-                </Link>
+                </a>
               </div>
             ))}
           </div>
@@ -357,46 +357,31 @@ const Home = () => {
 
       <section className="py-20 px-4 reveal" style={{ background: 'linear-gradient(135deg, #6B8F8B 0%, #4A6B68 100%)' }}>
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-4xl font-bold text-center text-white mb-12">Архетипы</h2>
-          <div className="grid md:grid-cols-2 gap-8">
-            <div className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 reveal scale-in">
-              <h3 className="text-2xl font-bold text-white mb-6 text-center flex items-center justify-center gap-2"><Flower2 className="w-6 h-6" /> Женские архетипы</h3>
-              <div className="space-y-3">
-                {[
-                  { name: 'Ксения', desc: 'Сестра/Артемида' },
-                  { name: 'Кира', desc: 'Стратег/Афина' },
-                  { name: 'Катерина', desc: 'Хранительница/Гестия' },
-                  { name: 'Карина', desc: 'Возлюбленная/Афродита' },
-                  { name: 'Клара', desc: 'Мать/Деметра' },
-                  { name: 'Кристина', desc: 'Дочь/Персефона' },
-                  { name: 'Каллерия', desc: 'Жена/Гера' },
-                ].map((arch, i) => (
-                  <div key={i} className="flex items-center justify-between bg-white/10 rounded-xl p-3">
-                    <span className="text-white font-semibold">{arch.name}</span>
-                    <span className="text-white/70 text-sm">{arch.desc}</span>
-                  </div>
-                ))}
+          <h2 className="text-4xl font-bold text-center text-white mb-4">Польза работы с психологом</h2>
+          <p className="text-center text-white/80 mb-12 max-w-2xl mx-auto">
+            Профессиональная психологическая помощь — это инвестиция в качество вашей жизни
+          </p>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[
+              { icon: HeartHandshake, title: 'Понимание себя', desc: 'Вы научитесь распознавать свои истинные потребности, чувства и мотивы. Это даст ясность в принятии решений и понимание, почему вы поступаете так, а не иначе.' },
+              { icon: Shield, title: 'Устойчивость к стрессу', desc: 'Психолог поможет выработать внутренние опоры, чтобы вы могли справляться с трудностями без разрушения себя и отношений.' },
+              { icon: Users, title: 'Гармоничные отношения', desc: 'Работа с паттернами поведения позволит строить более близкие, доверительные и глубокие отношения с близкими людьми.' },
+              { icon: Lightbulb, title: 'Осознанный выбор', desc: 'Вместо импульсивных реакций и автоматических сценариев вы получите свободу выбирать — как отвечать на вызовы жизни.' },
+              { icon: HeartCrack, title: 'Проживание боли', desc: 'Безопасное пространство для проживания горя, утраты, обиды и других тяжёлых чувств, которые в одиночку нести слишком тяжело.' },
+              { icon: GraduationCap, title: 'Рост и развитие', desc: 'Психологическая работа — это не только про «починку», но и про раскрытие вашего потенциала, талантов и возможностей.' },
+            ].map((item, i) => (
+              <div
+                key={i}
+                className="bg-white/10 backdrop-blur-lg rounded-3xl p-6 hover:bg-white/20 transition transform hover:scale-105 duration-300 reveal scale-in"
+                style={{ animationDelay: `${i * 0.1}s` }}
+              >
+                <div className="w-14 h-14 mx-auto mb-4 bg-white/20 rounded-full flex items-center justify-center">
+                  <item.icon className="w-7 h-7 text-white" />
+                </div>
+                <h3 className="text-xl font-semibold text-white mb-3 text-center">{item.title}</h3>
+                <p className="text-white/80 text-sm text-center leading-relaxed">{item.desc}</p>
               </div>
-            </div>
-            <div className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 reveal scale-in" style={{ animationDelay: '0.2s' }}>
-              <h3 className="text-2xl font-bold text-white mb-6 text-center flex items-center justify-center gap-2"><Swords className="w-6 h-6" /> Мужские архетипы</h3>
-              <div className="space-y-3">
-                {[
-                  { name: 'Константин', desc: 'Правитель/Зевс' },
-                  { name: 'Кирилл', desc: 'Эмоциональный/Посейдон' },
-                  { name: 'Клемент', desc: 'Потусторонний/Гадес' },
-                  { name: 'Кузьма', desc: 'Умный/Гермес' },
-                  { name: 'Кондратий', desc: 'Гармоничный/Аполлон' },
-                  { name: 'Кристиан', desc: 'Ранимый/Гефест' },
-                  { name: 'Клим', desc: 'Воинственный/Арес' },
-                ].map((arch, i) => (
-                  <div key={i} className="flex items-center justify-between bg-white/10 rounded-xl p-3">
-                    <span className="text-white font-semibold">{arch.name}</span>
-                    <span className="text-white/70 text-sm">{arch.desc}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>

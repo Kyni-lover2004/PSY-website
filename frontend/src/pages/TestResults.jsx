@@ -1,21 +1,58 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import { profileAPI } from '../api/api';
+import { useParams, useNavigate } from 'react-router-dom';
+import { profileAPI, testAPI } from '../api/api';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
-import { Trophy, Shield, AlertTriangle, Heart, Copy, ArrowRight } from 'lucide-react';
+import { Trophy, Shield, AlertTriangle, Heart, Copy, ArrowRight, Save, UserPlus, LogIn, CheckCircle } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const TestResults = () => {
   const { code } = useParams();
+  const navigate = useNavigate();
+  const { user: authUser, token } = useAuth();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [errorDetails, setErrorDetails] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  const handleSaveToAccount = async () => {
+    if (!authUser || !token || !code) return;
+    setSaving(true);
+    try {
+      await testAPI.saveToAccount({ compatibility_code: code });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err) {
+      console.error('Ошибка сохранения:', err);
+      alert('Ошибка при сохранении: ' + (err.response?.data?.detail || err.message));
+    } finally {
+      setSaving(false);
+    }
+  };
 
   useEffect(() => {
+    console.log('TestResults - загрузка профиля для кода:', code);
+    
+    if (!code) {
+      setError('Код совместимости не найден');
+      setLoading(false);
+      return;
+    }
+    
     const fetchProfile = async () => {
       try {
+        setError(null);
+        setErrorDetails(null);
         const response = await profileAPI.getProfile(code);
+        console.log('TestResults - профиль загружен:', response.data);
         setProfile(response.data);
       } catch (error) {
         console.error('Ошибка загрузки профиля:', error);
+        const status = error.response?.status;
+        const detail = error.response?.data?.detail || error.message;
+        setError(status === 404 ? 'Профиль не найден' : status === 400 ? 'Неверный формат кода' : 'Ошибка загрузки');
+        setErrorDetails(detail);
       } finally {
         setLoading(false);
       }
@@ -26,18 +63,45 @@ const TestResults = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-white text-xl">Загрузка результатов...</div>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #6B8F8B 0%, #4A6B68 100%)' }}>
+        <div className="bg-white rounded-3xl p-8 text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <div className="text-white text-xl">Загрузка результатов...</div>
+          <div className="text-gray-400 text-sm mt-2 font-mono">{code}</div>
+        </div>
       </div>
     );
   }
 
-  if (!profile) {
+  if (error || !profile) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="bg-white rounded-3xl p-8 text-center">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">Профиль не найден</h2>
-          <p className="text-gray-600">Проверьте код совместимости</p>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #6B8F8B 0%, #4A6B68 100%)' }}>
+        <div className="bg-white rounded-3xl p-8 text-center max-w-md">
+          <div className="text-red-500 text-5xl mb-4">⚠️</div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">{error || 'Ошибка'}</h2>
+          <p className="text-gray-600 mb-4">Проверьте код совместимости</p>
+          <div className="bg-gray-100 rounded-lg p-3 mb-4">
+            <code className="text-sm text-gray-700 break-all">{code || 'Код не получен'}</code>
+          </div>
+          {errorDetails && (
+            <div className="bg-red-50 rounded-lg p-3 mb-4 text-left">
+              <p className="text-red-700 text-sm font-mono break-all">{errorDetails}</p>
+            </div>
+          )}
+          <div className="flex gap-3">
+            <button
+              onClick={() => { setLoading(true); setError(null); setErrorDetails(null); window.location.reload(); }}
+              className="flex-1 bg-gray-100 text-gray-700 px-4 py-3 rounded-xl font-semibold hover:bg-gray-200 transition"
+            >
+              🔄 Повторить
+            </button>
+            <button
+              onClick={() => navigate('/test')}
+              className="flex-1 bg-primary text-white px-4 py-3 rounded-xl font-semibold hover:shadow-lg transition"
+            >
+              Пройти заново
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -53,7 +117,7 @@ const TestResults = () => {
   const dominantArchetype = profile.archetypes[0];
 
   return (
-    <div className="py-12 px-4">
+    <div className="py-12 px-4" style={{ background: 'linear-gradient(135deg, #6B8F8B 0%, #4A6B68 100%)', minHeight: '100vh' }}>
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-8 fade-in">
           <h1 className="text-4xl font-bold text-white mb-2">Ваши результаты</h1>
@@ -183,6 +247,80 @@ const TestResults = () => {
               Проверить совместимость <ArrowRight className="w-4 h-4 inline" />
             </a>
           </div>
+        </div>
+
+        {/* Кнопка сохранения в личный кабинет */}
+        <div className="bg-white rounded-3xl shadow-2xl p-8 text-center fade-in">
+          {authUser && token ? (
+            <>
+              <div className="flex items-center justify-center gap-2 mb-4">
+                {saved ? (
+                  <CheckCircle className="w-6 h-6 text-green-600" />
+                ) : (
+                  <Save className="w-6 h-6 text-primary" />
+                )}
+                <h3 className="text-xl font-bold text-gray-800">
+                  {saved ? '✅ Сохранено!' : 'Сохранить результаты'}
+                </h3>
+              </div>
+              <p className="text-gray-600 mb-6">
+                {saved
+                  ? 'Результаты сохранены в вашем личном кабинете'
+                  : 'Результаты будут сохранены в вашем личном кабинете'}
+              </p>
+              <button
+                onClick={handleSaveToAccount}
+                disabled={saving || saved}
+                className={`px-8 py-4 rounded-xl font-semibold transition transform hover:scale-105 ${
+                  saved
+                    ? 'bg-green-600 text-white cursor-default'
+                    : saving
+                    ? 'bg-gray-300 text-gray-500 cursor-wait'
+                    : 'bg-green-600 text-white hover:bg-green-700 hover:shadow-lg'
+                }`}
+              >
+                {saving ? (
+                  'Сохранение...'
+                ) : saved ? (
+                  <><CheckCircle className="w-5 h-5 inline mr-2" /> Сохранено</>
+                ) : (
+                  <><Save className="w-5 h-5 inline mr-2" /> Сохранить в личный кабинет</>
+                )}
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="flex items-center justify-center gap-2 mb-4">
+                <UserPlus className="w-6 h-6 text-primary" />
+                <h3 className="text-xl font-bold text-gray-800">Сохранить результаты</h3>
+              </div>
+              <p className="text-gray-600 mb-6">
+                Зарегистрируйтесь или войдите, чтобы сохранить результаты в личном кабинете
+              </p>
+              <div className="flex flex-wrap gap-4 justify-center">
+                <button
+                  onClick={() => {
+                    sessionStorage.setItem('redirectAfterLogin', window.location.pathname);
+                    navigate('/register');
+                  }}
+                  className="bg-primary text-white px-8 py-4 rounded-xl font-semibold hover:shadow-lg transition transform hover:scale-105"
+                >
+                  <UserPlus className="w-5 h-5 inline mr-2" />
+                  Зарегистрироваться
+                </button>
+                <button
+                  onClick={() => {
+                    sessionStorage.setItem('redirectAfterLogin', window.location.pathname);
+                    navigate('/login');
+                  }}
+                  className="bg-gray-100 text-gray-700 px-8 py-4 rounded-xl font-semibold hover:bg-gray-200 transition transform hover:scale-105"
+                >
+                  <LogIn className="w-5 h-5 inline mr-2" />
+                  Войти
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

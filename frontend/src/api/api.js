@@ -35,6 +35,7 @@ export const questionsAPI = {
 
 export const testAPI = {
   complete: (data) => api.post('/test/complete', data),
+  saveToAccount: (data) => api.post('/test/save-to-account', data),
 };
 
 export const consultationAPI = {

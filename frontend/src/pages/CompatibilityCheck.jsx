@@ -1,13 +1,23 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { compatibilityAPI } from '../api/api';
-import { Heart, AlertCircle, BookOpen } from 'lucide-react';
+import { Heart, AlertCircle, BookOpen, Copy } from 'lucide-react';
 
 const CompatibilityCheck = () => {
-  const [code1, setCode1] = useState('');
-  const [code2, setCode2] = useState('');
+  const [searchParams] = useSearchParams();
+  const myCodeFromUrl = searchParams.get('mycode') || '';
+  
+  const [myCode, setMyCode] = useState(myCodeFromUrl);
+  const [partnerCode, setPartnerCode] = useState('');
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (myCodeFromUrl) {
+      setMyCode(myCodeFromUrl);
+    }
+  }, [myCodeFromUrl]);
 
   const handleCheck = async (e) => {
     e.preventDefault();
@@ -16,7 +26,7 @@ const CompatibilityCheck = () => {
     setResult(null);
 
     try {
-      const response = await compatibilityAPI.check(code1, code2);
+      const response = await compatibilityAPI.check(myCode, partnerCode);
       setResult(response.data);
     } catch (err) {
       setError(err.response?.data?.detail || 'Ошибка проверки совместимости');
@@ -26,44 +36,68 @@ const CompatibilityCheck = () => {
   };
 
   return (
-    <div className="py-12 px-4">
+    <div className="py-12 px-4" style={{ background: 'linear-gradient(135deg, #6B8F8B 0%, #4A6B68 100%)', minHeight: '100vh' }}>
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-4 flex items-center justify-center gap-2"><Heart className="w-8 h-8" /> Проверка совместимости</h1>
+          <h1 className="text-4xl font-bold text-white mb-4 flex items-center justify-center gap-2">
+            <Heart className="w-8 h-8" /> Проверка совместимости
+          </h1>
           <p className="text-white/80 text-lg">
-            Введите коды совместимости обоих партнёров для расчёта индекса комплементарности
+            Рассчитайте индекс комплементарности между двумя партнёрами
           </p>
         </div>
 
-        <div className="bg-white rounded-3xl shadow-2xl p-8 mb-8">
+        <div className="bg-white rounded-3xl shadow-2xl p-8 mb-8 fade-in">
           <form onSubmit={handleCheck} className="space-y-6">
-            <div className="grid md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-gray-700 font-semibold mb-2">
-                  Код первого партнёра
-                </label>
+            {/* Мой код */}
+            <div>
+              <label className="block text-gray-700 font-semibold mb-2">
+                Ваш код совместимости
+              </label>
+              {myCode ? (
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 bg-primary/10 rounded-xl px-4 py-3">
+                    <code className="text-lg font-mono text-primary font-bold">{myCode}</code>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => navigator.clipboard.writeText(myCode)}
+                    className="p-3 bg-gray-100 rounded-xl hover:bg-gray-200 transition"
+                    title="Копировать"
+                  >
+                    <Copy className="w-5 h-5 text-gray-600" />
+                  </button>
+                </div>
+              ) : (
                 <input
                   type="text"
                   required
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition"
-                  value={code1}
-                  onChange={(e) => setCode1(e.target.value.toUpperCase())}
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition font-mono"
+                  value={myCode}
+                  onChange={(e) => setMyCode(e.target.value.toUpperCase())}
                   placeholder="PSY-YYYYMMDD-XXXXXXXX"
                 />
-              </div>
-              <div>
-                <label className="block text-gray-700 font-semibold mb-2">
-                  Код второго партнёра
-                </label>
-                <input
-                  type="text"
-                  required
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition"
-                  value={code2}
-                  onChange={(e) => setCode2(e.target.value.toUpperCase())}
-                  placeholder="PSY-YYYYMMDD-XXXXXXXX"
-                />
-              </div>
+              )}
+              {!myCode && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Получите код после прохождения теста на архетипы
+                </p>
+              )}
+            </div>
+
+            {/* Код партнёра */}
+            <div>
+              <label className="block text-gray-700 font-semibold mb-2">
+                Код партнёра
+              </label>
+              <input
+                type="text"
+                required
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition font-mono"
+                value={partnerCode}
+                onChange={(e) => setPartnerCode(e.target.value.toUpperCase())}
+                placeholder="PSY-YYYYMMDD-XXXXXXXX"
+              />
             </div>
 
             <button
@@ -112,7 +146,9 @@ const CompatibilityCheck = () => {
             </div>
 
             <div className="bg-white rounded-3xl shadow-2xl p-8">
-              <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2"><BookOpen className="w-6 h-6" /> Расшифровка значений</h3>
+              <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                <BookOpen className="w-6 h-6" /> Расшифровка значений
+              </h3>
               <div className="space-y-4">
                 <div className="flex items-start gap-4">
                   <div className="text-2xl">7/0</div>

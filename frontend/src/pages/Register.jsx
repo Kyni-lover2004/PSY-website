@@ -12,6 +12,7 @@ const Register = () => {
     login: '',
     password: '',
     confirmPassword: '',
+    telegram: '',
     gender: 'female'
   });
   const [error, setError] = useState('');
@@ -42,19 +43,27 @@ const Register = () => {
       const response = await authAPI.register({
         login: formData.login,
         password: formData.password,
+        telegram: formData.telegram || null,
         gender: formData.gender
       });
 
-      const user = response.data.user;
+      const user = { ...response.data.user, compatibility_code: response.data.compatibility_code, created_at: response.data.user.created_at };
       const token = response.data.access_token;
-      
+
       login(user, token);
 
       const redirect = searchParams.get('redirect');
       if (redirect === 'test') {
         navigate('/test/archetypes/anketa');
       } else {
-        navigate('/dashboard');
+        // Если был редирект на регистрацию с /appointment — перенаправляем туда
+        const savedRedirect = sessionStorage.getItem('redirectAfterLogin');
+        if (savedRedirect) {
+          sessionStorage.removeItem('redirectAfterLogin');
+          navigate(savedRedirect);
+        } else {
+          navigate('/dashboard');
+        }
       }
     } catch (err) {
       console.error('Registration error:', err);
@@ -85,6 +94,19 @@ const Register = () => {
               value={formData.login}
               onChange={(e) => setFormData({...formData, login: e.target.value})}
               placeholder="Придумайте логин"
+            />
+          </div>
+
+          <div>
+            <label className="block text-gray-700 font-semibold mb-2">
+              Telegram <span className="text-gray-400 font-normal">(для связи)</span>
+            </label>
+            <input
+              type="text"
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition"
+              value={formData.telegram}
+              onChange={(e) => setFormData({...formData, telegram: e.target.value})}
+              placeholder="@username"
             />
           </div>
 

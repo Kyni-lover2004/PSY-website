@@ -25,12 +25,17 @@ const Login = () => {
         password: formData.password
       });
 
-      const user = response.data.user;
+      const user = { ...response.data.user, compatibility_code: response.data.compatibility_code, created_at: response.data.user.created_at };
       const token = response.data.access_token;
-      
+
       login(user, token);
 
-      if (user.role === 'admin') {
+      // Проверяем редирект после входа
+      const savedRedirect = sessionStorage.getItem('redirectAfterLogin');
+      if (savedRedirect) {
+        sessionStorage.removeItem('redirectAfterLogin');
+        navigate(savedRedirect);
+      } else if (user.role === 'admin') {
         navigate('/admin');
       } else {
         navigate('/dashboard');
