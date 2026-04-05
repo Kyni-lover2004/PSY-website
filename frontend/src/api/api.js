@@ -7,6 +7,28 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+// Добавляем JWT токен к каждому запросу
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Обрабатываем 401 ошибки
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
 export const questionsAPI = {
   getQuestions: (gender) => api.get(`/questions/${gender}`),
 };
@@ -33,12 +55,22 @@ export const authAPI = {
 };
 
 export const adminAPI = {
-  getQuestions: () => api.get('/admin/questions'),
-  updateQuestion: (id, data) => api.put(`/admin/questions/${id}`, data),
-  getArchetypes: () => api.get('/admin/archetypes'),
-  updateArchetype: (id, data) => api.put(`/admin/archetypes/${id}`, data),
+  getDashboard: () => api.get('/admin/dashboard'),
+  getUsers: () => api.get('/admin/users'),
+  updateUserRole: (userId, role) => api.post(`/admin/users/${userId}/role`, { role }),
+  deleteUser: (userId) => api.delete(`/admin/users/${userId}`),
   getConsultations: () => api.get('/admin/consultations'),
-  updateConsultation: (id, status) => api.put(`/admin/consultations/${id}?status=${status}`),
+  updateConsultationStatus: (id, status) => api.post(`/admin/consultations/${id}/status`, { status }),
+  getQuestions: () => api.get('/admin/questions'),
+  getArchetypes: () => api.get('/admin/archetypes'),
+  createTest: (data) => api.post('/tests', data),
+  deleteTest: (testId) => api.delete(`/tests/${testId}`),
+  getTestQuestions: (testId) => api.get(`/tests/${testId}/questions`),
+  createQuestion: (data) => api.post('/tests/questions', data),
+  deleteQuestion: (questionId) => api.delete(`/tests/questions/${questionId}`),
+  createAnswer: (data) => api.post('/tests/answers', data),
+  getAnswers: (questionId) => api.get(`/questions/${questionId}/answers`),
+  deleteAnswer: (answerId) => api.delete(`/tests/answers/${answerId}`),
 };
 
 export default api;
