@@ -25,16 +25,10 @@ const Login = () => {
         password: formData.password
       });
 
-      const user = {
-        id: response.data.user.id,
-        login: response.data.user.login,
-        gender: response.data.user.gender,
-        role: response.data.user.role
-      };
-      localStorage.setItem('user', JSON.stringify(user));
-      sessionStorage.setItem('compatibilityCode', response.data.compatibility_code);
-
-      login(user);
+      const user = response.data.user;
+      const token = response.data.access_token;
+      
+      login(user, token);
 
       if (user.role === 'admin') {
         navigate('/admin');

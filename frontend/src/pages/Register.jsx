@@ -26,8 +26,8 @@ const Register = () => {
       return;
     }
 
-    if (formData.password.length < 6) {
-      setError('Пароль должен быть не менее 6 символов');
+    if (formData.password.length < 8) {
+      setError('Пароль должен быть не менее 8 символов');
       return;
     }
 
@@ -45,13 +45,10 @@ const Register = () => {
         gender: formData.gender
       });
 
-      const user = {
-        id: response.data.user_id,
-        login: response.data.login,
-        gender: response.data.gender
-      };
-      localStorage.setItem('user', JSON.stringify(user));
-      sessionStorage.setItem('compatibilityCode', response.data.compatibility_code);
+      const user = response.data.user;
+      const token = response.data.access_token;
+      
+      login(user, token);
 
       const redirect = searchParams.get('redirect');
       if (redirect === 'test') {
@@ -96,11 +93,11 @@ const Register = () => {
             <input
               type="password"
               required
-              minLength={6}
+              minLength={8}
               className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition"
               value={formData.password}
               onChange={(e) => setFormData({...formData, password: e.target.value})}
-              placeholder="Минимум 6 символов"
+              placeholder="Минимум 8 символов"
             />
           </div>
 
@@ -109,7 +106,7 @@ const Register = () => {
             <input
               type="password"
               required
-              minLength={6}
+              minLength={8}
               className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition"
               value={formData.confirmPassword}
               onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
