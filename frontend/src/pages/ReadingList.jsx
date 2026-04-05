@@ -100,7 +100,7 @@ const ReadingList = () => {
             </div>
             <h2 className="text-2xl font-bold text-gray-800 mb-2">Больше книг и рекомендаций</h2>
             <p className="text-gray-600 mb-6 max-w-xl mx-auto">
-              Подписывайтесь на наш Telegram-канал! Там ещё больше полезной литературы, разборов и практических упражнений для самопознания и работы над собой.
+              Подписывайтесь на мой Telegram-канал! Там ещё больше полезной литературы, разборов и практических упражнений для самопознания и работы над собой.
             </p>
             <a
               href="https://t.me/+oBt1XAigVGA2ZjU"
@@ -118,7 +118,7 @@ const ReadingList = () => {
         </div>
 
         {/* Книги */}
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid md:grid-cols-2 gap-6 mt-12">
           {books.map((book, i) => (
             <div
               key={i}
