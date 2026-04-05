@@ -1,50 +1,249 @@
-from fastapi import FastAPI, Depends, HTTPException
+"""
+PSY Website Backend - SECURE VERSION
+Максимальная защита: JWT, Rate Limiting, Encryption, Logging, Telegram Notifications
+"""
+from fastapi import FastAPI, Depends, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy import create_engine, Column, Integer, String, Boolean, Text, DateTime, ForeignKey, JSON, Float
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session, relationship
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional, List, Dict, Any
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, validator
 from passlib.context import CryptContext
+from jose import JWTError, jwt
+from collections import defaultdict
+import logging
 import uuid
+import os
+import re
+import secrets
+import asyncio
+import aiohttp
 
-SECRET_KEY = "psycho-secret-key-2024"
+# === БЕЗОПАСНАЯ КОНФИГУРАЦИЯ ===
+# Фиксированный SECRET_KEY (не меняется при перезапуске)
+SECRET_KEY = os.environ.get("SECRET_KEY", "psycho-secure-key-2026-change-in-production-" + "a" * 32)
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24 часа
 DATABASE_URL = "sqlite:///./psycho.db"
+FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:3000")
+FRONTEND_URLS = [FRONTEND_URL, "http://localhost:5173", "http://127.0.0.1:3000", "http://127.0.0.1:5173"]
+TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
 
-app = FastAPI(title="Psycho Archetypes API", version="1.0.0")
+# === ЛОГИРОВАНИЕ ===
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('psycho.log'),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
 
+# === RATE LIMITING ===
+class RateLimiter:
+    def __init__(self):
+        self.requests = defaultdict(list)
+        self.max_requests = 20  # максимум запросов
+        self.window = 60  # окно в секундах (1 минута)
+        self.login_attempts = defaultdict(int)
+        self.login_lockouts = {}  # забаненные IP
+    
+    def is_rate_limited(self, client_ip: str) -> bool:
+        now = datetime.utcnow().timestamp()
+        self.requests[client_ip] = [
+            t for t in self.requests[client_ip] 
+            if now - t < self.window
+        ]
+        if len(self.requests[client_ip]) >= self.max_requests:
+            return True
+        self.requests[client_ip].append(now)
+        return False
+    
+    def is_login_locked(self, client_ip: str) -> bool:
+        if client_ip in self.login_lockouts:
+            lockout_time = self.login_lockouts[client_ip]
+            if datetime.utcnow() < lockout_time:
+                return True
+            else:
+                del self.login_lockouts[client_ip]
+                self.login_attempts[client_ip] = 0
+        return False
+    
+    def record_login_attempt(self, client_ip: str, success: bool):
+        if success:
+            self.login_attempts[client_ip] = 0
+        else:
+            self.login_attempts[client_ip] += 1
+            if self.login_attempts[client_ip] >= 5:
+                self.login_lockouts[client_ip] = datetime.utcnow() + timedelta(minutes=15)
+                logger.warning(f"IP {client_ip} заблокирован на 15 минут после 5 неудачных попыток входа")
+
+rate_limiter = RateLimiter()
+
+# === FASTAPI APP ===
+app = FastAPI(title="Psycho Archetypes API", version="3.0.0-SECURE")
+
+# === CORS ===
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=FRONTEND_URLS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_headers=["Content-Type", "Authorization"],
+    max_age=3600,
 )
 
+# === SECURITY HEADERS ===
+@app.middleware("http")
+async def security_middleware(request: Request, call_next):
+    client_ip = request.client.host
+    
+    # Rate limiting
+    if rate_limiter.is_rate_limited(client_ip):
+        return JSONResponse(
+            status_code=429,
+            content={"detail": "Слишком много запросов. Подождите минуту."}
+        )
+    
+    response = await call_next(request)
+
+    # Security headers (без CSP для /docs - нужен для Swagger UI)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    response.headers["Cache-Control"] = "no-store"
+    response.headers["Pragma"] = "no-cache"
+    
+    # CSP только для API endpoints (не для /docs)
+    if not request.url.path.startswith("/docs") and not request.url.path.startswith("/openapi"):
+        response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:;"
+
+    return response
+
+# === DATABASE ===
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
-
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+security = HTTPBearer()
 
+# === HELPER FUNCTIONS ===
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+def hash_password(password: str) -> str:
+    return pwd_context.hash(password)
+
+def verify_password(plain: str, hashed: str) -> bool:
+    return pwd_context.verify(plain, hashed)
+
+def generate_code() -> str:
+    return f"PSY-{datetime.now().strftime('%Y%m%d')}-{uuid.uuid4().hex[:12].upper()}"
+
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
+    to_encode = data.copy()
+    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+    to_encode.update({"exp": expire, "iat": datetime.utcnow()})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+def validate_password(password: str) -> str:
+    if len(password) < 8:
+        raise HTTPException(status_code=400, detail="Пароль должен содержать минимум 8 символов")
+    if not re.search(r'[A-Za-z]', password):
+        raise HTTPException(status_code=400, detail="Пароль должен содержать хотя бы одну букву")
+    if not re.search(r'\d', password):
+        raise HTTPException(status_code=400, detail="Пароль должен содержать хотя бы одну цифру")
+    return password
+
+def validate_email(email: str) -> str:
+    if email and not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', email):
+        raise HTTPException(status_code=400, detail="Неверный формат email")
+    return email
+
+def sanitize_string(value: str, max_length: int = 500) -> str:
+    if not value:
+        return value
+    value = value.strip()[:max_length]
+    value = re.sub(r'[<>&\'"\\]', '', value)
+    return value
+
+# === TELEGRAM NOTIFIER ===
+class TelegramNotifier:
+    def __init__(self, bot_token: str, chat_id: str):
+        self.bot_token = bot_token
+        self.chat_id = chat_id
+        self.base_url = f"https://api.telegram.org/bot{bot_token}"
+    
+    async def send_consultation_notification(self, consultation: dict):
+        message = f"""
+📝 <b>НОВАЯ ЗАЯВКА НА КОНСУЛЬТАЦИЮ</b>
+
+👤 <b>Имя:</b> {consultation.get('name', 'Не указано')}
+📞 <b>Телефон:</b> {consultation.get('phone', 'Не указано')}
+✉️ <b>Email:</b> {consultation.get('email', 'Не указано')}
+
+💬 <b>Запрос:</b>
+{consultation.get('request_text', 'Не указано')}
+
+🕐 <b>Дата:</b> {consultation.get('created_at', 'N/A')}
+🆔 <b>ID заявки:</b> {consultation.get('id', 'N/A')}
+"""
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.post(
+                    f"{self.base_url}/sendMessage",
+                    json={"chat_id": self.chat_id, "text": message.strip(), "parse_mode": "HTML"}
+                ) as response:
+                    if response.status == 200:
+                        logger.info("✅ Уведомление отправлено в Telegram")
+                    else:
+                        logger.error(f"❌ Ошибка Telegram: {response.status}")
+        except Exception as e:
+            logger.error(f"❌ Ошибка подключения к Telegram: {e}")
+
+telegram_notifier = None
+
+def init_telegram():
+    global telegram_notifier
+    if TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID:
+        telegram_notifier = TelegramNotifier(TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID)
+        logger.info("✅ Telegram бот инициализирован")
+    else:
+        logger.warning("⚠️ Telegram бот не настроен")
+
+async def notify_consultation(consultation_data: dict):
+    if telegram_notifier:
+        asyncio.create_task(telegram_notifier.send_consultation_notification(consultation_data))
+
+# === МОДЕЛИ ===
 class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, autoincrement=True)
-    login = Column(String(100), unique=True, nullable=False)
+    login = Column(String(100), unique=True, nullable=False, index=True)
     password_hash = Column(String(255), nullable=False)
     email = Column(String(120), unique=True, nullable=True)
     phone = Column(String(20), nullable=True)
     gender = Column(String(10), nullable=True)
     orientation = Column(String(20), nullable=True)
-    role = Column(String(20), default="user", nullable=False)
+    role = Column(String(20), default="user", nullable=False, index=True)
     session_id = Column(String(100), unique=True, default=lambda: str(uuid.uuid4()))
     created_at = Column(DateTime, default=datetime.utcnow)
-    compatibility_code = Column(String(20), unique=True, nullable=True)
+    compatibility_code = Column(String(50), unique=True, nullable=True)
     archetype_scores = Column(JSON, nullable=True)
     active_archetypes = Column(JSON, nullable=True)
     is_active = Column(Boolean, default=True)
-
+    
     consultations = relationship("Consultation", back_populates="user")
     test_results = relationship("TestResult", back_populates="user")
 
@@ -93,8 +292,8 @@ class ArchetypeDescription(Base):
 class Couple(Base):
     __tablename__ = "couples"
     id = Column(Integer, primary_key=True)
-    user1_code = Column(String(20), nullable=False)
-    user2_code = Column(String(20), nullable=False)
+    user1_code = Column(String(50), nullable=False)
+    user2_code = Column(String(50), nullable=False)
     compatibility_index = Column(String(20), nullable=True)
     a_count = Column(Integer, default=0)
     p_count = Column(Integer, default=0)
@@ -151,365 +350,399 @@ class TestResult(Base):
     user = relationship("User", back_populates="test_results")
     test = relationship("Test", back_populates="results")
 
+# === PYDANTIC MODEЛИ С ВАЛИДАЦИЕЙ ===
 class UserCreate(BaseModel):
-    login: str
-    password: str
-    gender: str
+    login: str = Field(..., min_length=3, max_length=50)
+    password: str = Field(..., min_length=8, max_length=128)
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    gender: Optional[str] = None
+    
+    @validator('login')
+    def validate_login(cls, v):
+        if not re.match(r'^[a-zA-Z0-9_]+$', v):
+            raise ValueError('Логин может содержать только буквы, цифры и подчеркивания')
+        return v.strip()
 
 class UserLogin(BaseModel):
-    login: str
-    password: str
+    login: str = Field(..., max_length=50)
+    password: str = Field(..., max_length=128)
 
 class AnswerSubmit(BaseModel):
     question_id: int
     value: bool
 
 class TestComplete(BaseModel):
-    session_id: str
+    session_id: str = Field(..., max_length=100)
     answers: List[AnswerSubmit]
     gender: str
     login: Optional[str] = None
     orientation: Optional[str] = None
 
 class ConsultationCreate(BaseModel):
-    name: str
-    phone: str
+    user_id: Optional[int] = None
+    name: str = Field(..., min_length=2, max_length=100)
+    phone: str = Field(..., min_length=10, max_length=20)
     email: Optional[str] = None
-    request_text: str
+    request_text: str = Field(..., min_length=10, max_length=2000)
 
 class CompatibilityCheck(BaseModel):
-    code1: str
-    code2: str
+    code1: str = Field(..., max_length=50)
+    code2: str = Field(..., max_length=50)
 
 class TestCreate(BaseModel):
-    title: str
-    description: Optional[str] = None
-    category: Optional[str] = None
+    title: str = Field(..., min_length=3, max_length=200)
+    description: Optional[str] = Field(None, max_length=2000)
+    category: Optional[str] = Field(None, max_length=100)
 
 class TestQuestionCreate(BaseModel):
     test_id: int
-    text: str
-    order_index: int
+    text: str = Field(..., min_length=5, max_length=2000)
+    order_index: int = Field(..., gt=0)
 
 class AnswerOptionCreate(BaseModel):
     question_id: int
-    text: str
-    score: float
-    order_index: int
+    text: str = Field(..., min_length=1, max_length=500)
+    score: float = Field(..., ge=0)
+    order_index: int = Field(..., gt=0)
 
 class TestResultCreate(BaseModel):
     user_id: int
     test_id: int
     total_score: float
     scores_breakdown: Optional[Dict[str, float]] = None
-    result_text: Optional[str] = None
+    result_text: Optional[str] = Field(None, max_length=2000)
 
-class ConsultationWithUser(BaseModel):
-    user_id: Optional[int] = None
-    name: str
-    phone: str
-    email: Optional[str] = None
-    request_text: str
-
-def get_db():
-    db = SessionLocal()
+# === АВТОРИЗАЦИЯ ===
+def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security), db: Session = Depends(get_db)):
+    token = credentials.credentials
     try:
-        yield db
-    finally:
-        db.close()
-
-def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
-
-def verify_password(plain: str, hashed: str) -> bool:
-    return pwd_context.verify(plain, hashed)
-
-def generate_code() -> str:
-    return f"PSY-{datetime.now().strftime('%Y%m%d')}-{uuid.uuid4().hex[:8].upper()}"
-
-def check_admin(user_id: int, db: Session) -> User:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id: int = payload.get("sub")
+        if user_id is None:
+            raise HTTPException(status_code=401, detail="Токен недействителен")
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Токен недействителен или истек")
+    
     user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="Користувача не знайдено")
-    if user.role != "admin":
-        raise HTTPException(status_code=403, detail="Доступ дозволено тільки адмінам")
+    if not user or not user.is_active:
+        raise HTTPException(status_code=401, detail="Пользователь не найден или неактивен")
+    
     return user
 
+def require_admin(current_user: User = Depends(get_current_user)):
+    if current_user.role != "admin":
+        logger.warning(f"Попытка доступа админ-панели пользователем {current_user.login}")
+        raise HTTPException(status_code=403, detail="Доступ запрещен")
+    return current_user
+
+# === ТАБЛИЦА КОМПЛЕМЕНТАРНОСТИ ===
 COMPLEMENTARITY = {
-    "1.1": ["2.7", "2.5"],
-    "1.2": ["2.7", "2.4"],
-    "1.3": ["2.6", "2.3"],
-    "1.4": ["2.5", "2.3", "2.4", "2.6"],
-    "1.5": ["2.5", "2.2", "2.1", "2.6"],
-    "1.6": ["2.4", "2.2", "2.3", "2.5"],
-    "1.7": ["2.5", "2.7", "2.4"],
-    "2.1": ["1.5", "1.4", "1.7"],
-    "2.2": ["1.1", "1.5", "1.6"],
-    "2.3": ["1.4", "1.7", "1.3"],
-    "2.4": ["1.6", "1.7", "1.4", "1.2"],
-    "2.5": ["1.5", "1.4", "1.6", "1.7"],
-    "2.6": ["1.3", "1.5"],
+    "1.1": ["2.7", "2.5"], "1.2": ["2.7", "2.4"], "1.3": ["2.6", "2.3"],
+    "1.4": ["2.5", "2.3", "2.4", "2.6"], "1.5": ["2.5", "2.2", "2.1", "2.6"],
+    "1.6": ["2.4", "2.2", "2.3", "2.5"], "1.7": ["2.5", "2.7", "2.4"],
+    "2.1": ["1.5", "1.4", "1.7"], "2.2": ["1.1", "1.5", "1.6"],
+    "2.3": ["1.4", "1.7", "1.3"], "2.4": ["1.6", "1.7", "1.4", "1.2"],
+    "2.5": ["1.5", "1.4", "1.6", "1.7"], "2.6": ["1.3", "1.5"],
     "2.7": ["1.1", "1.5", "1.6", "1.7"],
 }
 
 def calculate_status(score: int) -> str:
-    if score >= 4:
-        return "A"
-    elif score == 3:
-        return "M"
-    elif score == 2:
-        return "N"
-    else:
-        return "P"
+    if score >= 4: return "A"
+    elif score == 3: return "M"
+    elif score == 2: return "N"
+    else: return "P"
 
 def calculate_compatibility(scores1: Dict, scores2: Dict) -> Dict[str, Any]:
     active1 = {code: calculate_status(score) for code, score in scores1.items()}
     active2 = {code: calculate_status(score) for code, score in scores2.items()}
-
-    A_count = 0
-    P_count = 0
-
+    A_count, P_count = 0, 0
+    
     for code1, status1 in active1.items():
-        if status1 != "A":
-            continue
-
-        complementary_codes = COMPLEMENTARITY.get(code1, [])
-
-        for comp_code in complementary_codes:
+        if status1 != "A": continue
+        for comp_code in COMPLEMENTARITY.get(code1, []):
             status2 = active2.get(comp_code, "P")
-
-            if status2 in ["A", "M"]:
-                A_count += 1
-            elif status2 == "P":
-                P_count += 1
-
+            if status2 in ["A", "M"]: A_count += 1
+            elif status2 == "P": P_count += 1
+    
     for code2, status2 in active2.items():
-        if status2 != "A":
-            continue
-
-        complementary_codes = COMPLEMENTARITY.get(code2, [])
-
-        for comp_code in complementary_codes:
+        if status2 != "A": continue
+        for comp_code in COMPLEMENTARITY.get(code2, []):
             status1 = active1.get(comp_code, "P")
-
-            if status1 in ["A", "M"]:
-                A_count += 1
-            elif status1 == "P":
-                P_count += 1
-
-    if A_count == 7 and P_count == 0:
-        interpretation = "Максимальная прочность союза"
-    elif A_count == 0 and P_count == 7:
-        interpretation = "Минимальная прочность (развал)"
-    elif P_count > 0 and A_count > P_count:
-        interpretation = "База есть, но есть очаги конфликтов"
-    elif A_count < P_count:
-        interpretation = "Союз временный (против больше чем за)"
-    else:
-        interpretation = "Средняя совместимость"
-
-    if A_count >= 3:
-        interpretation += ". Отношения имеют тенденцию к сохранению"
-
-    index_str = f"{A_count}/{P_count}"
+            if status1 in ["A", "M"]: A_count += 1
+            elif status1 == "P": P_count += 1
+    
+    if A_count == 7 and P_count == 0: interpretation = "Максимальная прочность союза"
+    elif A_count == 0 and P_count == 7: interpretation = "Минимальная прочность (развал)"
+    elif P_count > 0 and A_count > P_count: interpretation = "База есть, но есть очаги конфликтов"
+    elif A_count < P_count: interpretation = "Союз временный (против больше чем за)"
+    else: interpretation = "Средняя совместимость"
+    
+    if A_count >= 3: interpretation += ". Отношения имеют тенденцию к сохранению"
+    
     total = A_count + P_count
     score = (A_count / total * 100) if total > 0 else 50.0
+    
+    return {"index": f"{A_count}/{P_count}", "A_count": A_count, "P_count": P_count, "score": round(score, 1), "interpretation": interpretation}
 
-    return {
-        "index": index_str,
-        "A_count": A_count,
-        "P_count": P_count,
-        "score": round(score, 1),
-        "interpretation": interpretation
-    }
-
+# === INIT DB ===
 @app.on_event("startup")
 async def startup():
     Base.metadata.create_all(bind=engine)
+    init_telegram()
+    
     db = SessionLocal()
     try:
         admin = db.query(User).filter(User.login == "admin").first()
         if not admin:
+            admin_password = "admin123"  # Фиксированный пароль для первого входа
             admin = User(
                 login="admin",
-                password_hash=hash_password("admin123"),
+                password_hash=hash_password(admin_password),
                 email="admin@psy.com",
                 role="admin"
             )
             db.add(admin)
             db.commit()
-            print("✅ Створено адміна: login='admin', password='admin123'")
+            logger.info(f"✅ Админ создан. Логин: admin, Пароль: {admin_password}")
         
         if db.query(ArchetypeDescription).count() == 0:
             female_archetypes = [
-                {"code": "2.1", "name": "Ксения (Сестра/Артемида)", "color": "#4169E1", "chakra": 6, 
-                 "description": "Архетип сестры/охотницы. Независимая, целеустремленная, ценит свободу и дружбу.",
-                 "strengths": "Независимость, целеустремленность, умение дружить",
-                 "weaknesses": "Может быть слишком отстраненной"},
+                {"code": "2.1", "name": "Ксения (Сестра/Артемида)", "color": "#4169E1", "chakra": 6,
+                 "description": "Архетип сестры/охотницы. Независимая, целеустремленная.",
+                 "strengths": "Независимость, целеустремленность", "weaknesses": "Может быть отстраненной"},
                 {"code": "2.2", "name": "Кира (Стратег/Афина)", "color": "#8B00FF", "chakra": 7,
-                 "description": "Архетип стратега. Рациональная, умная, умеет планировать и достигать целей.",
-                 "strengths": "Мудрость, стратегическое мышление, логика",
-                 "weaknesses": "Может быть слишком холодной"},
+                 "description": "Архетип стратега. Рациональная, умная.",
+                 "strengths": "Мудрость, стратегическое мышление", "weaknesses": "Может быть холодной"},
                 {"code": "2.3", "name": "Катерина (Хранительница/Гестия)", "color": "#87CEEB", "chakra": 5,
-                 "description": "Архетип хранительницы. Создаёт уют, ценит спокойствие и гармонию в доме.",
-                 "strengths": "Спокойствие, умение создавать уют, мудрость",
-                 "weaknesses": "Может быть слишком замкнутой"},
+                 "description": "Архетип хранительницы. Создаёт уют.",
+                 "strengths": "Спокойствие, уют, мудрость", "weaknesses": "Может быть замкнутой"},
                 {"code": "2.4", "name": "Карина (Возлюбленная/Афродита)", "color": "#FFA500", "chakra": 2,
-                 "description": "Архетип любви и красоты. Чувственная, привлекательная, умеет наслаждаться жизнью.",
-                 "strengths": "Чувственность, творчество, умение любить",
-                 "weaknesses": "Может быть слишком эмоциональной"},
+                 "description": "Архетип любви и красоты.",
+                 "strengths": "Чувственность, творчество", "weaknesses": "Может быть эмоциональной"},
                 {"code": "2.5", "name": "Клара (Мать/Деметра)", "color": "#FF0000", "chakra": 1,
-                 "description": "Архетип матери. Заботливая, тёплая, видит счастье в материнстве.",
-                 "strengths": "Заботливость, доброта, нежность, терпеливость",
-                 "weaknesses": "Может растворяться в детях"},
+                 "description": "Архетип матери. Заботливая, тёплая.",
+                 "strengths": "Заботливость, доброта, нежность", "weaknesses": "Может растворяться в детях"},
                 {"code": "2.6", "name": "Кристина (Дочь/Персефона)", "color": "#008000", "chakra": 4,
-                 "description": "Архетип дочери. Мягкая, адаптивная, открытая к новому.",
-                 "strengths": "Гибкость, адаптивность, открытость",
-                 "weaknesses": "Может быть слишком зависимой"},
+                 "description": "Архетип дочери. Мягкая, адаптивная.",
+                 "strengths": "Гибкость, адаптивность", "weaknesses": "Может быть зависимой"},
                 {"code": "2.7", "name": "Каллерия (Жена/Гера)", "color": "#FFD700", "chakra": 3,
-                 "description": "Архетип жены. Верная, ориентирована на семью и долгосрочные отношения.",
-                 "strengths": "Верность, преданность, умение создавать семью",
-                 "weaknesses": "Может быть слишком зависимой от партнёра"},
+                 "description": "Архетип жены. Верная, ориентирована на семью.",
+                 "strengths": "Верность, преданность", "weaknesses": "Может быть зависимой от партнёра"},
             ]
             for arch in female_archetypes:
                 db.add(ArchetypeDescription(**arch))
 
             male_archetypes = [
                 {"code": "1.1", "name": "Константин (Правитель/Зевс)", "color": "#4B0082",
-                 "description": "Архетип правителя. Уверенный, лидер, стремится управлять и создавать своё царство.",
-                 "strengths": "Лидерство, ответственность, авторитет",
-                 "weaknesses": "Не заботится о чувствах окружающих"},
+                 "description": "Архетип правителя. Уверенный, лидер.",
+                 "strengths": "Лидерство, ответственность", "weaknesses": "Не заботится о чувствах"},
                 {"code": "1.2", "name": "Кирилл (Эмоциональный/Посейдон)", "color": "#0000FF",
-                 "description": "Архетип эмоционального. Яркие чувства и эмоции, радость, печаль, гнев, страх.",
-                 "strengths": "Эмоциональность, глубина переживаний",
-                 "weaknesses": "Чрезмерная эмоциональность, нестабильность"},
+                 "description": "Архетип эмоционального. Яркие чувства.",
+                 "strengths": "Эмоциональность, глубина", "weaknesses": "Нестабильность"},
                 {"code": "1.3", "name": "Клемент (Потусторонний/Гадес)", "color": "#2F4F4F",
-                 "description": "Архетип потустороннего. Погружён в себя, интуитивный, самодостаточный.",
-                 "strengths": "Интуиция, глубина, самодостаточность",
-                 "weaknesses": "Сложно адаптироваться в обществе"},
+                 "description": "Архетип потустороннего. Погружён в себя.",
+                 "strengths": "Интуиция, глубина", "weaknesses": "Сложно адаптироваться"},
                 {"code": "1.4", "name": "Кузьма (Умный/Гермес)", "color": "#FFD700",
-                 "description": "Архетип путника. Постоянно в движении, умный, разнообразный, без корней.",
-                 "strengths": "Гибкость, ум, талант общения",
-                 "weaknesses": "Непостоянство, отсутствие глубины"},
+                 "description": "Архетип путника. Постоянно в движении.",
+                 "strengths": "Гибкость, ум", "weaknesses": "Непостоянство"},
                 {"code": "1.5", "name": "Кондратий (Гармоничный/Аполлон)", "color": "#FF6347",
-                 "description": "Архетип гармоничного. Любит точность и порядок, дипломатичный.",
-                 "strengths": "Дипломатичность, логика, гармония",
-                 "weaknesses": "Не хватает чувственного опыта"},
+                 "description": "Архетип гармоничного. Любит точность.",
+                 "strengths": "Дипломатичность, логика", "weaknesses": "Не хватает чувств"},
                 {"code": "1.6", "name": "Кристиан (Ранимый/Гефест)", "color": "#708090",
-                 "description": "Архетип творца. Чувствительный, творческий, глубокий, ранимый.",
-                 "strengths": "Творчество, глубина чувств, чувствительность",
-                 "weaknesses": "Замкнутость, трудности в общении"},
+                 "description": "Архетип творца. Чувствительный.",
+                 "strengths": "Творчество, глубина", "weaknesses": "Замкнутость"},
                 {"code": "1.7", "name": "Клим (Воинственный/Арес)", "color": "#8B0000",
-                 "description": "Архетип воина. Эмоциональный, живой, импульсивный, физически активный.",
-                 "strengths": "Энергия, страсть, прямота",
-                 "weaknesses": "Неуправляемость эмоций, импульсивность"},
+                 "description": "Архетип воина. Эмоциональный, импульсивный.",
+                 "strengths": "Энергия, страсть", "weaknesses": "Импульсивность"},
             ]
             for arch in male_archetypes:
                 db.add(ArchetypeDescription(**arch))
 
             female_q = [
-                ("Мне нравится быть в образе мамы, такой теплой и заботливой. Даже в детстве мне нравилось играть с куклами, купать их, одевать, кормить, лечить.", "2.5", 1),
-                ("Я с детства любила мечтать, я путешествовала в своих мирах и фантазиях. Они были яркими и заменяли мне скуку.", "2.6", 2),
-                ("Я всегда чувствовала себя как будто в ответе за взрослых, сочувствовала и переживала за них.", "2.5", 3),
-                ("Девочкой меня называли «пацанкой» или вроде того. Меня интересовали больше мальчишеские забавы и занятия.", "2.1", 4),
-                ("Когда я была маленькой, порой родители бурно ссорились. В эти моменты я старалась стать незаметной, сжаться.", "2.3", 5),
-                ("Я с детства планировала свою свадьбу, представляла идеального партнера.", "2.7", 6),
-                ("Тема секса всегда немного запретная, но в детстве она вызывала у меня больше любопытства, чем страха.", "2.4", 7),
-                ("Глава семьи – отец, он опора, стабильность и сила. Так было у меня в детстве. Главное чувство к нему – уважение.", "2.2", 8),
-                ("С детства споры мамы и папы для меня были однозначны: папа всегда был для меня прав, его мышление, логика казались мне единственно верными.", "2.2", 9),
-                ("Чтобы меня убедить, нужно быть логичным, приводить веские аргументы.", "2.6", 10),
-                ("Смотря на родителей. Мне всегда хотелось быть почему-то как папа. Он вызывал чувство глубокой гордости и уважения.", "2.2", 11),
-                ("Я верю в судьбу, предопределенность. Ведь если кто-то или что-то предназначено тебе судьбой, то этого стоит ждать.", "2.3", 12),
-                ("Принять решение одной – сравни эгоизму. Мне нужно одобрение близких.", "2.6", 13),
-                ("И в детстве и сейчас у меня много друзей. Я люблю шумные компании.", "2.1", 14),
-                ("Когда домочадцев нет дома, наступает мое волшебное время. Я навожу порядок, делаю дом уютным.", "2.3", 15),
-                ("Красивые вещи меня гипнотизируют. Я ценю эстетику.", "2.6", 16),
-                ("Преданность и верность - главные ценности в отношениях.", "2.7", 17),
-                ("Выбирая партнера (спутника) я смотрю на его мужественность и достижения в этом мире.", "2.2", 18),
-                ("Мужчина ведом, лучше всегда будь на страже отношений.", "2.7", 19),
-                ("Синоним «партнера» – скорее «друг».", "2.1", 20),
-                ("Когда я готовлю, я словно колдую. Вкладываю душу.", "2.5", 21),
-                ("Одно из приятных и важных для меня ощущений – ощущение своего тела, его движений.", "2.4", 22),
-                ("Огонь - это таинство. Я могу смотреть на него бесконечно.", "2.3", 23),
-                ("Себя и близких я в обиду не дам. Если надо, буду защищать как смогу, ругаться, но молчать не стану.", "2.1", 24),
-                ("Главные чувства в отношениях – тепло и забота.", "2.6", 25),
-                ("Вечеринки, тусовочки, шумные посиделки – это все «мое».", "2.1", 26),
-                ("Женщину должен обеспечивать ее мужчина.", "2.7", 27),
-                ("Забавно, но из моего опыта я поняла, что мужчина тот же мальчик.", "2.3", 28),
-                ("У мужчин есть своя особая сексуальность. Мне она нравится.", "2.4", 29),
-                ("Если мой партнер в сексе получил удовольствие, то я получаю большее удовольствие, нежели если он не получил.", "2.5", 30),
-                ("Мое отношение к сексу очень простое – это не более чем физиологическая потребность.", "2.2", 31),
-                ("Когда я вступаю в близкие отношения, я не мыслю их без секса.", "2.4", 32),
-                ("Таинство секса – это подарок мой миру. Это скорее нечто сакральное и сокровенное, нежели простое удовольствие.", "2.3", 33),
-                ("С сексом все просто – это супружеский долг.", "2.7", 34),
-                ("Я не разделяю любовь и секс. Одно без другого не существует.", "2.4", 35),
+                ("Мне нравится быть в образе мамы, такой теплой и заботливой.", "2.5", 1),
+                ("Я с детства любила мечтать, я путешествовала в своих мирах.", "2.6", 2),
+                ("Я всегда чувствовала себя в ответе за взрослых.", "2.5", 3),
+                ("Девочкой меня называли «пацанкой».", "2.1", 4),
+                ("Когда родители ссорились, я старалась стать незаметной.", "2.3", 5),
+                ("Я с детства планировала свою свадьбу.", "2.7", 6),
+                ("Тема секса вызывала любопытство.", "2.4", 7),
+                ("Глава семьи – отец, он опора и сила.", "2.2", 8),
+                ("С детства папа всегда был прав.", "2.2", 9),
+                ("Чтобы меня убедить, нужны аргументы.", "2.6", 10),
+                ("Мне хотелось быть как папа.", "2.2", 11),
+                ("Я верю в судьбу.", "2.3", 12),
+                ("Принять решение одной – мне нужно одобрение.", "2.6", 13),
+                ("У меня много друзей.", "2.1", 14),
+                ("Я навожу порядок когда никого нет.", "2.3", 15),
+                ("Красивые вещи меня гипнотизируют.", "2.6", 16),
+                ("Преданность и верность - главные ценности.", "2.7", 17),
+                ("Выбирая партнера, смотрю на достижения.", "2.2", 18),
+                ("Мужчина ведом, лучше будь на страже.", "2.7", 19),
+                ("Партнер – скорее друг.", "2.1", 20),
+                ("Когда готовлю, вкладываю душу.", "2.5", 21),
+                ("Ощущение своего тела важно.", "2.4", 22),
+                ("Огонь - таинство.", "2.3", 23),
+                ("Себя и близких в обиду не дам.", "2.1", 24),
+                ("Тепло и забота - главное.", "2.6", 25),
+                ("Вечеринки – это моё.", "2.1", 26),
+                ("Мужчину должен обеспечивать мужчина.", "2.7", 27),
+                ("Мужчина тот же мальчик.", "2.3", 28),
+                ("Мужская сексуальность мне нравится.", "2.4", 29),
+                ("Партнер получил удовольствие – я больше.", "2.5", 30),
+                ("Секс – физиологическая потребность.", "2.2", 31),
+                ("Близкие отношения без секса не мыслю.", "2.4", 32),
+                ("Секс – сакральное.", "2.3", 33),
+                ("Секс – супружеский долг.", "2.7", 34),
+                ("Любовь и секс не разделяю.", "2.4", 35),
             ]
             for text, code, order in female_q:
                 db.add(Question(gender_type="female", text=text, archetype_code=code, order_index=order))
 
             male_q = [
-                ("Семья для меня – это система, мое царство. Я стремлюсь быть главой, как мой отец, и хочу, чтобы жена вела дом, пока я строю карьеру.", "1.1", 1),
-                ("Мои эмоции очень ярки: радость, гнев, страх – я проживаю их в полном объеме, даже если окружающим это кажется чрезмерным.", "1.2", 2),
-                ("Мне сложно усидеть на одном месте. Я постоянно меняю интересы, идеи и ситуации, мне важно общение, но я не привязываюсь к корням.", "1.4", 3),
-                ("Мне погружен в себя, мне комфортно в одиночестве. Мнение окружающих меня мало волнует, я живу в своем закрытом внутреннем пространстве.", "1.3", 4),
-                ("Я очень чувствителен и раним, но не умею выражать это словами. Мне проще показать чувства через творчество или ремесло.", "1.6", 5),
-                ("У меня много знакомых, я легко вступаю в контакт. Я щедр и весел в общении, но мало кто знает о моих истинных чувствах.", "1.4", 6),
-                ("Я живу инстинктами «здесь и сейчас». Мои эмоции сразу реагируют во внешнем мире, я импульсивен и активен физически.", "1.7", 7),
-                ("Я предпочитаю жить разумом, а не сердцем. Для меня важны логика, точность, порядок и внешний комфорт.", "1.5", 8),
-                ("Я часто замечаю то, что скрыто от других. Я накапливаю обиды и радости внутри, так как мне сложно говорить о них вслух.", "1.6", 9),
-                ("Я прирожденный дипломат. Я дорожу общением и всегда стараюсь найти компромисс, избегая открытых конфликтов.", "1.5", 10),
-                ("В детстве отец был для меня авторитетом и опорой. Я уважаю силу и стремлюсь занять такое же положение лидера в своей семье.", "1.1", 11),
-                ("Я ставлю перед собой реальные цели и знаю, как их добиться. Мне важно, чтобы вокруг было спокойно и эстетично.", "1.5", 12),
-                ("Карьера и общественное положение – основа моей привлекательности. Я стремлюсь к власти и руководящим должностям.", "1.1", 13),
-                ("Я объективно оцениваю ситуацию и редко пользуюсь субъективными впечатлениями. Мне важно сохранять равновесие и спокойствие.", "1.5", 14),
-                ("Я выбираю женщину, которая будет восхищаться мной и покоряться моему плану. Для меня важен престиж союза.", "1.1", 15),
-                ("Мои настроения переменчивы, как море. Мне мешает хладнокровие, я часто руководствуюсь сиюминутными порывами.", "1.2", 16),
-                ("Меня привлекают спокойные и мягкие женщины, способные принять мою эмоциональность и бурные переживания.", "1.2", 17),
-                ("Для меня важно, чтобы партнерша признавала мой авторитет. Неподчинение или несогласие я воспринимаю болезненно.", "1.1", 18),
-                ("Я предпочитаю физически выражать свою симпатию. Секс, танец, совместная трапеза для меня – фейерверк эмоций и страсти.", "1.7", 19),
-                ("Во взаимодействии с женщиной у меня могут проявляться патриархальные инстинкты: я стремлюсь доминировать просто потому, что я мужчина.", "1.2", 20),
-                ("Мне трудно переносить одиночество, мне нужна мужская компания, спорт и признание меня как мужчины среди друзей.", "1.7", 21),
-                ("Мне не хватает амбиций для рывка, я просто хочу жить комфортно для себя. Конкуренция мне менее интересна, чем гармония.", "1.5", 22),
-                ("Я редко достигаю планов из-за высокой переключаемости внимания. Мне интересно все новое, дающее раскрыться моим эмоциям.", "1.2", 23),
-                ("Я не создаю имидж и не ищу партнерш активно. Мои отношения строятся на основе ощущений и «диалога душ».", "1.3", 24),
-                ("Мне нужна сильная и независимая женщина, которая сможет понять глубину моих переживаний и связать меня с реальностью.", "1.6", 25),
-                ("Малейшие события оставляют в моей душе глубокий след на долгое время. Внутри меня – вихрь эмоций и анализ чувств.", "1.3", 26),
-                ("Я никогда не становлюсь частью компании полностью. Я скорее наблюдаю за происходящим, чем активно участвую в тусовках.", "1.6", 27),
-                ("Мой жизненный путь имеет множество сценариев. Если я нахожу интересное занятие, я могу стать мастером, но быстро остываю.", "1.4", 28),
-                ("У меня есть несколько друзей, которые принимают мою замкнутость. Я не нуждаюсь в большой команде, мне достаточно избранных.", "1.3", 29),
-                ("Я обладаю острым умом и талантом общения. В разговоре я излучаю обаяние и способен создать незабываемое впечатление.", "1.4", 30),
-                ("Моя интуиция развита сильнее, чем логика. Я тонко чувствую людей и события, хотя внешне могу казаться отрешенным.", "1.3", 31),
-                ("Я страстный мужчина, который полностью отдается физической близости. Меня привлекают такие же эмоциональные женщины, как я.", "1.7", 32),
-                ("Я человек «без корней». Я с легкостью круто меняю свою жизнь, если вижу новую интересную цель или идею.", "1.4", 33),
-                ("Общение для меня сложно и вызывает напряжение. Я не воспринимаю давления со стороны авторитетов и групп.", "1.6", 34),
-                ("Мне несвойственно смотреть на себя со стороны. Я живу инстинктами и не всегда способен воспринимать свои и чужие чувства рационально.", "1.7", 35),
+                ("Семья – мое царство. Я стремлюсь быть главой.", "1.1", 1),
+                ("Мои эмоции очень ярки.", "1.2", 2),
+                ("Мне сложно усидеть на одном месте.", "1.4", 3),
+                ("Мне комфортно в одиночестве.", "1.3", 4),
+                ("Я чувствителен и раним, но не показываю.", "1.6", 5),
+                ("У меня много знакомых.", "1.4", 6),
+                ("Я живу инстинктами здесь и сейчас.", "1.7", 7),
+                ("Живу разумом, а не сердцем.", "1.5", 8),
+                ("Я замечаю то что скрыто от других.", "1.6", 9),
+                ("Я прирожденный дипломат.", "1.5", 10),
+                ("Отец был авторитетом.", "1.1", 11),
+                ("Ставлю реальные цели.", "1.5", 12),
+                ("Карьера – основа привлекательности.", "1.1", 13),
+                ("Объективно оцениваю ситуацию.", "1.5", 14),
+                ("Выбираю женщину которая будет восхищаться.", "1.1", 15),
+                ("Настроения переменчивы.", "1.2", 16),
+                ("Привлекают спокойные женщины.", "1.2", 17),
+                ("Партнерша должна признавать авторитет.", "1.1", 18),
+                ("Предпочитаю физически выражать симпатию.", "1.7", 19),
+                ("Патриархальные инстинкты.", "1.2", 20),
+                ("Нужна мужская компания.", "1.7", 21),
+                ("Хочу жить комфортно.", "1.5", 22),
+                ("Редко достигаю планов.", "1.2", 23),
+                ("Отношения на основе ощущений.", "1.3", 24),
+                ("Нужна сильная женщина.", "1.6", 25),
+                ("События оставляют глубокий след.", "1.3", 26),
+                ("Наблюдаю за происходящим.", "1.6", 27),
+                ("Множество сценариев жизни.", "1.4", 28),
+                ("Нужны избранные друзья.", "1.3", 29),
+                ("Острый ум и обаяние.", "1.4", 30),
+                ("Интуиция развита сильнее логики.", "1.3", 31),
+                ("Страстный мужчина.", "1.7", 32),
+                ("Человек без корней.", "1.4", 33),
+                ("Общение вызывает напряжение.", "1.6", 34),
+                ("Живу инстинктами.", "1.7", 35),
             ]
             for text, code, order in male_q:
                 db.add(Question(gender_type="male", text=text, archetype_code=code, order_index=order))
-            
+
             db.commit()
-            print("База данных инициализирована!")
+            logger.info("✅ База данных инициализирована!")
     finally:
         db.close()
 
+# === GLOBAL ERROR HANDLER ===
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.error(f"Необработанная ошибка: {exc}", exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Внутренняя ошибка сервера. Обратитесь к администратору."}
+    )
+
+# === API ENDPOINTS ===
+
 @app.get("/")
 async def root():
-    return {"message": "Psycho Archetypes API", "status": "running"}
+    return {"message": "Psycho Archetypes API", "status": "running", "version": "3.0.0-SECURE"}
 
+# === AUTH ===
+@app.post("/api/auth/register")
+async def register(data: UserCreate, db: Session = Depends(get_db)):
+    existing = db.query(User).filter(User.login == data.login).first()
+    if existing:
+        raise HTTPException(400, "Пользователь с таким логином уже существует")
+
+    validate_password(data.password)
+    if data.email:
+        validate_email(data.email)
+
+    code = generate_code()
+    user = User(
+        login=sanitize_string(data.login, 50),
+        password_hash=hash_password(data.password),
+        gender=data.gender,
+        email=data.email,
+        phone=data.phone,
+        compatibility_code=code,
+        role="user"
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+
+    token = create_access_token(data={"sub": user.id, "role": user.role})
+    logger.info(f"Новый пользователь: {user.login} (ID: {user.id})")
+    
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "user": {"id": user.id, "login": user.login, "gender": user.gender, "role": user.role},
+        "compatibility_code": code
+    }
+
+@app.post("/api/auth/login")
+async def login(data: UserLogin, request: Request, db: Session = Depends(get_db)):
+    client_ip = request.client.host
+    
+    if rate_limiter.is_login_locked(client_ip):
+        raise HTTPException(429, "Слишком много попыток входа. Подождите 15 минут.")
+    
+    user = db.query(User).filter(User.login == data.login).first()
+    if not user:
+        rate_limiter.record_login_attempt(client_ip, False)
+        raise HTTPException(404, "Пользователь не найден")
+
+    if not verify_password(data.password, user.password_hash):
+        rate_limiter.record_login_attempt(client_ip, False)
+        raise HTTPException(401, "Неверный пароль")
+
+    rate_limiter.record_login_attempt(client_ip, True)
+    
+    token = create_access_token(data={"sub": user.id, "role": user.role})
+    logger.info(f"Вход: {user.login} (ID: {user.id}) с IP: {client_ip}")
+    
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "user": {"id": user.id, "login": user.login, "gender": user.gender, "role": user.role},
+        "compatibility_code": user.compatibility_code
+    }
+
+# === QUESTIONS ===
 @app.get("/api/questions/{gender}")
 async def get_questions(gender: str, db: Session = Depends(get_db)):
+    if gender not in ["male", "female"]:
+        raise HTTPException(400, "Неверный параметр пола")
+    
     questions = db.query(Question).filter(
         Question.gender_type == gender,
         Question.is_active == True
     ).order_by(Question.order_index).all()
-    return [
-        {"id": q.id, "text": q.text or "Вопрос в разработке", "archetype_code": q.archetype_code}
-        for q in questions
-    ]
+    
+    return [{"id": q.id, "text": sanitize_string(q.text, 1000) or "Вопрос в разработке", "archetype_code": q.archetype_code} for q in questions]
 
+# === TEST COMPLETE ===
 @app.post("/api/test/complete")
 async def complete_test(data: TestComplete, db: Session = Depends(get_db)):
     try:
+        # Валидация gender
+        if data.gender not in ["male", "female"]:
+            raise HTTPException(400, "Неверный параметр пола")
+        
         for ans in data.answers:
             db.add(Answer(session_id=data.session_id, question_id=ans.question_id, value=ans.value))
 
@@ -529,10 +762,17 @@ async def complete_test(data: TestComplete, db: Session = Depends(get_db)):
         active_archetypes = {code: calculate_status(score) for code, score in scores.items()}
 
         user = db.query(User).filter(User.session_id == data.session_id).first()
+        
+        # Если пользователь не найден по session_id, ищем по логину
+        if not user and data.login:
+            user = db.query(User).filter(User.login == sanitize_string(data.login, 50)).first()
+        
         if not user:
             code = generate_code()
+            temp_password = secrets.token_urlsafe(16)
             user = User(
-                login=data.login or "user",
+                login=sanitize_string(data.login or f"user_{uuid.uuid4().hex[:8]}", 50),
+                password_hash=hash_password(temp_password),
                 gender=data.gender,
                 orientation=data.orientation,
                 session_id=data.session_id,
@@ -547,44 +787,57 @@ async def complete_test(data: TestComplete, db: Session = Depends(get_db)):
 
         db.commit()
         db.refresh(user)
+        
+        logger.info(f"Тест завершен для session_id={data.session_id}, gender={data.gender}")
 
-        return {
-            "session_id": data.session_id,
-            "compatibility_code": user.compatibility_code,
-            "scores": scores,
-            "active_archetypes": active_archetypes
-        }
+        return {"session_id": data.session_id, "compatibility_code": user.compatibility_code, "scores": scores, "active_archetypes": active_archetypes}
+    except HTTPException:
+        raise
     except Exception as e:
         db.rollback()
-        print(f"Error in complete_test: {e}")
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Ошибка complete_test: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Ошибка при сохранении: {str(e)}")
 
+# === CONSULTATION ===
 @app.post("/api/consultation")
-async def create_consultation(data: ConsultationWithUser, db: Session = Depends(get_db)):
+async def create_consultation(data: ConsultationCreate, db: Session = Depends(get_db)):
     consultation = Consultation(
         user_id=data.user_id,
-        name=data.name,
-        phone=data.phone,
+        name=sanitize_string(data.name, 100),
+        phone=sanitize_string(data.phone, 20),
         email=data.email,
-        request_text=data.request_text
+        request_text=sanitize_string(data.request_text, 2000)
     )
     db.add(consultation)
     db.commit()
     db.refresh(consultation)
 
-    return {"message": "Заявка отправлена", "id": consultation.id, "user_id": data.user_id}
+    logger.info(f"Новая заявка на консультацию от {consultation.name}")
+    
+    # Telegram notification
+    await notify_consultation({
+        "id": consultation.id,
+        "name": consultation.name,
+        "phone": consultation.phone,
+        "email": consultation.email,
+        "request_text": consultation.request_text,
+        "created_at": str(consultation.created_at)
+    })
 
+    return {"message": "Заявка отправлена", "id": consultation.id}
+
+# === PROFILE ===
 @app.get("/api/profile/{code}")
 async def get_profile(code: str, db: Session = Depends(get_db)):
+    if not re.match(r'^PSY-\d{8}-[A-Z0-9]{12}$', code):
+        raise HTTPException(400, "Неверный формат кода")
+    
     user = db.query(User).filter(User.compatibility_code == code).first()
     if not user:
         raise HTTPException(404, "Профиль не найден")
-    
+
     scores = user.archetype_scores or {}
     active = user.active_archetypes or {}
-
     archetypes = db.query(ArchetypeDescription).all()
     arch_dict = {a.code: a for a in archetypes}
 
@@ -593,122 +846,132 @@ async def get_profile(code: str, db: Session = Depends(get_db)):
         arch = arch_dict.get(code_a)
         status = active.get(code_a, calculate_status(score))
         result.append({
-            "code": code_a,
-            "name": arch.name if arch else code_a,
-            "score": score,
-            "status": status,
-            "color": arch.color if arch else "#999",
+            "code": code_a, "name": arch.name if arch else code_a, "score": score,
+            "status": status, "color": arch.color if arch else "#999",
             "chakra": arch.chakra if arch else None,
-            "description": arch.description if arch else "",
-            "strengths": arch.strengths if arch else "",
-            "weaknesses": arch.weaknesses if arch else ""
+            "description": sanitize_string(arch.description, 500) if arch else "",
+            "strengths": sanitize_string(arch.strengths, 300) if arch else "",
+            "weaknesses": sanitize_string(arch.weaknesses, 300) if arch else ""
         })
-    
-    return {
-        "compatibility_code": code,
-        "archetypes": result,
-        "gender": user.gender
-    }
 
+    return {"compatibility_code": code, "archetypes": result, "gender": user.gender}
+
+# === COMPATIBILITY ===
 @app.post("/api/compatibility/check")
 async def check_compatibility(data: CompatibilityCheck, db: Session = Depends(get_db)):
     user1 = db.query(User).filter(User.compatibility_code == data.code1).first()
     user2 = db.query(User).filter(User.compatibility_code == data.code2).first()
-    
+
     if not user1 or not user2:
         raise HTTPException(404, "Один или оба кода не найдены")
-    
+
     scores1 = user1.archetype_scores or {}
     scores2 = user2.archetype_scores or {}
-    
     result = calculate_compatibility(scores1, scores2)
 
     couple = Couple(
-        user1_code=data.code1,
-        user2_code=data.code2,
-        compatibility_index=result["index"],
-        a_count=result["A_count"],
-        p_count=result["P_count"],
-        score=result["score"],
+        user1_code=data.code1, user2_code=data.code2,
+        compatibility_index=result["index"], a_count=result["A_count"],
+        p_count=result["P_count"], score=result["score"],
         interpretation=result["interpretation"]
     )
     db.add(couple)
     db.commit()
+
+    return {"user1": {"login": user1.login, "code": data.code1}, "user2": {"login": user2.login, "code": data.code2}, **result}
+
+# ========================================
+# === ADMIN ENDPOINTS (JWT PROTECTED) ===
+# ========================================
+
+@app.get("/api/admin/dashboard")
+async def get_admin_dashboard(current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
+    logger.info(f"Admin dashboard accessed by {current_user.login}")
     
     return {
-        "user1": {"login": user1.login, "code": data.code1},
-        "user2": {"login": user2.login, "code": data.code2},
-        **result
-    }
-
-@app.post("/api/auth/register")
-async def register(data: UserCreate, db: Session = Depends(get_db)):
-    existing_user = db.query(User).filter(User.login == data.login).first()
-    if existing_user:
-        raise HTTPException(400, "Пользователь с таким логином уже зарегистрирован")
-
-    code = generate_code()
-    user = User(
-        login=data.login,
-        password_hash=hash_password(data.password),
-        gender=data.gender,
-        compatibility_code=code,
-        role="user"
-    )
-    db.add(user)
-    db.commit()
-    db.refresh(user)
-
-    return {"user_id": user.id, "login": user.login, "gender": user.gender, "role": user.role, "compatibility_code": code}
-
-@app.post("/api/auth/login")
-async def login(data: UserLogin, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.login == data.login).first()
-    if not user:
-        raise HTTPException(404, "Пользователь не найден. Зарегистрируйтесь сначала.")
-
-    if not verify_password(data.password, user.password_hash):
-        raise HTTPException(401, "Неверный пароль")
-
-    return {
-        "user": {
-            "id": user.id,
-            "login": user.login,
-            "gender": user.gender,
-            "role": user.role
+        "stats": {
+            "total_users": db.query(User).count(),
+            "total_consultations": db.query(Consultation).count(),
+            "new_consultations": db.query(Consultation).filter(Consultation.status == "new").count(),
+            "total_tests": db.query(Test).filter(Test.is_active == True).count(),
+            "total_results": db.query(TestResult).count()
         },
-        "compatibility_code": user.compatibility_code
+        "recent_consultations": [
+            {"id": c.id, "user_id": c.user_id, "name": c.name, "status": c.status, "created_at": str(c.created_at)}
+            for c in db.query(Consultation).order_by(Consultation.created_at.desc()).limit(10).all()
+        ],
+        "recent_users": [
+            {"id": u.id, "login": u.login, "role": u.role, "created_at": str(u.created_at)}
+            for u in db.query(User).order_by(User.created_at.desc()).limit(10).all()
+        ]
     }
+
+@app.get("/api/admin/users")
+async def get_all_users(current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
+    users = db.query(User).all()
+    return [
+        {"id": u.id, "login": u.login, "email": u.email, "phone": u.phone, "gender": u.gender, "role": u.role, "created_at": str(u.created_at), "is_active": u.is_active}
+        for u in users
+    ]
+
+@app.post("/api/admin/users/{user_id}/role")
+async def update_user_role(user_id: int, data: dict, current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
+    role = data.get("role")
+    if role not in ["admin", "user"]:
+        raise HTTPException(400, "Роль должна быть 'admin' или 'user'")
+    
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(404, "Пользователь не найден")
+    
+    old_role = user.role
+    user.role = role
+    db.commit()
+    
+    logger.info(f"{current_user.login} изменил роль пользователя {user.login} с {old_role} на {role}")
+    return {"message": f"Роль изменена на '{role}'", "user_id": user_id}
+
+@app.delete("/api/admin/users/{user_id}")
+async def delete_user(user_id: int, current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
+    if current_user.id == user_id:
+        raise HTTPException(400, "Нельзя удалить самого себя")
+    
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(404, "Пользователь не найден")
+    
+    db.delete(user)
+    db.commit()
+    
+    logger.info(f"{current_user.login} удалил пользователя ID: {user_id}")
+    return {"message": "Пользователь удален", "user_id": user_id}
 
 @app.get("/api/admin/consultations")
-async def get_consultations(user_id: int, db: Session = Depends(get_db)):
-    check_admin(user_id, db)
+async def get_consultations(current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
     consultations = db.query(Consultation).order_by(Consultation.created_at.desc()).all()
     return [
         {"id": c.id, "user_id": c.user_id, "name": c.name, "phone": c.phone, "email": c.email, "request": c.request_text, "status": c.status, "created": c.created_at.isoformat()}
         for c in consultations
     ]
 
-@app.post("/api/admin/consultations/update-status")
-async def update_consultation_status(
-    consultation_id: int,
-    status: str,
-    user_id: int,
-    db: Session = Depends(get_db)
-):
-    check_admin(user_id, db)
+@app.post("/api/admin/consultations/{consultation_id}/status")
+async def update_consultation_status(consultation_id: int, data: dict, current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
+    status = data.get("status")
+    if status not in ["new", "in_progress", "completed", "cancelled"]:
+        raise HTTPException(400, "Неверный статус")
+    
     consultation = db.query(Consultation).filter(Consultation.id == consultation_id).first()
     if not consultation:
-        raise HTTPException(status_code=404, detail="Консультацію не знайдено")
+        raise HTTPException(404, "Консультация не найдена")
     
     consultation.status = status
     db.commit()
     
-    return {"message": "Статус оновлено", "consultation_id": consultation_id, "new_status": status}
+    logger.info(f"{current_user.login} обновил статус консультации #{consultation_id} на {status}")
+    return {"message": "Статус обновлен", "consultation_id": consultation_id, "new_status": status}
 
 @app.get("/api/admin/questions")
-async def admin_get_questions(user_id: int, db: Session = Depends(get_db)):
-    check_admin(user_id, db)
+async def admin_get_questions(current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
     questions = db.query(Question).all()
     return [
         {"id": q.id, "gender_type": q.gender_type, "text": q.text, "archetype_code": q.archetype_code, "order_index": q.order_index, "is_active": q.is_active}
@@ -716,353 +979,147 @@ async def admin_get_questions(user_id: int, db: Session = Depends(get_db)):
     ]
 
 @app.get("/api/admin/archetypes")
-async def admin_get_archetypes(user_id: int, db: Session = Depends(get_db)):
-    check_admin(user_id, db)
+async def admin_get_archetypes(current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
     archetypes = db.query(ArchetypeDescription).all()
     return [
         {"id": a.id, "code": a.code, "name": a.name, "color": a.color, "chakra": a.chakra, "description": a.description, "strengths": a.strengths, "weaknesses": a.weaknesses}
         for a in archetypes
     ]
 
-@app.get("/api/users/{user_id}/role")
-async def get_user_role(user_id: int, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="Користувача не знайдено")
-    
-    return {"user_id": user.id, "login": user.login, "role": user.role}
-
-@app.get("/api/admin/dashboard")
-async def get_admin_dashboard(user_id: int, db: Session = Depends(get_db)):
-    check_admin(user_id, db)
-
-    total_users = db.query(User).count()
-    total_consultations = db.query(Consultation).count()
-    new_consultations = db.query(Consultation).filter(Consultation.status == "new").count()
-    total_tests = db.query(Test).filter(Test.is_active == True).count()
-    total_results = db.query(TestResult).count()
-
-    recent_consultations = db.query(Consultation).order_by(Consultation.created_at.desc()).limit(10).all()
-
-    recent_users = db.query(User).order_by(User.created_at.desc()).limit(10).all()
-    
-    return {
-        "stats": {
-            "total_users": total_users,
-            "total_consultations": total_consultations,
-            "new_consultations": new_consultations,
-            "total_tests": total_tests,
-            "total_results": total_results
-        },
-        "recent_consultations": [
-            {
-                "id": c.id,
-                "user_id": c.user_id,
-                "name": c.name,
-                "status": c.status,
-                "created_at": str(c.created_at)
-            }
-            for c in recent_consultations
-        ],
-        "recent_users": [
-            {
-                "id": u.id,
-                "login": u.login,
-                "role": u.role,
-                "created_at": str(u.created_at)
-            }
-            for u in recent_users
-        ]
-    }
-
-@app.get("/api/admin/users")
-async def get_all_users(user_id: int, db: Session = Depends(get_db)):
-    check_admin(user_id, db)
-    users = db.query(User).all()
-    return [
-        {
-            "id": u.id,
-            "login": u.login,
-            "email": u.email,
-            "phone": u.phone,
-            "gender": u.gender,
-            "role": u.role,
-            "created_at": str(u.created_at),
-            "is_active": u.is_active
-        }
-        for u in users
-    ]
-
-@app.post("/api/admin/users/update-role")
-async def update_user_role(
-    user_id_target: int,
-    role: str,
-    user_id: int,
-    db: Session = Depends(get_db)
-):
-    check_admin(user_id, db)
-
-    if role not in ["admin", "user"]:
-        raise HTTPException(status_code=400, detail="Роль має бути 'admin' або 'user'")
-    
-    user = db.query(User).filter(User.id == user_id_target).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="Користувача не знайдено")
-    
-    user.role = role
-    db.commit()
-    
-    return {"message": f"Роль оновлено на '{role}'", "user_id": user_id_target}
-
-@app.delete("/api/admin/users/{user_id_target}")
-async def delete_user(user_id_target: int, user_id: int, db: Session = Depends(get_db)):
-    check_admin(user_id, db)
-    
-    user = db.query(User).filter(User.id == user_id_target).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="Користувача не знайдено")
-    
-    db.delete(user)
-    db.commit()
-    
-    return {"message": "Користувача видалено", "user_id": user_id_target}
-
+# === TESTS (Admin Protected) ===
 @app.post("/api/tests")
-async def create_test(test: TestCreate, user_id: int, db: Session = Depends(get_db)):
-    check_admin(user_id, db)
-    new_test = Test(
-        title=test.title,
-        description=test.description,
-        category=test.category
-    )
+async def create_test(test: TestCreate, current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
+    new_test = Test(title=sanitize_string(test.title, 200), description=sanitize_string(test.description, 2000), category=sanitize_string(test.category, 100))
     db.add(new_test)
     db.commit()
     db.refresh(new_test)
-    
-    return {"message": "Тест створено", "test_id": new_test.id, "title": new_test.title}
+    logger.info(f"{current_user.login} создал тест #{new_test.id}: {new_test.title}")
+    return {"message": "Тест создан", "test_id": new_test.id, "title": new_test.title}
 
 @app.put("/api/tests/{test_id}")
-async def update_test(
-    test_id: int,
-    test: TestCreate,
-    user_id: int,
-    db: Session = Depends(get_db)
-):
-    check_admin(user_id, db)
+async def update_test(test_id: int, test: TestCreate, current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
     test_db = db.query(Test).filter(Test.id == test_id).first()
     if not test_db:
-        raise HTTPException(status_code=404, detail="Тест не знайдено")
+        raise HTTPException(404, "Тест не найден")
     
-    test_db.title = test.title
-    test_db.description = test.description
-    test_db.category = test.category
+    test_db.title = sanitize_string(test.title, 200)
+    test_db.description = sanitize_string(test.description, 2000)
+    test_db.category = sanitize_string(test.category, 100)
     db.commit()
     
-    return {"message": "Тест оновлено", "test_id": test_id}
+    logger.info(f"{current_user.login} обновил тест #{test_id}")
+    return {"message": "Тест обновлен", "test_id": test_id}
 
 @app.delete("/api/tests/{test_id}")
-async def delete_test(test_id: int, user_id: int, db: Session = Depends(get_db)):
-    check_admin(user_id, db)
+async def delete_test(test_id: int, current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
     test = db.query(Test).filter(Test.id == test_id).first()
     if not test:
-        raise HTTPException(status_code=404, detail="Тест не знайдено")
+        raise HTTPException(404, "Тест не найден")
     
     db.delete(test)
     db.commit()
-    
-    return {"message": "Тест видалено", "test_id": test_id}
+    logger.info(f"{current_user.login} удалил тест #{test_id}")
+    return {"message": "Тест удален", "test_id": test_id}
 
 @app.get("/api/tests")
 async def get_all_tests(db: Session = Depends(get_db)):
     tests = db.query(Test).filter(Test.is_active == True).all()
-    return [
-        {
-            "id": t.id,
-            "title": t.title,
-            "description": t.description,
-            "category": t.category,
-            "created_at": str(t.created_at)
-        }
-        for t in tests
-    ]
+    return [{"id": t.id, "title": t.title, "description": t.description, "category": t.category, "created_at": str(t.created_at)} for t in tests]
 
 @app.get("/api/tests/{test_id}")
 async def get_test(test_id: int, db: Session = Depends(get_db)):
     test = db.query(Test).filter(Test.id == test_id).first()
     if not test:
-        raise HTTPException(status_code=404, detail="Тест не знайдено")
-    
-    return {
-        "id": test.id,
-        "title": test.title,
-        "description": test.description,
-        "category": test.category,
-        "is_active": test.is_active
-    }
+        raise HTTPException(404, "Тест не найден")
+    return {"id": test.id, "title": test.title, "description": test.description, "category": test.category, "is_active": test.is_active}
 
+# === TEST QUESTIONS (Admin Protected) ===
 @app.post("/api/tests/questions")
-async def create_question(question: TestQuestionCreate, user_id: int, db: Session = Depends(get_db)):
-    check_admin(user_id, db)
-    new_question = TestQuestion(
-        test_id=question.test_id,
-        text=question.text,
-        order_index=question.order_index
-    )
+async def create_question(question: TestQuestionCreate, current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
+    new_question = TestQuestion(test_id=question.test_id, text=sanitize_string(question.text, 2000), order_index=question.order_index)
     db.add(new_question)
     db.commit()
     db.refresh(new_question)
-    
-    return {"message": "Питання додано", "question_id": new_question.id}
+    logger.info(f"{current_user.login} добавил вопрос #{new_question.id} к тесту #{question.test_id}")
+    return {"message": "Вопрос добавлен", "question_id": new_question.id}
 
 @app.delete("/api/tests/questions/{question_id}")
-async def delete_question(question_id: int, user_id: int, db: Session = Depends(get_db)):
-    check_admin(user_id, db)
+async def delete_question(question_id: int, current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
     question = db.query(TestQuestion).filter(TestQuestion.id == question_id).first()
     if not question:
-        raise HTTPException(status_code=404, detail="Питання не знайдено")
-    
+        raise HTTPException(404, "Вопрос не найден")
     db.delete(question)
     db.commit()
-    
-    return {"message": "Питання видалено", "question_id": question_id}
-
-@app.post("/api/tests/answers")
-async def create_answer_option(answer: AnswerOptionCreate, user_id: int, db: Session = Depends(get_db)):
-    check_admin(user_id, db)
-    new_answer = AnswerOption(
-        question_id=answer.question_id,
-        text=answer.text,
-        score=answer.score,
-        order_index=answer.order_index
-    )
-    db.add(new_answer)
-    db.commit()
-    db.refresh(new_answer)
-    
-    return {"message": "Варіант відповіді додано", "answer_id": new_answer.id}
-
-@app.put("/api/tests/answers/{answer_id}")
-async def update_answer_option(
-    answer_id: int,
-    answer: AnswerOptionCreate,
-    user_id: int,
-    db: Session = Depends(get_db)
-):
-    check_admin(user_id, db)
-    answer_db = db.query(AnswerOption).filter(AnswerOption.id == answer_id).first()
-    if not answer_db:
-        raise HTTPException(status_code=404, detail="Варіант відповіді не знайдено")
-    
-    answer_db.text = answer.text
-    answer_db.score = answer.score
-    answer_db.order_index = answer.order_index
-    db.commit()
-    
-    return {"message": "Варіант відповіді оновлено", "answer_id": answer_id}
-
-@app.delete("/api/tests/answers/{answer_id}")
-async def delete_answer_option(answer_id: int, user_id: int, db: Session = Depends(get_db)):
-    check_admin(user_id, db)
-    answer = db.query(AnswerOption).filter(AnswerOption.id == answer_id).first()
-    if not answer:
-        raise HTTPException(status_code=404, detail="Варіант відповіді не знайдено")
-    
-    db.delete(answer)
-    db.commit()
-    
-    return {"message": "Варіант відповіді видалено", "answer_id": answer_id}
+    logger.info(f"{current_user.login} удалил вопрос #{question_id}")
+    return {"message": "Вопрос удален", "question_id": question_id}
 
 @app.get("/api/tests/{test_id}/questions")
 async def get_test_questions(test_id: int, db: Session = Depends(get_db)):
-    questions = db.query(TestQuestion).filter(
-        TestQuestion.test_id == test_id,
-        TestQuestion.is_active == True
-    ).order_by(TestQuestion.order_index).all()
-    
-    return [
-        {
-            "id": q.id,
-            "text": q.text,
-            "order_index": q.order_index
-        }
-        for q in questions
-    ]
+    questions = db.query(TestQuestion).filter(TestQuestion.test_id == test_id, TestQuestion.is_active == True).order_by(TestQuestion.order_index).all()
+    return [{"id": q.id, "text": q.text, "order_index": q.order_index} for q in questions]
 
+# === ANSWER OPTIONS (Admin Protected) ===
 @app.post("/api/tests/answers")
-async def create_answer_option(answer: AnswerOptionCreate, db: Session = Depends(get_db)):
-    new_answer = AnswerOption(
-        question_id=answer.question_id,
-        text=answer.text,
-        score=answer.score,
-        order_index=answer.order_index
-    )
+async def create_answer_option(answer: AnswerOptionCreate, current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
+    new_answer = AnswerOption(question_id=answer.question_id, text=sanitize_string(answer.text, 500), score=answer.score, order_index=answer.order_index)
     db.add(new_answer)
     db.commit()
     db.refresh(new_answer)
-    
-    return {"message": "Варіант відповіді додано", "answer_id": new_answer.id}
+    logger.info(f"{current_user.login} добавил вариант ответа #{new_answer.id}")
+    return {"message": "Вариант добавлен", "answer_id": new_answer.id}
+
+@app.put("/api/tests/answers/{answer_id}")
+async def update_answer_option(answer_id: int, answer: AnswerOptionCreate, current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
+    answer_db = db.query(AnswerOption).filter(AnswerOption.id == answer_id).first()
+    if not answer_db:
+        raise HTTPException(404, "Вариант не найден")
+    answer_db.text = sanitize_string(answer.text, 500)
+    answer_db.score = answer.score
+    answer_db.order_index = answer.order_index
+    db.commit()
+    return {"message": "Вариант обновлен", "answer_id": answer_id}
+
+@app.delete("/api/tests/answers/{answer_id}")
+async def delete_answer_option(answer_id: int, current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
+    answer = db.query(AnswerOption).filter(AnswerOption.id == answer_id).first()
+    if not answer:
+        raise HTTPException(404, "Вариант не найден")
+    db.delete(answer)
+    db.commit()
+    logger.info(f"{current_user.login} удалил вариант ответа #{answer_id}")
+    return {"message": "Вариант удален", "answer_id": answer_id}
 
 @app.get("/api/questions/{question_id}/answers")
 async def get_answer_options(question_id: int, db: Session = Depends(get_db)):
-    answers = db.query(AnswerOption).filter(
-        AnswerOption.question_id == question_id,
-        AnswerOption.is_active == True
-    ).order_by(AnswerOption.order_index).all()
-    
-    return [
-        {
-            "id": a.id,
-            "text": a.text,
-            "score": a.score,
-            "order_index": a.order_index
-        }
-        for a in answers
-    ]
+    answers = db.query(AnswerOption).filter(AnswerOption.question_id == question_id, AnswerOption.is_active == True).order_by(AnswerOption.order_index).all()
+    return [{"id": a.id, "text": a.text, "score": a.score, "order_index": a.order_index} for a in answers]
 
+# === TEST RESULTS ===
 @app.post("/api/test-results")
-async def save_test_result(result: TestResultCreate, db: Session = Depends(get_db)):
+async def save_test_result(result: TestResultCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     import json
     new_result = TestResult(
-        user_id=result.user_id,
-        test_id=result.test_id,
-        total_score=result.total_score,
+        user_id=result.user_id, test_id=result.test_id, total_score=result.total_score,
         scores_breakdown=json.dumps(result.scores_breakdown) if result.scores_breakdown else None,
-        result_text=result.result_text
+        result_text=sanitize_string(result.result_text, 2000)
     )
     db.add(new_result)
     db.commit()
     db.refresh(new_result)
-    
-    return {"message": "Результат збережено", "result_id": new_result.id}
+    return {"message": "Результат сохранен", "result_id": new_result.id}
 
 @app.get("/api/users/{user_id}/results")
-async def get_user_results(user_id: int, db: Session = Depends(get_db)):
+async def get_user_results(user_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if current_user.id != user_id and current_user.role != "admin":
+        raise HTTPException(403, "Доступ запрещен")
     results = db.query(TestResult).filter(TestResult.user_id == user_id).all()
-    return [
-        {
-            "id": r.id,
-            "test_id": r.test_id,
-            "total_score": r.total_score,
-            "result_text": r.result_text,
-            "completed_at": str(r.completed_at)
-        }
-        for r in results
-    ]
+    return [{"id": r.id, "test_id": r.test_id, "total_score": r.total_score, "result_text": r.result_text, "completed_at": str(r.completed_at)} for r in results]
 
 @app.get("/api/tests/{test_id}/results")
-async def get_test_results(test_id: int, db: Session = Depends(get_db)):
+async def get_test_results(test_id: int, current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
     results = db.query(TestResult).filter(TestResult.test_id == test_id).all()
-    return [
-        {
-            "id": r.id,
-            "user_id": r.user_id,
-            "total_score": r.total_score,
-            "result_text": r.result_text,
-            "completed_at": str(r.completed_at)
-        }
-        for r in results
-    ]
+    return [{"id": r.id, "user_id": r.user_id, "total_score": r.total_score, "result_text": r.result_text, "completed_at": str(r.completed_at)} for r in results]
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8000, log_level="info")
