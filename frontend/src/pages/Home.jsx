@@ -1,11 +1,60 @@
 import { Link } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import psychologistPhoto from '../assets/psychologist.jpg';
 import vkIcon from '../assets/vk-icon.avif';
 import maxIcon from '../assets/max-icon.jpg';
-import { Heart, Brain, Palette, Target, Shield, Search, ArrowRight, Flower2, Swords, Sparkles } from 'lucide-react';
+import { ArrowRight, Flower2, Swords, User, Baby, Users, MessageCircle, UsersRound, Waves, AlertTriangle, Flame, Frown, Lightbulb, Compass, Lock, Shield, BookOpen, Tablet, Moon, HeartHandshake, GraduationCap, Droplets, Stethoscope, Scale, HeartCrack, KeyRound, BabyIcon, MessageSquare, Building2, DoorOpen } from 'lucide-react';
 
 const Home = () => {
+  const [activeTab, setActiveTab] = useState('personal');
+
+  const requestsData = {
+    personal: [
+      { icon: MessageCircle, title: 'Контакт с ребёнком или родителем', desc: 'Наладить отношения с ребёнком или со своим родителем.', link: '/appointment', linkText: 'Записаться на консультацию' },
+      { icon: UsersRound, title: 'Отношения в паре', desc: 'Наладить отношения в паре.', link: '/compatibility', linkText: 'Проверить совместимость' },
+      { icon: Waves, title: 'Тревожность и ПА', desc: 'Тревожность, панические атаки, постоянное беспокойство.', link: '/appointment', linkText: 'Записаться на консультацию' },
+      { icon: Flame, title: 'Переживания утраты', desc: 'Помощь в проживании горя и утраты.', link: '/appointment', linkText: 'Записаться на консультацию' },
+      { icon: AlertTriangle, title: 'Травмы и тяжёлые переживания', desc: 'Работа с травмирующим опытом и сложными переживаниями.', link: '/appointment', linkText: 'Записаться на консультацию' },
+      { icon: Frown, title: 'Страхи', desc: 'Помощь в работе со страхами и фобиями.', link: '/appointment', linkText: 'Записаться на консультацию' },
+      { icon: Lightbulb, title: 'Трудности в принятии решения', desc: 'Поддержка в сложных выборах и жизненных решениях.', link: '/appointment', linkText: 'Записаться на консультацию' },
+      { icon: Shield, title: 'Самоценность и самоопределение', desc: 'Работа с самооценкой и определением себя.', link: '/appointment', linkText: 'Записаться на консультацию' },
+      { icon: Compass, title: 'Профессиональное развитие', desc: 'Помощь в профессиональном самоопределении и росте.', link: '/appointment', linkText: 'Записаться на консультацию' },
+      { icon: Lock, title: 'Сексологические вопросы', desc: 'Деликатная работа с интимными вопросами.', link: '/appointment', linkText: 'Записаться на консультацию' },
+    ],
+    children: [
+      { icon: Waves, title: 'Тревожность', desc: 'Повышенная тревожность, беспокойство, неуверенность у ребёнка.', link: '/appointment', linkText: 'Записаться на консультацию' },
+      { icon: Flame, title: 'Агрессивность', desc: 'Агрессивное поведение, вспышки гнева, проблемы с контролем эмоций.', link: '/appointment', linkText: 'Записаться на консультацию' },
+      { icon: BookOpen, title: 'Школьная неуспеваемость', desc: 'Трудности в обучении, снижение успеваемости, нежелание учиться.', link: '/appointment', linkText: 'Записаться на консультацию' },
+      { icon: UsersRound, title: 'Нарушения общения', desc: 'Трудности в общении со сверстниками, замкнутость, конфликты.', link: '/appointment', linkText: 'Записаться на консультацию' },
+      { icon: Tablet, title: 'Зависимость от гаджетов', desc: 'Чрезмерное увлечение экранами, играми, социальными сетями.', link: '/appointment', linkText: 'Записаться на консультацию' },
+      { icon: Moon, title: 'Страхи и кошмары', desc: 'Ночные кошмары, страхи темноты, одиночества и другие.', link: '/appointment', linkText: 'Записаться на консультацию' },
+      { icon: AlertTriangle, title: 'Травмы и переживания', desc: 'Помощь ребёнку после травмирующих событий и тяжёлых переживаний.', link: '/appointment', linkText: 'Записаться на консультацию' },
+      { icon: GraduationCap, title: 'Готовность к школе', desc: 'Психологическая диагностика и подготовка к школьному обучению.', link: '/appointment', linkText: 'Записаться на консультацию' },
+      { icon: HeartHandshake, title: 'Адаптация в саду', desc: 'Помощь в адаптации ребёнка к детскому саду.', link: '/appointment', linkText: 'Записаться на консультацию' },
+      { icon: Scale, title: 'Представительство в суде', desc: 'Представление интересов ребёнка в судебных разбирательствах.', link: '/appointment', linkText: 'Записаться на консультацию' },
+      { icon: Droplets, title: 'Энурез, энкопрез', desc: 'Психологическая помощь при недержании мочи и кала.', link: '/appointment', linkText: 'Записаться на консультацию' },
+      { icon: Stethoscope, title: 'Сопровождение развития', desc: 'Психологическое сопровождение развития детей от 1 месяца.', link: '/appointment', linkText: 'Записаться на консультацию' },
+    ],
+    family: [
+      { icon: Waves, title: 'Кризисы семейной жизни', desc: 'Помощь в преодолении кризисов в отношениях и восстановлении близости.', link: '/appointment', linkText: 'Записаться на консультацию' },
+      { icon: Lock, title: 'Сексологические запросы', desc: 'Деликатная работа с интимными вопросами в паре.', link: '/appointment', linkText: 'Записаться на консультацию' },
+      { icon: HeartCrack, title: 'Измены и потеря доверия', desc: 'Восстановление доверия и работы с последствиями измены.', link: '/appointment', linkText: 'Записаться на консультацию' },
+      { icon: KeyRound, title: 'Начало семьи и добрачное консультирование', desc: 'Подготовка к совместной жизни и осознанный выбор партнёра.', link: '/appointment', linkText: 'Записаться на консультацию' },
+      { icon: DoorOpen, title: 'Развод', desc: 'Психологическая поддержка в процессе развода.', link: '/appointment', linkText: 'Записаться на консультацию' },
+      { icon: MessageSquare, title: 'Коммуникация в семье', desc: 'Организация эффективной коммуникации между членами семьи.', link: '/appointment', linkText: 'Записаться на консультацию' },
+      { icon: Building2, title: 'Семейная структура и система', desc: 'Консультирование по вопросам семейной структуры и ролей.', link: '/appointment', linkText: 'Записаться на консультацию' },
+      { icon: BabyIcon, title: 'Незавершённая сепарация', desc: 'Работа с незавершённой сепарацией с родителями.', link: '/appointment', linkText: 'Записаться на консультацию' },
+    ],
+  };
+
+  const tabs = [
+    { key: 'personal', label: 'Личные запросы', icon: User },
+    { key: 'children', label: 'Детские запросы', icon: Baby },
+    { key: 'family', label: 'Семейные запросы', icon: Users },
+  ];
+
+  const currentRequests = requestsData[activeTab];
+
   useEffect(() => {
     const revealElements = document.querySelectorAll('.reveal');
     const revealOnScroll = () => {
@@ -28,7 +77,7 @@ const Home = () => {
 
   return (
     <div>
-      <section className="relative py-20 px-4 overflow-hidden" style={{ background: 'linear-gradient(135deg, #6B8F8B 0%, #4A6B68 100%)' }}>
+      <section className="relative pt-24 pb-20 px-4 overflow-hidden" style={{ background: 'linear-gradient(135deg, #6B8F8B 0%, #4A6B68 100%)' }}>
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-20 left-10 w-32 h-32 bg-white/10 rounded-full blur-3xl float" style={{ animationDelay: '0s' }}></div>
           <div className="absolute bottom-20 right-10 w-40 h-40 bg-white/10 rounded-full blur-3xl float" style={{ animationDelay: '1s' }}></div>
@@ -113,31 +162,40 @@ const Home = () => {
                 </Link>
               </div>
               <div className="pt-6 border-t border-gray-200">
-                <p className="text-sm text-gray-500 mb-3">Я в соцсетях:</p>
-                <div className="flex flex-wrap gap-3">
+                <p className="text-sm text-gray-500 mb-4">Я в соцсетях:</p>
+                <div className="flex flex-wrap gap-4">
                   <a
                     href="https://vk.ru/pankratova_kseniya"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl font-medium hover:bg-primary-dark transition transform hover:scale-105"
+                    className="group flex flex-col items-center gap-2"
                   >
-                    <img src={vkIcon} alt="VK" className="w-5 h-5 object-contain rounded-full" />
-                    ВКонтакте
-                    <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                    </svg>
+                    <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 hover:scale-110 transition transform">
+                      <img src={vkIcon} alt="VK" className="w-6 h-6 object-contain" />
+                    </div>
+                    <span className="text-xs text-gray-600 text-center group-hover:text-primary transition">Основная страница ВКонтакте</span>
+                  </a>
+                  <a
+                    href="https://vk.ru/it_mama62"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group flex flex-col items-center gap-2"
+                  >
+                    <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 hover:scale-110 transition transform">
+                      <img src={vkIcon} alt="VK" className="w-6 h-6 object-contain" />
+                    </div>
+                    <span className="text-xs text-gray-600 text-center group-hover:text-primary transition">Группа ВКонтакте</span>
                   </a>
                   <a
                     href="https://max.ru/join/6HA8FoejJXU4ExztiPfwUh-ueBUh29SqE4qkW2iHdyY"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl font-medium hover:bg-primary-dark transition transform hover:scale-105"
+                    className="group flex flex-col items-center gap-2"
                   >
-                    <img src={maxIcon} alt="Max" className="w-5 h-5 object-contain rounded-full" />
-                    Мессенджер Макс
-                    <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                    </svg>
+                    <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 hover:scale-110 transition transform">
+                      <img src={maxIcon} alt="Max" className="w-7 h-7 object-contain rounded-full" />
+                    </div>
+                    <span className="text-xs text-gray-600 text-center group-hover:text-primary transition">Мессенджер Макс</span>
                   </a>
                 </div>
               </div>
@@ -236,57 +294,50 @@ const Home = () => {
         <div className="max-w-7xl mx-auto">
           <h2 className="text-4xl font-bold text-center text-gray-800 mb-4">С чем я работаю</h2>
           <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
-            Помогаю в самых разных жизненных ситуациях — от личных кризисов до сложностей в отношениях
+            Выберите категорию запросов и найдите то, что откликается именно вам
           </p>
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="bg-primary-light/20 rounded-2xl p-8 text-center hover:shadow-xl transition transform hover:-translate-y-2 reveal scale-in" style={{ animationDelay: '0.1s' }}>
-              <div className="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-full flex items-center justify-center">
-                <Heart className="w-8 h-8 text-primary" />
-              </div>
-              <h3 className="text-xl font-semibold mb-3 text-gray-800">Отношения в паре</h3>
-              <p className="text-gray-600 mb-4">Конфликты, недопонимание, потеря близости, поиск совместимости с партнёром.</p>
-              <Link to="/compatibility" className="text-primary font-semibold hover:underline inline-flex items-center gap-1">Проверить совместимость <ArrowRight className="w-4 h-4" /></Link>
+
+          {/* Табы-переключатели */}
+          <div className="flex justify-center mb-12">
+            <div className="inline-flex bg-gray-100 rounded-2xl p-1.5 gap-1">
+              {tabs.map((tab) => {
+                const isActive = activeTab === tab.key;
+                return (
+                  <button
+                    key={tab.key}
+                    onClick={() => setActiveTab(tab.key)}
+                    className={`flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm transition-all ${
+                      isActive
+                        ? 'bg-primary text-white shadow-lg scale-105'
+                        : 'text-gray-600 hover:text-primary hover:bg-white'
+                    }`}
+                  >
+                    <tab.icon className="w-4 h-4" />
+                    <span className="hidden sm:inline">{tab.label}</span>
+                  </button>
+                );
+              })}
             </div>
-            <div className="bg-primary-light/20 rounded-2xl p-8 text-center hover:shadow-xl transition transform hover:-translate-y-2 reveal scale-in" style={{ animationDelay: '0.2s' }}>
-              <div className="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-full flex items-center justify-center">
-                <Brain className="w-8 h-8 text-primary" />
+          </div>
+
+          {/* Карточки запросов */}
+          <div className="flex flex-wrap justify-center gap-8">
+            {currentRequests.map((item, i) => (
+              <div
+                key={`${activeTab}-${i}`}
+                className="bg-primary-light/20 rounded-2xl p-8 text-center hover:shadow-xl transition transform hover:-translate-y-2 reveal scale-in w-full sm:w-[calc(50%-16px)] lg:w-[calc(33.333%-22px)] max-w-sm"
+                style={{ animationDelay: `${i * 0.1}s` }}
+              >
+                <div className="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-full flex items-center justify-center">
+                  <item.icon className="w-8 h-8 text-primary" />
+                </div>
+                <h3 className="text-xl font-semibold mb-3 text-gray-800">{item.title}</h3>
+                <p className="text-gray-600 mb-4">{item.desc}</p>
+                <Link to={item.link} className="text-primary font-semibold hover:underline inline-flex items-center gap-1">
+                  {item.linkText} <ArrowRight className="w-4 h-4" />
+                </Link>
               </div>
-              <h3 className="text-xl font-semibold mb-3 text-gray-800">Тревога и стресс</h3>
-              <p className="text-gray-600 mb-4">Постоянное беспокойство, панические атаки, эмоциональное выгорание, усталость.</p>
-              <Link to="/appointment" className="text-primary font-semibold hover:underline inline-flex items-center gap-1">Записаться на консультацию <ArrowRight className="w-4 h-4" /></Link>
-            </div>
-            <div className="bg-primary-light/20 rounded-2xl p-8 text-center hover:shadow-xl transition transform hover:-translate-y-2 reveal scale-in" style={{ animationDelay: '0.3s' }}>
-              <div className="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-full flex items-center justify-center">
-                <Palette className="w-8 h-8 text-primary" />
-              </div>
-              <h3 className="text-xl font-semibold mb-3 text-gray-800">Самопознание</h3>
-              <p className="text-gray-600 mb-4">Поиск себя, принятие своих теневых сторон, понимание глубинных мотивов.</p>
-              <Link to="/tests" className="text-primary font-semibold hover:underline inline-flex items-center gap-1">Пройти тесты <ArrowRight className="w-4 h-4" /></Link>
-            </div>
-            <div className="bg-primary-light/20 rounded-2xl p-8 text-center hover:shadow-xl transition transform hover:-translate-y-2 reveal scale-in" style={{ animationDelay: '0.4s' }}>
-              <div className="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-full flex items-center justify-center">
-                <Target className="w-8 h-8 text-primary" />
-              </div>
-              <h3 className="text-xl font-semibold mb-3 text-gray-800">Жизненные кризисы</h3>
-              <p className="text-gray-600 mb-4">Потеря смысла, смена жизненного этапа, развод, утрата, переезд.</p>
-              <Link to="/appointment" className="text-primary font-semibold hover:underline inline-flex items-center gap-1">Записаться на консультацию <ArrowRight className="w-4 h-4" /></Link>
-            </div>
-            <div className="bg-primary-light/20 rounded-2xl p-8 text-center hover:shadow-xl transition transform hover:-translate-y-2 reveal scale-in" style={{ animationDelay: '0.5s' }}>
-              <div className="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-full flex items-center justify-center">
-                <Shield className="w-8 h-8 text-primary" />
-              </div>
-              <h3 className="text-xl font-semibold mb-3 text-gray-800">Самооценка</h3>
-              <p className="text-gray-600 mb-4">Неуверенность в себе, зависимость от чужого мнения, нарушение границ.</p>
-              <Link to="/appointment" className="text-primary font-semibold hover:underline inline-flex items-center gap-1">Записаться на консультацию <ArrowRight className="w-4 h-4" /></Link>
-            </div>
-            <div className="bg-primary-light/20 rounded-2xl p-8 text-center hover:shadow-xl transition transform hover:-translate-y-2 reveal scale-in" style={{ animationDelay: '0.6s' }}>
-              <div className="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-full flex items-center justify-center">
-                <Search className="w-8 h-8 text-primary" />
-              </div>
-              <h3 className="text-xl font-semibold mb-3 text-gray-800">Глубинная терапия</h3>
-              <p className="text-gray-600 mb-4">Работа с бессознательным, архетипами, родовыми сценариями и повторами.</p>
-              <Link to="/tests" className="text-primary font-semibold hover:underline inline-flex items-center gap-1">Узнать свои архетипы <ArrowRight className="w-4 h-4" /></Link>
-            </div>
+            ))}
           </div>
         </div>
       </section>
