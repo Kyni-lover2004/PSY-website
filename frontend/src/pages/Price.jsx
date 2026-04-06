@@ -86,22 +86,25 @@ const Price = () => {
                 </div>
 
                 {/* Сессии */}
-                <div className="p-6">
+                <div className="p-6" style={{ backgroundColor: isDark ? 'var(--bg-card)' : 'transparent' }}>
                   <div className="space-y-4">
                     {cat.sessions.map((session, i) => (
                       <div
                         key={i}
                         className="rounded-2xl px-6 py-5 border"
-                        style={{ backgroundColor: cat.bgColor, borderColor: cat.borderColor }}
+                        style={{
+                          backgroundColor: isDark ? 'var(--bg-card-alt)' : cat.bgColor,
+                          borderColor: isDark ? 'var(--border-color)' : cat.borderColor
+                        }}
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
-                            <Clock style={{ color: cat.iconColor }} className="w-5 h-5" />
-                            <span style={{ color: isDark ? '#E8E8E8' : '#1F2937', fontWeight: '600', fontSize: '1.125rem' }}>
+                            <Clock className="w-5 h-5" style={{ color: isDark ? 'var(--bg-gradient-from)' : cat.iconColor }} />
+                            <span style={{ color: 'var(--text-primary)', fontWeight: '600', fontSize: '1.125rem' }}>
                               Сессия {session.duration}
                             </span>
                           </div>
-                          <span className="text-2xl font-bold" style={{ color: cat.iconColor }}>
+                          <span className="text-2xl font-bold" style={{ color: isDark ? 'var(--text-primary)' : cat.iconColor }}>
                             {session.price}
                           </span>
                         </div>
@@ -118,8 +121,8 @@ const Price = () => {
         <div className="text-center mt-10">
           <a
             href="/appointment"
-            className="inline-flex items-center gap-2 px-10 py-4 rounded-xl font-semibold text-lg hover:shadow-2xl hover:scale-105 transition transform"
-            style={{ backgroundColor: isDark ? 'var(--hero-btn-bg)' : '#ffffff', color: isDark ? 'var(--hero-btn-text)' : 'var(--bg-gradient-from)' }}
+            className="inline-flex items-center gap-2 px-10 py-4 rounded-xl font-semibold text-lg text-white hover:shadow-2xl hover:scale-105 transition transform"
+            style={{ background: 'var(--bg-gradient-from)' }}
           >
             Записаться на консультацию
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

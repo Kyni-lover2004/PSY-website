@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { User, ArrowLeft, Brain } from 'lucide-react';
 
 const TestAnketa = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { isDark } = useTheme();
 
   if (!user) {
     return null;
@@ -24,7 +26,7 @@ const TestAnketa = () => {
   };
 
   return (
-    <div className="py-12 px-4" style={{ background: 'linear-gradient(135deg, #6B8F8B 0%, #4A6B68 100%)', minHeight: '100vh' }}>
+    <div className="py-12 px-4" style={{ background: 'var(--bg-gradient-hero)', minHeight: '100vh' }}>
       <div className="max-w-2xl mx-auto">
         <div className="text-center mb-8">
           <button
@@ -67,9 +69,9 @@ const TestAnketa = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-3xl shadow-2xl p-8 fade-in">
-          <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">Готовы?</h2>
-          <p className="text-center text-gray-600 mb-6">
+        <div className="rounded-3xl shadow-2xl p-8 fade-in" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>
+          <h2 className="text-2xl font-bold text-center mb-6" style={{ color: 'var(--text-primary)' }}>Готовы?</h2>
+          <p className="text-center mb-6" style={{ color: 'var(--text-secondary)' }}>
             Пол определён автоматически: <strong>{user.gender === 'female' ? 'Женский' : 'Мужской'}</strong>
           </p>
 
@@ -78,13 +80,15 @@ const TestAnketa = () => {
               <button
                 type="button"
                 onClick={() => navigate('/test/archetypes')}
-                className="flex-1 bg-gray-200 text-gray-700 py-4 rounded-xl font-semibold hover:bg-gray-300 transition"
+                className="flex-1 py-4 rounded-xl font-semibold hover:shadow-lg transition"
+                style={{ backgroundColor: isDark ? 'var(--bg-card-alt)' : '#e5e7eb', color: 'var(--text-secondary)' }}
               >
                 Назад
               </button>
               <button
                 type="submit"
-                className="flex-1 bg-primary text-white py-4 rounded-xl font-semibold text-lg hover:shadow-lg hover:scale-105 transition transform"
+                className="flex-1 text-white py-4 rounded-xl font-semibold text-lg hover:shadow-lg hover:scale-105 transition transform"
+                style={{ backgroundColor: 'var(--bg-gradient-from)' }}
               >
                 Начать тест
               </button>

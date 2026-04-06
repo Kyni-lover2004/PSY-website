@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import psychologistPhoto from '../assets/psychologist.jpg';
-import vkIcon from '../assets/vk-icon.avif';
+import vkIcon from '../assets/vk-icon.png';
 import maxIcon from '../assets/max-icon.jpg';
 import { ArrowRight, User, Baby, Users, MessageCircle, UsersRound, Waves, AlertTriangle, Flame, Frown, Lightbulb, Compass, Lock, Shield, BookOpen, Tablet, Moon, HeartHandshake, GraduationCap, Droplets, Stethoscope, Scale, HeartCrack, KeyRound, BabyIcon, MessageSquare, Building2, DoorOpen, PersonStanding, Ghost } from 'lucide-react';
 
@@ -180,7 +180,7 @@ const Home = () => {
                     rel="noopener noreferrer"
                     className="group flex flex-col items-center gap-2"
                   >
-                    <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 hover:scale-110 transition transform">
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center hover:scale-110 transition transform ${isDark ? 'bg-white/5 hover:bg-white/10' : 'bg-white/20 hover:bg-white/30'}`}>
                       <img src={vkIcon} alt="VK" className="w-6 h-6 object-contain" />
                     </div>
                     <span className="text-xs text-center group-hover:text-primary transition" style={{ color: 'var(--text-muted)' }}>Основная страница ВКонтакте</span>
@@ -191,7 +191,7 @@ const Home = () => {
                     rel="noopener noreferrer"
                     className="group flex flex-col items-center gap-2"
                   >
-                    <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 hover:scale-110 transition transform">
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center hover:scale-110 transition transform ${isDark ? 'bg-white/5 hover:bg-white/10' : 'bg-white/20 hover:bg-white/30'}`}>
                       <img src={vkIcon} alt="VK" className="w-6 h-6 object-contain" />
                     </div>
                     <span className="text-xs text-center group-hover:text-primary transition" style={{ color: 'var(--text-muted)' }}>Группа ВКонтакте</span>
@@ -202,7 +202,7 @@ const Home = () => {
                     rel="noopener noreferrer"
                     className="group flex flex-col items-center gap-2"
                   >
-                    <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 hover:scale-110 transition transform">
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center hover:scale-110 transition transform ${isDark ? 'bg-white/5 hover:bg-white/10' : 'bg-white/20 hover:bg-white/30'}`}>
                       <img src={maxIcon} alt="Max" className="w-7 h-7 object-contain rounded-full" />
                     </div>
                     <span className="text-xs text-center group-hover:text-primary transition" style={{ color: 'var(--text-muted)' }}>Мессенджер Макс</span>
@@ -213,7 +213,7 @@ const Home = () => {
                     rel="noopener noreferrer"
                     className="group flex flex-col items-center gap-2"
                   >
-                    <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 hover:scale-110 transition transform">
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center hover:scale-110 transition transform ${isDark ? 'bg-white/5 hover:bg-white/10' : 'bg-white/20 hover:bg-white/30'}`}>
                       <svg className="w-6 h-6 text-[#2AABEE]" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
                       </svg>
@@ -322,7 +322,7 @@ const Home = () => {
 
           {/* Табы-переключатели */}
           <div className="flex justify-center mb-12">
-            <div className="inline-flex rounded-2xl p-1.5 gap-1" style={{ backgroundColor: isDark ? 'var(--tab-bg)' : 'var(--tab-bg-light, #f3f4f6)' }}>
+            <div className="inline-flex rounded-2xl p-1.5 gap-1" style={{ backgroundColor: isDark ? 'var(--tab-bg)' : '#f3f4f6' }}>
               {tabs.map((tab) => {
                 const isActive = activeTab === tab.key;
                 return (
@@ -331,10 +331,10 @@ const Home = () => {
                     onClick={() => setActiveTab(tab.key)}
                     className={`flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm transition-all ${
                       isActive
-                        ? 'bg-primary text-white shadow-lg scale-105'
-                        : 'hover:bg-white'
+                        ? 'shadow-lg scale-105 text-white'
+                        : isDark ? 'hover:bg-white/5' : 'hover:bg-white'
                     }`}
-                    style={{ color: isActive ? 'var(--text-on-primary, white)' : (isDark ? 'var(--tab-inactive)' : 'var(--text-secondary)') }}
+                    style={{ backgroundColor: isActive ? 'var(--bg-gradient-from)' : 'transparent', color: isActive ? 'white' : (isDark ? 'var(--tab-inactive)' : 'var(--text-secondary)') }}
                   >
                     <tab.icon className="w-4 h-4" />
                     <span className="hidden sm:inline">{tab.label}</span>
@@ -353,11 +353,11 @@ const Home = () => {
                 style={{ backgroundColor: 'var(--primary-light)', animationDelay: `${i * 0.1}s` }}
               >
                 <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--primary-light-bg)' }}>
-                  <item.icon className="w-8 h-8 text-primary" />
+                  <item.icon className="w-8 h-8" style={{ color: 'var(--bg-gradient-from)' }} />
                 </div>
                 <h3 className="text-xl font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>{item.title}</h3>
                 <p className="mb-4" style={{ color: 'var(--text-muted)' }}>{item.desc}</p>
-                <a href={item.link} className="text-primary font-semibold hover:underline inline-flex items-center gap-1">
+                <a href={item.link} className="font-semibold hover:underline inline-flex items-center gap-1" style={{ color: 'var(--bg-gradient-from)' }}>
                   {item.linkText} <ArrowRight className="w-4 h-4" />
                 </a>
               </div>
@@ -380,7 +380,7 @@ const Home = () => {
         </div>
       </section>
 
-      <section className="py-20 px-4 reveal" style={{ background: 'linear-gradient(135deg, #6B8F8B 0%, #4A6B68 100%)' }}>
+      <section className="py-20 px-4 reveal" style={{ background: 'var(--bg-gradient-hero)' }}>
         <div className="max-w-7xl mx-auto">
           <h2 className="text-4xl font-bold text-center text-white mb-4">Польза работы с психологом</h2>
           <p className="text-center text-white/80 mb-12 max-w-2xl mx-auto">
@@ -418,11 +418,11 @@ const Home = () => {
             Пройдите тест бесплатно прямо сейчас. Регистрация потребуется только для сохранения результатов.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center reveal">
-            <Link to="/tests" className="group bg-primary text-white px-10 py-4 rounded-xl font-semibold text-lg hover:shadow-2xl hover:scale-105 transition transform">
+            <Link to="/tests" className="group text-white px-10 py-4 rounded-xl font-semibold text-lg hover:shadow-2xl hover:scale-105 transition transform" style={{ backgroundColor: 'var(--bg-gradient-from)' }}>
               Все тесты
               <ArrowRight className="inline-block ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Link>
-            <Link to="/appointment" className="group px-10 py-4 rounded-xl font-semibold text-lg hover:shadow-lg hover:scale-105 transition transform" style={{ backgroundColor: isDark ? 'var(--bg-secondary)' : '#f3f4f6', color: 'var(--text-primary)' }}>
+            <Link to="/appointment" className="group px-10 py-4 rounded-xl font-semibold text-lg hover:shadow-lg hover:scale-105 transition transform" style={{ backgroundColor: isDark ? 'var(--bg-card-alt)' : '#f3f4f6', color: 'var(--text-primary)' }}>
               Записаться к психологу
               <ArrowRight className="inline-block ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Link>

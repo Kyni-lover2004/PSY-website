@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTheme } from '../context/ThemeContext';
 import { Target, Clock, Brain, ArrowLeft } from 'lucide-react';
 
 const TestWelcome = () => {
   const navigate = useNavigate();
+  const { isDark } = useTheme();
   const [formData, setFormData] = useState({
     name: '',
     surname: '',
@@ -24,7 +26,7 @@ const TestWelcome = () => {
   };
 
   return (
-    <div className="py-12 px-4" style={{ background: 'linear-gradient(135deg, #6B8F8B 0%, #4A6B68 100%)', minHeight: '100vh' }}>
+    <div className="py-12 px-4" style={{ background: 'var(--bg-gradient-hero)', minHeight: '100vh' }}>
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-8">
           <button
@@ -71,16 +73,17 @@ const TestWelcome = () => {
           </div>
         </div>
 
-        <div className="max-w-2xl mx-auto bg-white rounded-3xl shadow-2xl p-8 fade-in">
-          <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">Анкета</h2>
+        <div className="max-w-2xl mx-auto rounded-3xl shadow-2xl p-8 fade-in" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>
+          <h2 className="text-2xl font-bold text-center mb-6" style={{ color: 'var(--text-primary)' }}>Анкета</h2>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className="block text-gray-700 font-semibold mb-2">Ваша фамилия *</label>
+              <label className="block font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>Ваша фамилия *</label>
               <input
                 type="text"
                 required
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition"
+                className="w-full px-4 py-3 border-2 rounded-xl focus:outline-none transition"
+                style={{ borderColor: isDark ? 'var(--border-color)' : '#e5e7eb', backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)' }}
                 value={formData.surname}
                 onChange={(e) => setFormData({...formData, surname: e.target.value})}
                 placeholder="Иванов"
@@ -88,11 +91,12 @@ const TestWelcome = () => {
             </div>
 
             <div>
-              <label className="block text-gray-700 font-semibold mb-2">Ваше имя *</label>
+              <label className="block font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>Ваше имя *</label>
               <input
                 type="text"
                 required
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition"
+                className="w-full px-4 py-3 border-2 rounded-xl focus:outline-none transition"
+                style={{ borderColor: isDark ? 'var(--border-color)' : '#e5e7eb', backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)' }}
                 value={formData.name}
                 onChange={(e) => setFormData({...formData, name: e.target.value})}
                 placeholder="Как к вам обращаться"
@@ -100,10 +104,11 @@ const TestWelcome = () => {
             </div>
 
             <div>
-              <label className="block text-gray-700 font-semibold mb-2">Пол *</label>
+              <label className="block font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>Пол *</label>
               <select
                 required
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition"
+                className="w-full px-4 py-3 border-2 rounded-xl focus:outline-none transition"
+                style={{ borderColor: isDark ? 'var(--border-color)' : '#e5e7eb', backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)' }}
                 value={formData.gender}
                 onChange={(e) => setFormData({...formData, gender: e.target.value})}
               >
@@ -114,10 +119,11 @@ const TestWelcome = () => {
             </div>
 
             <div>
-              <label className="block text-gray-700 font-semibold mb-2">Ориентация *</label>
+              <label className="block font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>Ориентация *</label>
               <select
                 required
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition"
+                className="w-full px-4 py-3 border-2 rounded-xl focus:outline-none transition"
+                style={{ borderColor: isDark ? 'var(--border-color)' : '#e5e7eb', backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)' }}
                 value={formData.orientation}
                 onChange={(e) => setFormData({...formData, orientation: e.target.value})}
               >
@@ -129,15 +135,16 @@ const TestWelcome = () => {
               </select>
             </div>
 
-            <div className="bg-blue-50 p-4 rounded-xl">
+            <div className="p-4 rounded-xl" style={{ backgroundColor: isDark ? 'rgba(59,130,246,0.15)' : '#eff6ff' }}>
               <label className="flex items-start gap-3 cursor-pointer">
                 <input
                   type="checkbox"
-                  className="mt-1 w-5 h-5 text-primary rounded focus:ring-primary"
+                  className="mt-1 w-5 h-5 rounded"
+                  style={{ color: 'var(--bg-gradient-from)' }}
                   checked={formData.consent}
                   onChange={(e) => setFormData({...formData, consent: e.target.checked})}
                 />
-                <span className="text-sm text-gray-700">
+                <span className="text-sm" style={{ color: isDark ? 'var(--text-secondary)' : '#374151' }}>
                   Я даю согласие на обработку моих персональных данных
                 </span>
               </label>
@@ -147,13 +154,15 @@ const TestWelcome = () => {
               <button
                 type="button"
                 onClick={() => navigate('/test/archetypes')}
-                className="flex-1 bg-gray-200 text-gray-700 py-4 rounded-xl font-semibold hover:bg-gray-300 transition"
+                className="flex-1 py-4 rounded-xl font-semibold hover:shadow-lg transition"
+                style={{ backgroundColor: isDark ? 'var(--bg-card-alt)' : '#e5e7eb', color: 'var(--text-secondary)' }}
               >
                 Назад
               </button>
               <button
                 type="submit"
-                className="flex-1 bg-gradient-to-r from-primary to-secondary text-white py-4 rounded-xl font-semibold text-lg hover:shadow-lg hover:scale-105 transition transform"
+                className="flex-1 text-white py-4 rounded-xl font-semibold text-lg hover:shadow-lg hover:scale-105 transition transform"
+                style={{ backgroundColor: 'var(--bg-gradient-from)' }}
               >
                 Начать тест
               </button>

@@ -4,11 +4,13 @@ import { profileAPI, testAPI } from '../api/api';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
 import { Trophy, Shield, AlertTriangle, Heart, Copy, ArrowRight, Save, UserPlus, LogIn, CheckCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 
 const TestResults = () => {
   const { code } = useParams();
   const navigate = useNavigate();
   const { user: authUser, token } = useAuth();
+  const { isDark } = useTheme();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -63,11 +65,11 @@ const TestResults = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #6B8F8B 0%, #4A6B68 100%)' }}>
-        <div className="bg-white rounded-3xl p-8 text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <div className="text-white text-xl">Загрузка результатов...</div>
-          <div className="text-gray-400 text-sm mt-2 font-mono">{code}</div>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg-gradient-hero)' }}>
+        <div className="rounded-3xl p-8 text-center" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4" style={{ borderColor: 'var(--bg-gradient-from)' }}></div>
+          <div className="text-xl" style={{ color: 'var(--text-primary)' }}>Загрузка результатов...</div>
+          <div className="text-sm mt-2 font-mono" style={{ color: 'var(--text-muted)' }}>{code}</div>
         </div>
       </div>
     );
@@ -75,29 +77,31 @@ const TestResults = () => {
 
   if (error || !profile) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #6B8F8B 0%, #4A6B68 100%)' }}>
-        <div className="bg-white rounded-3xl p-8 text-center max-w-md">
-          <div className="text-red-500 text-5xl mb-4">⚠️</div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">{error || 'Ошибка'}</h2>
-          <p className="text-gray-600 mb-4">Проверьте код совместимости</p>
-          <div className="bg-gray-100 rounded-lg p-3 mb-4">
-            <code className="text-sm text-gray-700 break-all">{code || 'Код не получен'}</code>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg-gradient-hero)' }}>
+        <div className="rounded-3xl p-8 text-center max-w-md" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>
+          <div className="text-5xl mb-4">⚠️</div>
+          <h2 className="text-2xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>{error || 'Ошибка'}</h2>
+          <p className="mb-4" style={{ color: 'var(--text-secondary)' }}>Проверьте код совместимости</p>
+          <div className="rounded-lg p-3 mb-4" style={{ backgroundColor: isDark ? 'var(--bg-card-alt)' : '#f3f4f6' }}>
+            <code className="text-sm break-all" style={{ color: 'var(--text-secondary)' }}>{code || 'Код не получен'}</code>
           </div>
           {errorDetails && (
-            <div className="bg-red-50 rounded-lg p-3 mb-4 text-left">
-              <p className="text-red-700 text-sm font-mono break-all">{errorDetails}</p>
+            <div className="rounded-lg p-3 mb-4 text-left" style={{ backgroundColor: 'var(--disclaimer-bg)' }}>
+              <p className="text-sm font-mono break-all" style={{ color: 'var(--disclaimer-text)' }}>{errorDetails}</p>
             </div>
           )}
           <div className="flex gap-3">
             <button
               onClick={() => { setLoading(true); setError(null); setErrorDetails(null); window.location.reload(); }}
-              className="flex-1 bg-gray-100 text-gray-700 px-4 py-3 rounded-xl font-semibold hover:bg-gray-200 transition"
+              className="flex-1 px-4 py-3 rounded-xl font-semibold hover:shadow-lg transition"
+              style={{ backgroundColor: isDark ? 'var(--bg-card-alt)' : '#f3f4f6', color: 'var(--text-secondary)' }}
             >
               🔄 Повторить
             </button>
             <button
               onClick={() => navigate('/test')}
-              className="flex-1 bg-primary text-white px-4 py-3 rounded-xl font-semibold hover:shadow-lg transition"
+              className="flex-1 text-white px-4 py-3 rounded-xl font-semibold hover:shadow-lg transition"
+              style={{ backgroundColor: 'var(--bg-gradient-from)' }}
             >
               Пройти заново
             </button>
@@ -117,7 +121,7 @@ const TestResults = () => {
   const dominantArchetype = profile.archetypes[0];
 
   return (
-    <div className="py-12 px-4" style={{ background: 'linear-gradient(135deg, #6B8F8B 0%, #4A6B68 100%)', minHeight: '100vh' }}>
+    <div className="py-12 px-4" style={{ background: 'var(--bg-gradient-hero)', minHeight: '100vh' }}>
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-8 fade-in">
           <h1 className="text-4xl font-bold text-white mb-2">Ваши результаты</h1>
@@ -125,15 +129,15 @@ const TestResults = () => {
         </div>
 
         {dominantArchetype && (
-          <div className="bg-white rounded-3xl shadow-2xl p-8 mb-8 fade-in">
+          <div className="rounded-3xl shadow-2xl p-8 mb-8 fade-in" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>
             <div className="text-center mb-6">
-              <div className="w-16 h-16 mx-auto mb-4 bg-yellow-50 rounded-full flex items-center justify-center">
-                <Trophy className="w-8 h-8 text-yellow-600" />
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(202, 138, 4, 0.1)' }}>
+                <Trophy className="w-8 h-8" style={{ color: '#ca8a04' }} />
               </div>
               <h2 className="text-3xl font-bold mb-2" style={{ color: dominantArchetype.color }}>
                 {dominantArchetype.name}
               </h2>
-              <p className="text-gray-600">
+              <p style={{ color: 'var(--text-secondary)' }}>
                 {dominantArchetype.score} из 5 баллов • Статус: {
                   dominantArchetype.status === 'A' ? 'Активный' :
                   dominantArchetype.status === 'M' ? 'Средний' :
@@ -141,37 +145,37 @@ const TestResults = () => {
                 }
               </p>
             </div>
-            
+
             {dominantArchetype.description && (
-              <div className="bg-gray-50 rounded-xl p-6 mb-6">
-                <p className="text-gray-700 leading-relaxed">{dominantArchetype.description}</p>
+              <div className="rounded-xl p-6 mb-6" style={{ backgroundColor: isDark ? 'var(--bg-card-alt)' : '#f9fafb' }}>
+                <p className="leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{dominantArchetype.description}</p>
               </div>
             )}
 
             <div className="grid md:grid-cols-2 gap-4">
               {dominantArchetype.strengths && (
-                <div className="bg-green-50 rounded-xl p-4">
-                  <h3 className="font-semibold text-green-800 mb-2 flex items-center gap-2"><Shield className="w-4 h-4" /> Сильные стороны</h3>
-                  <p className="text-green-700">{dominantArchetype.strengths}</p>
+                <div className="rounded-xl p-4" style={{ backgroundColor: 'rgba(34, 197, 94, 0.1)' }}>
+                  <h3 className="font-semibold mb-2 flex items-center gap-2" style={{ color: '#166534' }}><Shield className="w-4 h-4" /> Сильные стороны</h3>
+                  <p style={{ color: '#15803d' }}>{dominantArchetype.strengths}</p>
                 </div>
               )}
               {dominantArchetype.weaknesses && (
-                <div className="bg-red-50 rounded-xl p-4">
-                  <h3 className="font-semibold text-red-800 mb-2 flex items-center gap-2"><AlertTriangle className="w-4 h-4" /> Зоны роста</h3>
-                  <p className="text-red-700">{dominantArchetype.weaknesses}</p>
+                <div className="rounded-xl p-4" style={{ backgroundColor: 'var(--disclaimer-bg)' }}>
+                  <h3 className="font-semibold mb-2 flex items-center gap-2" style={{ color: 'var(--disclaimer-text)' }}><AlertTriangle className="w-4 h-4" /> Зоны роста</h3>
+                  <p style={{ color: 'var(--disclaimer-text)' }}>{dominantArchetype.weaknesses}</p>
                 </div>
               )}
             </div>
           </div>
         )}
 
-        <div className="bg-white rounded-3xl shadow-2xl p-8 mb-8 fade-in">
-          <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">Профиль архетипов</h2>
+        <div className="rounded-3xl shadow-2xl p-8 mb-8 fade-in" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>
+          <h2 className="text-2xl font-bold text-center mb-6" style={{ color: 'var(--text-primary)' }}>Профиль архетипов</h2>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
               <RadarChart cx="50%" cy="50%" outerRadius="80%" data={chartData}>
                 <PolarGrid />
-                <PolarAngleAxis dataKey="subject" tick={{ fill: '#666', fontSize: 12 }} />
+                <PolarAngleAxis dataKey="subject" tick={{ fill: isDark ? '#888899' : '#666', fontSize: 12 }} />
                 <PolarRadiusAxis angle={30} domain={[0, 5]} />
                 <Radar
                   name="Баллы"
@@ -186,17 +190,17 @@ const TestResults = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-3xl shadow-2xl p-8 mb-8 fade-in">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">Все архетипы</h2>
+        <div className="rounded-3xl shadow-2xl p-8 mb-8 fade-in" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>
+          <h2 className="text-2xl font-bold mb-6" style={{ color: 'var(--text-primary)' }}>Все архетипы</h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
             {profile.archetypes.map((arch, index) => (
               <div
                 key={arch.code}
                 className="border-2 rounded-xl p-4 transition hover:shadow-lg"
-                style={{ borderColor: arch.color + '40' }}
+                style={{ borderColor: arch.color + '40', backgroundColor: isDark ? 'transparent' : 'white' }}
               >
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-semibold text-gray-800">{arch.name}</h3>
+                  <h3 className="font-semibold" style={{ color: 'var(--text-primary)' }}>{arch.name}</h3>
                   <span
                     className="text-xs px-2 py-1 rounded-full font-semibold"
                     style={{
@@ -212,20 +216,20 @@ const TestResults = () => {
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ backgroundColor: isDark ? 'var(--bg-card-alt)' : '#e5e7eb' }}>
                     <div
                       className="h-full rounded-full transition-all"
                       style={{ width: `${(arch.score / 5) * 100}%`, backgroundColor: arch.color }}
                     />
                   </div>
-                  <span className="text-sm font-semibold text-gray-600">{arch.score}/5</span>
+                  <span className="text-sm font-semibold" style={{ color: 'var(--text-secondary)' }}>{arch.score}/5</span>
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="bg-gradient-to-r from-primary to-secondary rounded-3xl shadow-2xl p-8 text-white text-center fade-in">
+        <div className="rounded-3xl shadow-2xl p-8 text-white text-center fade-in" style={{ background: 'var(--bg-gradient-hero)' }}>
           <h2 className="text-2xl font-bold mb-4 flex items-center justify-center gap-2"><Heart className="w-6 h-6" /> Ваш код совместимости</h2>
           <div className="bg-white/20 backdrop-blur-lg rounded-xl p-4 mb-4">
             <p className="text-3xl font-mono font-bold tracking-wider">{code}</p>
@@ -236,13 +240,15 @@ const TestResults = () => {
           <div className="flex flex-wrap gap-4 justify-center">
             <button
               onClick={() => navigator.clipboard.writeText(code)}
-              className="bg-white text-primary px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition"
+              className="px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition"
+              style={{ backgroundColor: 'var(--hero-btn-bg)', color: 'var(--hero-btn-text)' }}
             >
               <Copy className="w-4 h-4 inline mr-1" /> Копировать код
             </button>
             <a
               href="/compatibility"
-              className="bg-transparent border-2 border-white text-white px-6 py-3 rounded-xl font-semibold hover:bg-white hover:text-primary transition"
+              className="border-2 border-white px-6 py-3 rounded-xl font-semibold hover:bg-white hover:text-primary transition"
+              style={{ backgroundColor: 'transparent', color: 'white' }}
             >
               Проверить совместимость <ArrowRight className="w-4 h-4 inline" />
             </a>
@@ -250,20 +256,20 @@ const TestResults = () => {
         </div>
 
         {/* Кнопка сохранения в личный кабинет */}
-        <div className="bg-white rounded-3xl shadow-2xl p-8 text-center fade-in">
+        <div className="rounded-3xl shadow-2xl p-8 text-center fade-in" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>
           {authUser && token ? (
             <>
               <div className="flex items-center justify-center gap-2 mb-4">
                 {saved ? (
-                  <CheckCircle className="w-6 h-6 text-green-600" />
+                  <CheckCircle className="w-6 h-6" style={{ color: '#22c55e' }} />
                 ) : (
-                  <Save className="w-6 h-6 text-primary" />
+                  <Save className="w-6 h-6" style={{ color: 'var(--bg-gradient-from)' }} />
                 )}
-                <h3 className="text-xl font-bold text-gray-800">
+                <h3 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
                   {saved ? '✅ Сохранено!' : 'Сохранить результаты'}
                 </h3>
               </div>
-              <p className="text-gray-600 mb-6">
+              <p className="mb-6" style={{ color: 'var(--text-secondary)' }}>
                 {saved
                   ? 'Результаты сохранены в вашем личном кабинете'
                   : 'Результаты будут сохранены в вашем личном кабинете'}
@@ -273,11 +279,12 @@ const TestResults = () => {
                 disabled={saving || saved}
                 className={`px-8 py-4 rounded-xl font-semibold transition transform hover:scale-105 ${
                   saved
-                    ? 'bg-green-600 text-white cursor-default'
+                    ? 'text-white cursor-default'
                     : saving
-                    ? 'bg-gray-300 text-gray-500 cursor-wait'
-                    : 'bg-green-600 text-white hover:bg-green-700 hover:shadow-lg'
+                    ? 'cursor-wait'
+                    : 'text-white hover:shadow-lg'
                 }`}
+                style={{ backgroundColor: saved ? '#22c55e' : (saving ? (isDark ? 'var(--bg-card-alt)' : '#d1d5db') : '#22c55e'), color: saved || !saving ? 'white' : 'var(--text-muted)' }}
               >
                 {saving ? (
                   'Сохранение...'
@@ -291,10 +298,10 @@ const TestResults = () => {
           ) : (
             <>
               <div className="flex items-center justify-center gap-2 mb-4">
-                <UserPlus className="w-6 h-6 text-primary" />
-                <h3 className="text-xl font-bold text-gray-800">Сохранить результаты</h3>
+                <UserPlus className="w-6 h-6" style={{ color: 'var(--bg-gradient-from)' }} />
+                <h3 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>Сохранить результаты</h3>
               </div>
-              <p className="text-gray-600 mb-6">
+              <p className="mb-6" style={{ color: 'var(--text-secondary)' }}>
                 Зарегистрируйтесь или войдите, чтобы сохранить результаты в личном кабинете
               </p>
               <div className="flex flex-wrap gap-4 justify-center">
@@ -303,7 +310,8 @@ const TestResults = () => {
                     sessionStorage.setItem('redirectAfterLogin', window.location.pathname);
                     navigate('/register');
                   }}
-                  className="bg-primary text-white px-8 py-4 rounded-xl font-semibold hover:shadow-lg transition transform hover:scale-105"
+                  className="text-white px-8 py-4 rounded-xl font-semibold hover:shadow-lg transition transform hover:scale-105"
+                  style={{ backgroundColor: 'var(--bg-gradient-from)' }}
                 >
                   <UserPlus className="w-5 h-5 inline mr-2" />
                   Зарегистрироваться
@@ -313,7 +321,8 @@ const TestResults = () => {
                     sessionStorage.setItem('redirectAfterLogin', window.location.pathname);
                     navigate('/login');
                   }}
-                  className="bg-gray-100 text-gray-700 px-8 py-4 rounded-xl font-semibold hover:bg-gray-200 transition transform hover:scale-105"
+                  className="px-8 py-4 rounded-xl font-semibold hover:shadow-lg transition transform hover:scale-105"
+                  style={{ backgroundColor: isDark ? 'var(--bg-card-alt)' : '#f3f4f6', color: 'var(--text-secondary)' }}
                 >
                   <LogIn className="w-5 h-5 inline mr-2" />
                   Войти

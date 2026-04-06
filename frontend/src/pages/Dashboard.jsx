@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import TestResultsTab from './TestResultsTab';
 import { User, BarChart3, Calendar, Award, Palette, Copy, CheckCircle, ArrowRight } from 'lucide-react';
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
+  const { isDark } = useTheme();
   const [activeTab, setActiveTab] = useState('profile');
   const [copied, setCopied] = useState(false);
 
@@ -33,37 +35,31 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="py-12 px-4" style={{ background: 'linear-gradient(135deg, #6B8F8B 0%, #4A6B68 100%)', minHeight: '100vh' }}>
+    <div className="py-12 px-4" style={{ background: 'var(--bg-gradient-hero)', minHeight: '100vh' }}>
       <div className="max-w-6xl mx-auto">
         <h1 className="text-4xl font-bold text-white mb-8">Личный кабинет</h1>
 
         <div className="flex gap-2 mb-8 overflow-x-auto">
           <button
             onClick={() => setActiveTab('profile')}
-            className={`px-6 py-3 rounded-xl font-semibold whitespace-nowrap transition ${
-              activeTab === 'profile'
-                ? 'bg-white text-primary shadow-lg'
-                : 'bg-white/20 text-white hover:bg-white/30'
-            }`}
+            className="px-6 py-3 rounded-xl font-semibold whitespace-nowrap transition"
+            style={activeTab === 'profile' ? { backgroundColor: 'var(--bg-gradient-from)', color: '#ffffff', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' } : { backgroundColor: 'var(--bg-card)', color: 'var(--text-muted)' }}
           >
             <User className="w-4 h-4 inline mr-1" /> Профиль
           </button>
           <button
             onClick={() => setActiveTab('results')}
-            className={`px-6 py-3 rounded-xl font-semibold whitespace-nowrap transition ${
-              activeTab === 'results'
-                ? 'bg-white text-primary shadow-lg'
-                : 'bg-white/20 text-white hover:bg-white/30'
-            }`}
+            className="px-6 py-3 rounded-xl font-semibold whitespace-nowrap transition"
+            style={activeTab === 'results' ? { backgroundColor: 'var(--bg-gradient-from)', color: '#ffffff', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' } : { backgroundColor: 'var(--bg-card)', color: 'var(--text-muted)' }}
           >
             <BarChart3 className="w-4 h-4 inline mr-1" /> Результаты тестов
           </button>
         </div>
 
-        <div className="bg-white rounded-3xl shadow-2xl p-8 min-h-[400px]">
+        <div className="rounded-3xl shadow-2xl p-8 min-h-[400px]" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>
           {activeTab === 'profile' && (
             <div className="fade-in">
-              <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2"><User className="w-6 h-6" /> Профиль</h2>
+              <h2 className="text-2xl font-bold mb-6 flex items-center gap-2" style={{ color: isDark ? 'var(--text-primary)' : '#1F2937' }}><User className="w-6 h-6" /> Профиль</h2>
               {user ? (
                 <div className="space-y-6">
                   {/* Карточка пользователя */}
@@ -87,9 +83,9 @@ const Dashboard = () => {
 
                   {/* Код совместимости */}
                   {user.compatibility_code ? (
-                    <div className="bg-gray-50 rounded-2xl p-6">
+                    <div className="rounded-2xl p-6" style={{ backgroundColor: isDark ? 'var(--bg-card-alt)' : '#F3F4F6' }}>
                       <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                        <h3 className="text-lg font-bold flex items-center gap-2" style={{ color: isDark ? 'var(--text-primary)' : '#1F2937' }}>
                           <Palette className="w-5 h-5 text-primary" />
                           Код совместимости
                         </h3>
@@ -100,7 +96,7 @@ const Dashboard = () => {
                           {copied ? <><CheckCircle className="w-4 h-4" /> Скопировано</> : <><Copy className="w-4 h-4" /> Копировать</>}
                         </button>
                       </div>
-                      <div className="bg-white rounded-xl px-4 py-3 border-2 border-dashed border-primary/30">
+                      <div className="rounded-xl px-4 py-3 border-2 border-dashed border-primary/30" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>
                         <code className="text-xl font-mono font-bold text-primary">{user.compatibility_code}</code>
                       </div>
                       <Link
@@ -133,34 +129,34 @@ const Dashboard = () => {
                   )}
 
                   {/* Информация о профиле */}
-                  <div className="bg-gray-50 rounded-2xl p-6">
-                    <h3 className="text-lg font-bold text-gray-800 mb-4">Информация</h3>
+                  <div className="rounded-2xl p-6" style={{ backgroundColor: isDark ? 'var(--bg-card-alt)' : '#F3F4F6' }}>
+                    <h3 className="text-lg font-bold mb-4" style={{ color: isDark ? 'var(--text-primary)' : '#1F2937' }}>Информация</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="bg-white rounded-xl p-4">
-                        <div className="text-gray-500 text-sm">Логин</div>
-                        <div className="text-gray-800 font-semibold mt-1">{user.login}</div>
+                      <div className="rounded-xl p-4" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>
+                        <div className="text-sm" style={{ color: isDark ? 'var(--text-muted)' : '#6B7280' }}>Логин</div>
+                        <div className="font-semibold mt-1" style={{ color: isDark ? 'var(--text-primary)' : '#1F2937' }}>{user.login}</div>
                       </div>
-                      <div className="bg-white rounded-xl p-4">
-                        <div className="text-gray-500 text-sm">Пол</div>
-                        <div className="text-gray-800 font-semibold mt-1 capitalize">
+                      <div className="rounded-xl p-4" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>
+                        <div className="text-sm" style={{ color: isDark ? 'var(--text-muted)' : '#6B7280' }}>Пол</div>
+                        <div className="font-semibold mt-1 capitalize" style={{ color: isDark ? 'var(--text-primary)' : '#1F2937' }}>
                           {user.gender === 'male' ? 'Мужской' : 'Женский'}
                         </div>
                       </div>
-                      <div className="bg-white rounded-xl p-4">
-                        <div className="text-gray-500 text-sm">Роль</div>
-                        <div className="text-gray-800 font-semibold mt-1">
+                      <div className="rounded-xl p-4" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>
+                        <div className="text-sm" style={{ color: isDark ? 'var(--text-muted)' : '#6B7280' }}>Роль</div>
+                        <div className="font-semibold mt-1" style={{ color: isDark ? 'var(--text-primary)' : '#1F2937' }}>
                           {user.role === 'admin' ? 'Администратор' : 'Пользователь'}
                         </div>
                       </div>
-                      <div className="bg-white rounded-xl p-4">
-                        <div className="text-gray-500 text-sm">Дата регистрации</div>
-                        <div className="text-gray-800 font-semibold mt-1">{formatDate(user.created_at)}</div>
+                      <div className="rounded-xl p-4" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>
+                        <div className="text-sm" style={{ color: isDark ? 'var(--text-muted)' : '#6B7280' }}>Дата регистрации</div>
+                        <div className="font-semibold mt-1" style={{ color: isDark ? 'var(--text-primary)' : '#1F2937' }}>{formatDate(user.created_at)}</div>
                       </div>
                     </div>
                   </div>
                 </div>
               ) : (
-                <div className="text-gray-600">
+                <div className="text-gray-600" style={{ color: isDark ? 'var(--text-muted)' : '#6B7280' }}>
                   <p>Вы вошли как гость</p>
                   <Link to="/login" className="text-primary hover:underline">Войти в аккаунт</Link>
                 </div>
@@ -170,7 +166,7 @@ const Dashboard = () => {
 
           {activeTab === 'results' && (
             <div className="fade-in">
-              <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2"><BarChart3 className="w-6 h-6" /> Результаты тестов</h2>
+              <h2 className="text-2xl font-bold mb-6 flex items-center gap-2" style={{ color: isDark ? 'var(--text-primary)' : '#1F2937' }}><BarChart3 className="w-6 h-6" /> Результаты тестов</h2>
               <TestResultsTab />
             </div>
           )}

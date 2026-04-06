@@ -1,4 +1,5 @@
 import { BookOpen, ExternalLink, Sparkles } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 
 const books = [
   {
@@ -66,8 +67,9 @@ const books = [
 const categories = [...new Set(books.map((b) => b.category))];
 
 const ReadingList = () => {
+  const { isDark } = useTheme();
   return (
-    <div className="min-h-screen py-16 px-4" style={{ background: 'linear-gradient(135deg, #6B8F8B 0%, #4A6B68 100%)' }}>
+    <div className="min-h-screen py-16 px-4" style={{ background: 'var(--bg-gradient-hero)' }}>
       <div className="max-w-5xl mx-auto">
         {/* Заголовок */}
         <div className="text-center mb-16 fade-in">
@@ -81,32 +83,21 @@ const ReadingList = () => {
           </p>
         </div>
 
-        {/* Категории */}
-        <div className="flex flex-wrap justify-center gap-2 mb-12">
-          {categories.map((cat) => (
-            <span
-              key={cat}
-              className="bg-white/15 text-white px-4 py-2 rounded-full text-sm font-medium"
-            >
-              {cat}
-            </span>
-          ))}
-        </div>
-
-        <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
-          <div className="bg-gradient-to-r from-amber-50 to-orange-50 p-8 text-center">
-            <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg">
+        <div className="rounded-3xl shadow-2xl overflow-hidden" style={{ backgroundColor: 'var(--bg-card)' }}>
+          <div className="p-8 text-center" style={{ background: isDark ? 'linear-gradient(135deg, rgba(84,110,122,0.3) 0%, rgba(74,75,92,0.2) 100%)' : '#ffffff' }}>
+            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center shadow-lg" style={{ background: isDark ? 'linear-gradient(135deg, #f59e0b 0%, #f97316 100%)' : 'linear-gradient(135deg, #fbbf24 0%, #f97316 100%)' }}>
               <Sparkles className="w-8 h-8 text-white" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">Больше книг и рекомендаций</h2>
-            <p className="text-gray-600 mb-6 max-w-xl mx-auto">
+            <h2 className="text-2xl font-bold mb-2" style={{ color: isDark ? 'var(--text-primary)' : '#1f2937' }}>Больше книг и рекомендаций</h2>
+            <p className="mb-6 max-w-xl mx-auto" style={{ color: isDark ? 'var(--text-secondary)' : '#4b5563' }}>
               Подписывайтесь на мой Telegram-канал! Там ещё больше полезной литературы, разборов и практических упражнений для самопознания и работы над собой.
             </p>
             <a
               href="https://t.me/+oBt1XAigVGA2ZjUy"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-3 bg-[#2AABEE] text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-[#229ED9] hover:shadow-xl transition transform hover:scale-105"
+              className="inline-flex items-center gap-3 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:shadow-xl transition transform hover:scale-105"
+              style={{ backgroundColor: '#2AABEE' }}
             >
               <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
@@ -126,7 +117,7 @@ const ReadingList = () => {
               style={{ animationDelay: `${i * 0.05}s` }}
             >
               <div className="flex items-start gap-4 mb-4">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center flex-shrink-0 shadow-lg">
+                <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg" style={{ background: isDark ? 'linear-gradient(135deg, rgba(245,158,11,0.8) 0%, rgba(249,115,22,0.8) 100%)' : 'linear-gradient(135deg, #fbbf24 0%, #f97316 100%)' }}>
                   <BookOpen className="w-6 h-6 text-white" />
                 </div>
                 <div>

@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { questionsAPI, testAPI } from '../api/api';
+import { useTheme } from '../context/ThemeContext';
 import { CheckCircle, XCircle, ArrowLeft, ArrowRight } from 'lucide-react';
 
 const TestQuestionnaire = () => {
   const navigate = useNavigate();
+  const { isDark } = useTheme();
   const [questions, setQuestions] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState({});
@@ -124,10 +126,10 @@ const TestQuestionnaire = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #6B8F8B 0%, #4A6B68 100%)' }}>
-        <div className="bg-white rounded-3xl p-8 text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-gray-600">Загрузка вопросов...</p>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg-gradient-hero)' }}>
+        <div className="rounded-3xl p-8 text-center" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4" style={{ borderColor: 'var(--bg-gradient-from)' }}></div>
+          <p style={{ color: 'var(--text-secondary)' }}>Загрузка вопросов...</p>
         </div>
       </div>
     );
@@ -143,7 +145,7 @@ const TestQuestionnaire = () => {
   console.log('currentQuestion.text:', currentQuestion?.text);
 
   return (
-    <div className="py-12 px-4" style={{ background: 'linear-gradient(135deg, #6B8F8B 0%, #4A6B68 100%)', minHeight: '100vh' }}>
+    <div className="py-12 px-4" style={{ background: 'var(--bg-gradient-hero)', minHeight: '100vh' }}>
       <div className="max-w-3xl mx-auto">
         {/* Прогресс */}
         <div className="mb-8">
@@ -157,8 +159,8 @@ const TestQuestionnaire = () => {
         </div>
 
         {/* Вопрос */}
-        <div className="bg-white rounded-3xl shadow-2xl p-8 fade-in">
-          <h2 className="text-2xl font-semibold text-gray-800 mb-8 leading-relaxed">
+        <div className="rounded-3xl shadow-2xl p-8 fade-in" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>
+          <h2 className="text-2xl font-semibold mb-8 leading-relaxed" style={{ color: 'var(--text-primary)' }}>
             {currentQuestion ? (currentQuestion.text || 'Нет текста') : 'Вопрос не найден'}
           </h2>
 
@@ -167,9 +169,10 @@ const TestQuestionnaire = () => {
               onClick={() => handleAnswer(true)}
               className={`py-4 px-6 rounded-xl font-semibold text-lg transition transform hover:scale-105 ${
                 answers[currentQuestion?.id] === true
-                  ? 'bg-primary text-white shadow-lg'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'text-white shadow-lg'
+                  : 'hover:shadow-lg'
               }`}
+              style={{ backgroundColor: answers[currentQuestion?.id] === true ? 'var(--bg-gradient-from)' : (isDark ? 'var(--bg-card-alt)' : '#f3f4f6'), color: answers[currentQuestion?.id] === true ? 'white' : 'var(--text-secondary)' }}
             >
               <CheckCircle className="w-5 h-5 inline mr-2" /> Да
             </button>
@@ -177,9 +180,10 @@ const TestQuestionnaire = () => {
               onClick={() => handleAnswer(false)}
               className={`py-4 px-6 rounded-xl font-semibold text-lg transition transform hover:scale-105 ${
                 answers[currentQuestion?.id] === false
-                  ? 'bg-primary text-white shadow-lg'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'text-white shadow-lg'
+                  : 'hover:shadow-lg'
               }`}
+              style={{ backgroundColor: answers[currentQuestion?.id] === false ? 'var(--bg-gradient-from)' : (isDark ? 'var(--bg-card-alt)' : '#f3f4f6'), color: answers[currentQuestion?.id] === false ? 'white' : 'var(--text-secondary)' }}
             >
               <XCircle className="w-5 h-5 inline mr-2" /> Нет
             </button>
@@ -190,15 +194,17 @@ const TestQuestionnaire = () => {
               onClick={handlePrev}
               disabled={currentIndex === 0}
               className={`flex-1 py-3 rounded-xl font-semibold transition ${
-                currentIndex === 0 ? 'bg-gray-200 text-gray-400' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                currentIndex === 0 ? 'cursor-not-allowed' : 'hover:shadow-lg'
               }`}
+              style={{ backgroundColor: currentIndex === 0 ? (isDark ? 'var(--bg-card-alt)' : '#e5e7eb') : (isDark ? 'var(--bg-card-alt)' : '#f3f4f6'), color: currentIndex === 0 ? 'var(--text-muted)' : 'var(--text-secondary)' }}
             ><ArrowLeft className="w-4 h-4 inline" /> Назад</button>
             <button
               onClick={handleNext}
               disabled={!hasAnswer || submitting}
               className={`flex-1 py-3 rounded-xl font-semibold transition ${
-                !hasAnswer || submitting ? 'bg-gray-200 text-gray-400' : 'bg-primary text-white hover:shadow-lg'
+                !hasAnswer || submitting ? 'cursor-not-allowed' : 'text-white hover:shadow-lg'
               }`}
+              style={{ backgroundColor: (!hasAnswer || submitting) ? (isDark ? 'var(--bg-card-alt)' : '#e5e7eb') : 'var(--bg-gradient-from)', color: (!hasAnswer || submitting) ? 'var(--text-muted)' : 'white' }}
             >
               {submitting ? 'Сохранение...' : currentIndex === questions.length - 1 ? 'Завершить' : 'Далее '}
               {!submitting && currentIndex !== questions.length - 1 && <ArrowRight className="w-4 h-4 inline" />}

@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { compatibilityAPI } from '../api/api';
+import { useTheme } from '../context/ThemeContext';
 import { Heart, AlertCircle, BookOpen, Copy } from 'lucide-react';
 
 const CompatibilityCheck = () => {
+  const { isDark } = useTheme();
   const [searchParams] = useSearchParams();
   const myCodeFromUrl = searchParams.get('mycode') || '';
   
@@ -36,7 +38,7 @@ const CompatibilityCheck = () => {
   };
 
   return (
-    <div className="py-12 px-4" style={{ background: 'linear-gradient(135deg, #6B8F8B 0%, #4A6B68 100%)', minHeight: '100vh' }}>
+    <div className="py-12 px-4" style={{ background: 'var(--bg-gradient-hero)', minHeight: '100vh' }}>
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-white mb-4 flex items-center justify-center gap-2">
@@ -47,39 +49,41 @@ const CompatibilityCheck = () => {
           </p>
         </div>
 
-        <div className="bg-white rounded-3xl shadow-2xl p-8 mb-8 fade-in">
+        <div className="rounded-3xl shadow-2xl p-8 mb-8 fade-in" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>
           <form onSubmit={handleCheck} className="space-y-6">
             {/* Мой код */}
             <div>
-              <label className="block text-gray-700 font-semibold mb-2">
+              <label className="block font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
                 Ваш код совместимости
               </label>
               {myCode ? (
                 <div className="flex items-center gap-3">
-                  <div className="flex-1 bg-primary/10 rounded-xl px-4 py-3">
-                    <code className="text-lg font-mono text-primary font-bold">{myCode}</code>
+                  <div className="flex-1 rounded-xl px-4 py-3" style={{ backgroundColor: 'var(--primary-light)' }}>
+                    <code className="text-lg font-mono font-bold" style={{ color: 'var(--bg-gradient-from)' }}>{myCode}</code>
                   </div>
                   <button
                     type="button"
                     onClick={() => navigator.clipboard.writeText(myCode)}
-                    className="p-3 bg-gray-100 rounded-xl hover:bg-gray-200 transition"
+                    className="p-3 rounded-xl hover:shadow-lg transition"
+                    style={{ backgroundColor: isDark ? 'var(--bg-card-alt)' : '#f3f4f6' }}
                     title="Копировать"
                   >
-                    <Copy className="w-5 h-5 text-gray-600" />
+                    <Copy className="w-5 h-5" style={{ color: 'var(--text-muted)' }} />
                   </button>
                 </div>
               ) : (
                 <input
                   type="text"
                   required
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition font-mono"
+                  className="w-full px-4 py-3 border-2 rounded-xl focus:outline-none transition font-mono"
+                  style={{ borderColor: isDark ? 'var(--border-color)' : '#e5e7eb', backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)' }}
                   value={myCode}
                   onChange={(e) => setMyCode(e.target.value.toUpperCase())}
                   placeholder="PSY-YYYYMMDD-XXXXXXXX"
                 />
               )}
               {!myCode && (
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
                   Получите код после прохождения теста на архетипы
                 </p>
               )}
@@ -87,13 +91,14 @@ const CompatibilityCheck = () => {
 
             {/* Код партнёра */}
             <div>
-              <label className="block text-gray-700 font-semibold mb-2">
+              <label className="block font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
                 Код партнёра
               </label>
               <input
                 type="text"
                 required
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition font-mono"
+                className="w-full px-4 py-3 border-2 rounded-xl focus:outline-none transition font-mono"
+                style={{ borderColor: isDark ? 'var(--border-color)' : '#e5e7eb', backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)' }}
                 value={partnerCode}
                 onChange={(e) => setPartnerCode(e.target.value.toUpperCase())}
                 placeholder="PSY-YYYYMMDD-XXXXXXXX"
@@ -105,16 +110,17 @@ const CompatibilityCheck = () => {
               disabled={loading}
               className={`w-full py-4 rounded-xl font-semibold text-lg transition ${
                 loading
-                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-primary to-secondary text-white hover:shadow-lg hover:scale-105'
+                  ? 'cursor-not-allowed'
+                  : 'text-white hover:shadow-lg hover:scale-105'
               }`}
+              style={{ backgroundColor: loading ? (isDark ? 'var(--bg-card-alt)' : '#d1d5db') : 'var(--bg-gradient-hero)', color: loading ? 'var(--text-muted)' : 'white' }}
             >
               {loading ? 'Проверка...' : 'Рассчитать совместимость'}
             </button>
           </form>
 
           {error && (
-            <div className="mt-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl flex items-center gap-2">
+            <div className="mt-6 px-4 py-3 rounded-xl flex items-center gap-2" style={{ backgroundColor: 'var(--disclaimer-bg)', borderColor: 'var(--disclaimer-border)', color: 'var(--disclaimer-text)', border: '1px solid' }}>
               <AlertCircle className="w-5 h-5 flex-shrink-0" /> {error}
             </div>
           )}
@@ -122,7 +128,7 @@ const CompatibilityCheck = () => {
 
         {result && (
           <div className="fade-in">
-            <div className="bg-gradient-to-r from-primary to-secondary rounded-3xl shadow-2xl p-8 text-white mb-8">
+            <div className="rounded-3xl shadow-2xl p-8 text-white mb-8" style={{ background: 'var(--bg-gradient-hero)' }}>
               <div className="text-center mb-6">
                 <h2 className="text-3xl font-bold mb-2">Индекс комплементарности</h2>
                 <div className="text-6xl font-bold my-4">{result.index}</div>
@@ -145,44 +151,44 @@ const CompatibilityCheck = () => {
               </div>
             </div>
 
-            <div className="bg-white rounded-3xl shadow-2xl p-8">
-              <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-                <BookOpen className="w-6 h-6" /> Расшифровка значений
+            <div className="rounded-3xl shadow-2xl p-8" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>
+              <h3 className="text-2xl font-bold mb-6 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+                <BookOpen className="w-6 h-6" style={{ color: 'var(--bg-gradient-from)' }} /> Расшифровка значений
               </h3>
               <div className="space-y-4">
                 <div className="flex items-start gap-4">
-                  <div className="text-2xl">7/0</div>
+                  <div className="text-2xl font-bold" style={{ color: 'var(--bg-gradient-from)' }}>7/0</div>
                   <div>
-                    <div className="font-semibold text-gray-800">Максимальная прочность</div>
-                    <div className="text-gray-600">Идеальное совпадение архетипов</div>
+                    <div className="font-semibold" style={{ color: 'var(--text-primary)' }}>Максимальная прочность</div>
+                    <div style={{ color: 'var(--text-secondary)' }}>Идеальное совпадение архетипов</div>
                   </div>
                 </div>
                 <div className="flex items-start gap-4">
-                  <div className="text-2xl">0/7</div>
+                  <div className="text-2xl font-bold" style={{ color: 'var(--bg-gradient-from)' }}>0/7</div>
                   <div>
-                    <div className="font-semibold text-gray-800">Минимальная прочность</div>
-                    <div className="text-gray-600">Высокий риск развала отношений</div>
+                    <div className="font-semibold" style={{ color: 'var(--text-primary)' }}>Минимальная прочность</div>
+                    <div style={{ color: 'var(--text-secondary)' }}>Высокий риск развала отношений</div>
                   </div>
                 </div>
                 <div className="flex items-start gap-4">
-                  <div className="text-2xl">&gt; 1</div>
+                  <div className="text-2xl font-bold" style={{ color: 'var(--bg-gradient-from)' }}>&gt; 1</div>
                   <div>
-                    <div className="font-semibold text-gray-800">База есть</div>
-                    <div className="text-gray-600">Отношения перспективны, но есть очаги конфликтов</div>
+                    <div className="font-semibold" style={{ color: 'var(--text-primary)' }}>База есть</div>
+                    <div style={{ color: 'var(--text-secondary)' }}>Отношения перспективны, но есть очаги конфликтов</div>
                   </div>
                 </div>
                 <div className="flex items-start gap-4">
-                  <div className="text-2xl">&lt; 1</div>
+                  <div className="text-2xl font-bold" style={{ color: 'var(--bg-gradient-from)' }}>&lt; 1</div>
                   <div>
-                    <div className="font-semibold text-gray-800">Союз временный</div>
-                    <div className="text-gray-600">«Против» больше чем «за»</div>
+                    <div className="font-semibold" style={{ color: 'var(--text-primary)' }}>Союз временный</div>
+                    <div style={{ color: 'var(--text-secondary)' }}>«Против» больше чем «за»</div>
                   </div>
                 </div>
                 <div className="flex items-start gap-4">
-                  <div className="text-2xl">А ≥ 3</div>
+                  <div className="text-2xl font-bold" style={{ color: 'var(--bg-gradient-from)' }}>А ≥ 3</div>
                   <div>
-                    <div className="font-semibold text-gray-800">Правило спасения</div>
-                    <div className="text-gray-600">Отношения имеют тенденцию к сохранению независимо от П</div>
+                    <div className="font-semibold" style={{ color: 'var(--text-primary)' }}>Правило спасения</div>
+                    <div style={{ color: 'var(--text-secondary)' }}>Отношения имеют тенденцию к сохранению независимо от П</div>
                   </div>
                 </div>
               </div>
