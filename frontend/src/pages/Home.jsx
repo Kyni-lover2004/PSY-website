@@ -6,9 +6,38 @@ import vkIcon from '../assets/vk-icon.png';
 import maxIcon from '../assets/max-icon.jpg';
 import { ArrowRight, User, Baby, Users, MessageCircle, UsersRound, Waves, AlertTriangle, Flame, Frown, Lightbulb, Compass, Lock, Shield, BookOpen, Tablet, Moon, HeartHandshake, GraduationCap, Droplets, Stethoscope, Scale, HeartCrack, KeyRound, BabyIcon, MessageSquare, Building2, DoorOpen, PersonStanding, Ghost } from 'lucide-react';
 
+const quotes = [
+  {
+    text: 'Ваш взор станет ясным лишь тогда, когда вы сможете заглянуть в свою собственную душу.',
+    author: 'Карл Густав Юнг'
+  },
+  {
+    text: 'Психотерапия не про то, чтобы сделать человека лучше. Она про то, чтобы он перестал стараться казаться лучше, а начал считать самым удобным — быть собой.',
+    author: 'Виктор Каган'
+  },
+  {
+    text: 'Вы знаете, придя в терапию я думал, что сломан и меня будут чинить.\n— Не, не буду, чинить вас никто не будет: ни я, ни вы сами.\n— А что же будет?\n— Вы будете учиться беречь себя и перестанете себя ломать.\n— А вы тогда здесь со мной зачем?\n— Я буду наблюдать, чтобы вы по-привычке не сбежали и не спрятались, потому, что вам больно. Я выдержу вас с вашей болью.',
+    author: 'Из практики психотерапии'
+  },
+  {
+    text: 'Первым делом следует разорвать порочный круг ненависти к себе, саморазрушения и еще большей ненависти к себе из-за стыда за свое поведение.',
+    author: 'Ирвин Ялом'
+  },
+  {
+    text: 'Я не то, что со мной случилось, я — то, чем я решил стать.',
+    author: 'Карл Юнг'
+  },
+];
+
 const Home = () => {
   const { isDark } = useTheme();
   const [activeTab, setActiveTab] = useState('personal');
+  const [randomQuote, setRandomQuote] = useState(quotes[0]);
+
+  useEffect(() => {
+    const randomIndex = Math.floor(Math.random() * quotes.length);
+    setRandomQuote(quotes[randomIndex]);
+  }, []);
 
   const requestsData = {
     personal: [
@@ -234,11 +263,11 @@ const Home = () => {
             <div className="flex-1 h-px bg-gradient-to-l from-transparent to-white/30"></div>
           </div>
           <blockquote className="text-center">
-            <p className="text-xl md:text-2xl text-white/95 italic leading-relaxed mb-4 font-light">
-              Ваш взор станет ясным лишь тогда, когда вы сможете заглянуть в свою собственную душу.
+            <p className="text-xl md:text-2xl text-white/95 italic leading-relaxed mb-4 font-light whitespace-pre-line">
+              {randomQuote.text}
             </p>
             <footer className="text-white/60 text-sm font-medium tracking-wide uppercase">
-              — Карл Густав Юнг
+              — {randomQuote.author}
             </footer>
           </blockquote>
           <div className="flex items-center gap-4 mt-6">
