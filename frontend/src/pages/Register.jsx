@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
+import { useTheme } from '../context/ThemeContext';
 import { authAPI } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import { AlertCircle } from 'lucide-react';
 
 const Register = () => {
+  const { isDark } = useTheme();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { login } = useAuth();
@@ -74,10 +76,10 @@ const Register = () => {
   };
 
   return (
-    <div className="py-12 px-4" style={{ background: 'linear-gradient(135deg, #6B8F8B 0%, #4A6B68 100%)', minHeight: '100vh' }}>
-      <div className="max-w-md mx-auto bg-white rounded-3xl shadow-2xl p-8 fade-in">
-        <h1 className="text-3xl font-bold text-center text-gray-800 mb-2">Регистрация</h1>
-        <p className="text-center text-gray-600 mb-8">
+    <div className="py-12 px-4" style={{ background: 'var(--bg-gradient-hero)', minHeight: '100vh' }}>
+      <div className="max-w-md mx-auto rounded-3xl shadow-2xl p-8 fade-in" style={{ backgroundColor: 'var(--bg-card)' }}>
+        <h1 className="text-3xl font-bold text-center mb-2" style={{ color: isDark ? 'var(--text-primary)' : '#1F2937' }}>Регистрация</h1>
+        <p className="text-center mb-8" style={{ color: isDark ? 'var(--text-muted)' : '#6B7280' }}>
           {searchParams.get('redirect') === 'test'
             ? 'Зарегистрируйтесь для прохождения теста'
             : 'Для сохранения результатов и кода совместимости'}
@@ -85,12 +87,13 @@ const Register = () => {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-gray-700 font-semibold mb-2">Логин *</label>
+            <label className="block font-semibold mb-2" style={{ color: isDark ? 'var(--text-secondary)' : '#374151' }}>Логин *</label>
             <input
               type="text"
               required
               minLength={3}
-              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition"
+              className="w-full px-4 py-3 border-2 rounded-xl focus:outline-none transition"
+              style={{ borderColor: isDark ? 'var(--border-color)' : '#E5E7EB', backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)' }}
               value={formData.login}
               onChange={(e) => setFormData({...formData, login: e.target.value})}
               placeholder="Придумайте логин"
@@ -98,12 +101,13 @@ const Register = () => {
           </div>
 
           <div>
-            <label className="block text-gray-700 font-semibold mb-2">
-              Telegram <span className="text-gray-400 font-normal">(для связи)</span>
+            <label className="block font-semibold mb-2" style={{ color: isDark ? 'var(--text-secondary)' : '#374151' }}>
+              Telegram <span style={{ color: isDark ? 'var(--text-muted)' : '#9CA3AF', fontWeight: 'normal' }}>(для связи)</span>
             </label>
             <input
               type="text"
-              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition"
+              className="w-full px-4 py-3 border-2 rounded-xl focus:outline-none transition"
+              style={{ borderColor: isDark ? 'var(--border-color)' : '#E5E7EB', backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)' }}
               value={formData.telegram}
               onChange={(e) => setFormData({...formData, telegram: e.target.value})}
               placeholder="@username"
@@ -111,12 +115,13 @@ const Register = () => {
           </div>
 
           <div>
-            <label className="block text-gray-700 font-semibold mb-2">Пароль *</label>
+            <label className="block font-semibold mb-2" style={{ color: isDark ? 'var(--text-secondary)' : '#374151' }}>Пароль *</label>
             <input
               type="password"
               required
               minLength={8}
-              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition"
+              className="w-full px-4 py-3 border-2 rounded-xl focus:outline-none transition"
+              style={{ borderColor: isDark ? 'var(--border-color)' : '#E5E7EB', backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)' }}
               value={formData.password}
               onChange={(e) => setFormData({...formData, password: e.target.value})}
               placeholder="Минимум 8 символов"
@@ -124,12 +129,13 @@ const Register = () => {
           </div>
 
           <div>
-            <label className="block text-gray-700 font-semibold mb-2">Подтверждение пароля *</label>
+            <label className="block font-semibold mb-2" style={{ color: isDark ? 'var(--text-secondary)' : '#374151' }}>Подтверждение пароля *</label>
             <input
               type="password"
               required
               minLength={8}
-              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition"
+              className="w-full px-4 py-3 border-2 rounded-xl focus:outline-none transition"
+              style={{ borderColor: isDark ? 'var(--border-color)' : '#E5E7EB', backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)' }}
               value={formData.confirmPassword}
               onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
               placeholder="Повторите пароль"
@@ -137,9 +143,10 @@ const Register = () => {
           </div>
 
           <div>
-            <label className="block text-gray-700 font-semibold mb-2">Пол *</label>
+            <label className="block font-semibold mb-2" style={{ color: isDark ? 'var(--text-secondary)' : '#374151' }}>Пол *</label>
             <select
-              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition"
+              className="w-full px-4 py-3 border-2 rounded-xl focus:outline-none transition"
+              style={{ borderColor: isDark ? 'var(--border-color)' : '#E5E7EB', backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)' }}
               value={formData.gender}
               onChange={(e) => setFormData({...formData, gender: e.target.value})}
             >
@@ -149,7 +156,7 @@ const Register = () => {
           </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl flex items-center gap-2">
+            <div className="border px-4 py-3 rounded-xl flex items-center gap-2" style={{ backgroundColor: 'var(--disclaimer-bg)', borderColor: 'var(--disclaimer-border)', color: 'var(--disclaimer-text)' }}>
               <AlertCircle className="w-5 h-5 flex-shrink-0" /> {error}
             </div>
           )}
@@ -167,9 +174,9 @@ const Register = () => {
           </button>
         </form>
 
-        <p className="text-center text-gray-600 mt-6">
+        <p className="text-center mt-6" style={{ color: isDark ? 'var(--text-muted)' : '#6B7280' }}>
           Уже есть аккаунт?{' '}
-          <Link to="/login" className="text-primary font-semibold hover:underline">Войти</Link>
+          <Link to="/login" className="font-semibold hover:underline" style={{ color: 'var(--bg-gradient-from)' }}>Войти</Link>
         </p>
       </div>
     </div>

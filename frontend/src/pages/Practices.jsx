@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { useTheme } from '../context/ThemeContext';
 import { Play, Pause, SkipBack, SkipForward, Volume2, Headphones, Shield, Heart, Waves, CircleDot } from 'lucide-react';
 
 const practices = [
@@ -41,6 +42,7 @@ const practices = [
 ];
 
 const Practices = () => {
+  const { isDark } = useTheme();
   const [currentTrack, setCurrentTrack] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -136,7 +138,7 @@ const Practices = () => {
   const progressPercent = duration ? (progress / duration) * 100 : 0;
 
   return (
-    <div className="min-h-screen py-16 px-4" style={{ background: 'linear-gradient(135deg, #6B8F8B 0%, #4A6B68 100%)' }}>
+    <div className="min-h-screen py-16 px-4" style={{ background: 'var(--bg-gradient-hero)' }}>
       <div className="max-w-5xl mx-auto">
         {/* Заголовок */}
         <div className="text-center mb-16 fade-in">
@@ -157,10 +159,14 @@ const Practices = () => {
             return (
               <div
                 key={practice.id}
-                className={`group relative bg-white/10 backdrop-blur-lg rounded-3xl p-8 transition-all duration-500 cursor-pointer hover:bg-white/20 hover:scale-[1.02] hover:shadow-2xl reveal scale-in ${
-                  isActive ? 'ring-2 ring-white/50 bg-white/20' : ''
+                className={`group relative rounded-3xl p-8 transition-all duration-500 cursor-pointer hover:scale-[1.02] hover:shadow-2xl reveal scale-in ${
+                  isActive ? 'ring-2 ring-white/50' : ''
                 }`}
-                style={{ animationDelay: `${i * 0.1}s` }}
+                style={{
+                  backgroundColor: isActive ? 'var(--bg-overlay-hover)' : 'var(--bg-blur)',
+                  backdropFilter: 'blur(16px)',
+                  animationDelay: `${i * 0.1}s`
+                }}
                 onClick={() => playTrack(practice)}
               >
                 {/* Иконка и градиент */}
@@ -213,11 +219,11 @@ const Practices = () => {
 
         {/* Нижний плеер */}
         {currentTrack && (
-          <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl shadow-2xl border-t border-gray-200 z-30 fade-in">
+          <div className="fixed bottom-0 left-0 right-0 shadow-2xl border-t z-30 fade-in" style={{ backgroundColor: isDark ? 'rgba(45,46,58,0.95)' : 'rgba(255,255,255,0.95)', backdropFilter: 'blur(16px)', borderColor: isDark ? 'var(--border-color)' : '#E5E7EB' }}>
             <div className="max-w-5xl mx-auto px-4 py-4">
               {/* Прогресс */}
               <div className="flex items-center gap-3 mb-3">
-                <span className="text-sm text-gray-500 w-10 text-right">{formatTime(progress)}</span>
+                <span className="text-sm w-10 text-right" style={{ color: isDark ? 'var(--text-muted)' : '#6B7280' }}>{formatTime(progress)}</span>
                 <input
                   type="range"
                   min="0"
@@ -226,7 +232,7 @@ const Practices = () => {
                   onChange={handleSeek}
                   className="flex-1 h-1.5 bg-gray-200 rounded-full appearance-none cursor-pointer accent-purple-600"
                 />
-                <span className="text-sm text-gray-500 w-10">{formatTime(duration)}</span>
+                <span className="text-sm w-10" style={{ color: isDark ? 'var(--text-muted)' : '#6B7280' }}>{formatTime(duration)}</span>
               </div>
 
               {/* Контролы */}
@@ -238,28 +244,29 @@ const Practices = () => {
                     <currentTrack.Icon className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <div className="font-semibold text-gray-800 text-sm">{currentTrack.title}</div>
-                    <div className="text-gray-500 text-xs">{currentTrack.duration}</div>
+                    <div className="font-semibold text-sm" style={{ color: isDark ? '#E8E8E8' : '#1F2937' }}>{currentTrack.title}</div>
+                    <div className="text-xs" style={{ color: isDark ? 'var(--text-muted)' : '#6B7280' }}>{currentTrack.duration}</div>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-4">
-                  <button onClick={playPrev} className="p-2 text-gray-600 hover:text-primary transition">
+                  <button onClick={playPrev} className="p-2 transition" style={{ color: isDark ? '#9CA3AF' : '#4B5563' }}>
                     <SkipBack className="w-5 h-5" />
                   </button>
                   <button
                     onClick={togglePlay}
-                    className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center hover:shadow-lg hover:scale-105 transition"
+                    className="w-12 h-12 rounded-full text-white flex items-center justify-center hover:shadow-lg hover:scale-105 transition"
+                    style={{ backgroundColor: 'var(--bg-gradient-from)' }}
                   >
                     {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
                   </button>
-                  <button onClick={playNext} className="p-2 text-gray-600 hover:text-primary transition">
+                  <button onClick={playNext} className="p-2 transition" style={{ color: isDark ? '#9CA3AF' : '#4B5563' }}>
                     <SkipForward className="w-5 h-5" />
                   </button>
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <Volume2 className="w-4 h-4 text-gray-500" />
+                  <Volume2 className="w-4 h-4" style={{ color: isDark ? 'var(--text-muted)' : '#6B7280' }} />
                   <input
                     type="range"
                     min="0"

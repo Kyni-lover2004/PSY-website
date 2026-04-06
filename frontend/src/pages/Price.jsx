@@ -1,6 +1,8 @@
 import { Wallet, Clock, Users, Baby, GraduationCap, Heart } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 
 const Price = () => {
+  const { isDark } = useTheme();
   const categories = [
     {
       title: 'Взрослые',
@@ -50,7 +52,7 @@ const Price = () => {
   ];
 
   return (
-    <div className="py-20 px-4" style={{ background: 'linear-gradient(135deg, #6B8F8B 0%, #4A6B68 100%)', minHeight: '100vh' }}>
+    <div className="py-20 px-4" style={{ background: 'var(--bg-gradient-hero)', minHeight: '100vh' }}>
       <div className="max-w-4xl mx-auto">
         {/* Заголовок */}
         <div className="text-center mb-12">
@@ -70,8 +72,8 @@ const Price = () => {
             return (
               <div
                 key={cat.title}
-                className="bg-white rounded-3xl shadow-2xl overflow-hidden fade-in"
-                style={{ animationDelay: `${index * 0.15}s` }}
+                className="rounded-3xl shadow-2xl overflow-hidden fade-in"
+                style={{ backgroundColor: 'var(--bg-card)', animationDelay: `${index * 0.15}s` }}
               >
                 {/* Шапка карточки */}
                 <div style={{ backgroundColor: cat.headerBg }} className="px-8 py-6">
@@ -95,7 +97,7 @@ const Price = () => {
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
                             <Clock style={{ color: cat.iconColor }} className="w-5 h-5" />
-                            <span className="text-gray-800 font-semibold text-lg">
+                            <span style={{ color: isDark ? '#E8E8E8' : '#1F2937', fontWeight: '600', fontSize: '1.125rem' }}>
                               Сессия {session.duration}
                             </span>
                           </div>
@@ -116,7 +118,8 @@ const Price = () => {
         <div className="text-center mt-10">
           <a
             href="/appointment"
-            className="inline-flex items-center gap-2 bg-white text-primary px-10 py-4 rounded-xl font-semibold text-lg hover:shadow-2xl hover:scale-105 transition transform"
+            className="inline-flex items-center gap-2 px-10 py-4 rounded-xl font-semibold text-lg hover:shadow-2xl hover:scale-105 transition transform"
+            style={{ backgroundColor: isDark ? 'var(--hero-btn-bg)' : '#ffffff', color: isDark ? 'var(--hero-btn-text)' : 'var(--bg-gradient-from)' }}
           >
             Записаться на консультацию
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

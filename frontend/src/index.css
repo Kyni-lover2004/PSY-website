@@ -2,6 +2,84 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  /* Light theme (default) */
+  --bg-gradient-from: #6B8F8B;
+  --bg-gradient-to: #4A6B68;
+  --bg-gradient-hero: linear-gradient(135deg, #6B8F8B 0%, #4A6B68 100%);
+  --bg-card: #ffffff;
+  --bg-card-alt: #f5f5f5;
+  --bg-input: #ffffff;
+  --text-primary: #2D312E;
+  --text-secondary: #4B5563;
+  --text-muted: #6B7280;
+  --text-on-bg: #ffffff;
+  --text-on-bg-muted: rgba(255,255,255,0.8);
+  --border-color: #E5E7EB;
+  --border-light: #F3F4F6;
+  --bg-section: #ffffff;
+  --bg-overlay: rgba(255,255,255,0.1);
+  --bg-overlay-hover: rgba(255,255,255,0.2);
+  --bg-blur: rgba(255,255,255,0.1);
+  --bg-blur-hover: rgba(255,255,255,0.2);
+  --scrollbar-track: #F5F5F5;
+  --scrollbar-thumb: #6B8F8B;
+  --scrollbar-thumb-hover: #4A6B68;
+  --tab-bg: #F3F4F6;
+  --tab-inactive: #6B7280;
+  --card-badge: #E8F0EF;
+  --badge-dot: #6B8F8B;
+  --primary-light: rgba(107,143,139,0.2);
+  --primary-light-bg: rgba(107,143,139,0.1);
+  --disclaimer-bg: #FEF2F2;
+  --disclaimer-border: #FECACA;
+  --disclaimer-text: #B91C1C;
+  --hero-btn-bg: #ffffff;
+  --hero-btn-text: #6B8F8B;
+  --hero-btn-border: #ffffff;
+  --nav-bg: rgba(255,255,255,0.95);
+  --nav-text: #2D312E;
+}
+
+.dark-theme {
+  /* Dark theme */
+  --bg-gradient-from: #546E7A;
+  --bg-gradient-to: #4A4B5C;
+  --bg-gradient-hero: linear-gradient(135deg, #546E7A 0%, #4A4B5C 100%);
+  --bg-card: #2D2E3A;
+  --bg-card-alt: #252630;
+  --bg-input: #2D2E3A;
+  --text-primary: #E8E8E8;
+  --text-secondary: #B0B0B0;
+  --text-muted: #888899;
+  --text-on-bg: #E8E8E8;
+  --text-on-bg-muted: rgba(232,232,232,0.8);
+  --border-color: #3D3E4A;
+  --border-light: #333440;
+  --bg-section: #252630;
+  --bg-overlay: rgba(255,255,255,0.05);
+  --bg-overlay-hover: rgba(255,255,255,0.1);
+  --bg-blur: rgba(45,46,58,0.6);
+  --bg-blur-hover: rgba(45,46,58,0.8);
+  --scrollbar-track: #252630;
+  --scrollbar-thumb: #546E7A;
+  --scrollbar-thumb-hover: #4A4B5C;
+  --tab-bg: #2D2E3A;
+  --tab-inactive: #888899;
+  --card-badge: #333440;
+  --badge-dot: #546E7A;
+  --primary-light: rgba(84,110,122,0.3);
+  --primary-light-bg: rgba(84,110,122,0.15);
+  --disclaimer-bg: rgba(185,28,28,0.15);
+  --disclaimer-border: rgba(185,28,28,0.3);
+  --disclaimer-text: #FCA5A5;
+  --hero-btn-bg: rgba(255,255,255,0.1);
+  --hero-btn-text: #E8E8E8;
+  --hero-btn-border: rgba(255,255,255,0.3);
+  --nav-bg: rgba(45,46,58,0.95);
+  --nav-text: #E8E8E8;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -13,6 +91,11 @@ body {
   background-color: #F5F5F5;
   color: #2D312E;
   min-height: 100vh;
+}
+
+.dark-theme body {
+  background-color: #252630;
+  color: #E8E8E8;
 }
 
 @keyframes fadeIn {
@@ -105,22 +188,35 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #F5F5F5;
+  background: var(--scrollbar-track);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #6B8F8B;
+  background: var(--scrollbar-thumb);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #4A6B68;
+  background: var(--scrollbar-thumb-hover);
 }
 
 input:focus,
 textarea:focus,
 select:focus {
   outline: none;
-  border-color: #6B8F8B !important;
+  border-color: var(--bg-gradient-from) !important;
   box-shadow: 0 0 0 3px rgba(107, 143, 139, 0.2);
+}
+
+.dark-theme input,
+.dark-theme textarea,
+.dark-theme select {
+  background-color: var(--bg-input);
+  color: var(--text-primary);
+  border-color: var(--border-color);
+}
+
+.dark-theme input::placeholder,
+.dark-theme textarea::placeholder {
+  color: var(--text-muted);
 }
