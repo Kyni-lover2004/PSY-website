@@ -1,17 +1,20 @@
 """
-PSY Website Backend - SECURE VERSION
-Максимальная защита: JWT, Rate Limiting, Encryption, Logging, Telegram Notifications
+PSY Website Backend v4.0 - FULL DB REBUILD
+- Без email/phone, только telegram
+- Consultations с category/topic/telegram
+- Все результаты тестов сохраняются
+- Админка получает все данные
 """
-from fastapi import FastAPI, Depends, HTTPException, Request, status
+from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy import create_engine, Column, Integer, String, Boolean, Text, DateTime, ForeignKey, JSON, Float
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session, relationship
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, List, Dict, Any
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field
 from passlib.context import CryptContext
 from jose import JWTError, jwt
 from collections import defaultdict
@@ -23,11 +26,10 @@ import secrets
 import asyncio
 import aiohttp
 
-# === БЕЗОПАСНАЯ КОНФИГУРАЦИЯ ===
-# Фиксированный SECRET_KEY (не меняется при перезапуске)
-SECRET_KEY = os.environ.get("SECRET_KEY", "psycho-secure-key-2026-change-in-production-" + "a" * 32)
+# === КОНФИГУРАЦИЯ ===
+SECRET_KEY = os.environ.get("SECRET_KEY", "psycho-secure-key-2026-" + "a" * 40)
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24 часа
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24
 DATABASE_URL = "sqlite:///./psycho.db"
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:3000")
 FRONTEND_URLS = [FRONTEND_URL, "http://localhost:5173", "http://127.0.0.1:3000", "http://127.0.0.1:5173"]
@@ -49,45 +51,41 @@ logger = logging.getLogger(__name__)
 class RateLimiter:
     def __init__(self):
         self.requests = defaultdict(list)
-        self.max_requests = 20  # максимум запросов
-        self.window = 60  # окно в секундах (1 минута)
+        self.max_requests = 10000  # Увеличено до 10000 запросов
+        self.window = 60           # За 60 секунд (1 минуту)
         self.login_attempts = defaultdict(int)
-        self.login_lockouts = {}  # забаненные IP
-    
+        self.login_lockouts = {}
+
     def is_rate_limited(self, client_ip: str) -> bool:
-        now = datetime.utcnow().timestamp()
-        self.requests[client_ip] = [
-            t for t in self.requests[client_ip] 
-            if now - t < self.window
-        ]
+        now = datetime.now(timezone.utc).timestamp()
+        self.requests[client_ip] = [t for t in self.requests[client_ip] if now - t < self.window]
         if len(self.requests[client_ip]) >= self.max_requests:
             return True
         self.requests[client_ip].append(now)
         return False
-    
+
     def is_login_locked(self, client_ip: str) -> bool:
         if client_ip in self.login_lockouts:
-            lockout_time = self.login_lockouts[client_ip]
-            if datetime.utcnow() < lockout_time:
+            if datetime.now(timezone.utc) < self.login_lockouts[client_ip]:
                 return True
             else:
                 del self.login_lockouts[client_ip]
                 self.login_attempts[client_ip] = 0
         return False
-    
+
     def record_login_attempt(self, client_ip: str, success: bool):
         if success:
             self.login_attempts[client_ip] = 0
         else:
             self.login_attempts[client_ip] += 1
             if self.login_attempts[client_ip] >= 5:
-                self.login_lockouts[client_ip] = datetime.utcnow() + timedelta(minutes=15)
-                logger.warning(f"IP {client_ip} заблокирован на 15 минут после 5 неудачных попыток входа")
+                self.login_lockouts[client_ip] = datetime.now(timezone.utc) + timedelta(minutes=15)
+                logger.warning(f"IP {client_ip} заблокирован на 15 минут")
 
 rate_limiter = RateLimiter()
 
 # === FASTAPI APP ===
-app = FastAPI(title="Psycho Archetypes API", version="3.0.0-SECURE")
+app = FastAPI(title="Psycho Archetypes API", version="4.0.0")
 
 # === CORS ===
 app.add_middleware(
@@ -103,28 +101,14 @@ app.add_middleware(
 @app.middleware("http")
 async def security_middleware(request: Request, call_next):
     client_ip = request.client.host
-    
-    # Rate limiting
     if rate_limiter.is_rate_limited(client_ip):
-        return JSONResponse(
-            status_code=429,
-            content={"detail": "Слишком много запросов. Подождите минуту."}
-        )
-    
+        return JSONResponse(status_code=429, content={"detail": "Слишком много запросов"})
     response = await call_next(request)
-
-    # Security headers (без CSP для /docs - нужен для Swagger UI)
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-XSS-Protection"] = "1; mode=block"
-    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     response.headers["Cache-Control"] = "no-store"
     response.headers["Pragma"] = "no-cache"
-    
-    # CSP только для API endpoints (не для /docs)
-    if not request.url.path.startswith("/docs") and not request.url.path.startswith("/openapi"):
-        response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:;"
-
     return response
 
 # === DATABASE ===
@@ -134,7 +118,6 @@ Base = declarative_base()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security = HTTPBearer()
 
-# === HELPER FUNCTIONS ===
 def get_db():
     db = SessionLocal()
     try:
@@ -149,27 +132,16 @@ def verify_password(plain: str, hashed: str) -> bool:
     return pwd_context.verify(plain, hashed)
 
 def generate_code() -> str:
-    return f"PSY-{datetime.now().strftime('%Y%m%d')}-{uuid.uuid4().hex[:12].upper()}"
+    return f"PSY-{datetime.now(timezone.utc).strftime('%Y%m%d')}-{uuid.uuid4().hex[:12].upper()}"
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
-    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
-    to_encode.update({"exp": expire, "iat": datetime.utcnow()})
+    # JWT требует чтобы sub был строкой
+    if "sub" in to_encode:
+        to_encode["sub"] = str(to_encode["sub"])
+    expire = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+    to_encode.update({"exp": expire, "iat": datetime.now(timezone.utc)})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-
-def validate_password(password: str) -> str:
-    if len(password) < 8:
-        raise HTTPException(status_code=400, detail="Пароль должен содержать минимум 8 символов")
-    if not re.search(r'[A-Za-z]', password):
-        raise HTTPException(status_code=400, detail="Пароль должен содержать хотя бы одну букву")
-    if not re.search(r'\d', password):
-        raise HTTPException(status_code=400, detail="Пароль должен содержать хотя бы одну цифру")
-    return password
-
-def validate_email(email: str) -> str:
-    if email and not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', email):
-        raise HTTPException(status_code=400, detail="Неверный формат email")
-    return email
 
 def sanitize_string(value: str, max_length: int = 500) -> str:
     if not value:
@@ -178,26 +150,28 @@ def sanitize_string(value: str, max_length: int = 500) -> str:
     value = re.sub(r'[<>&\'"\\]', '', value)
     return value
 
-# === TELEGRAM NOTIFIER ===
+# === TELEGRAM ===
 class TelegramNotifier:
     def __init__(self, bot_token: str, chat_id: str):
         self.bot_token = bot_token
         self.chat_id = chat_id
         self.base_url = f"https://api.telegram.org/bot{bot_token}"
-    
+
     async def send_consultation_notification(self, consultation: dict):
         message = f"""
 📝 <b>НОВАЯ ЗАЯВКА НА КОНСУЛЬТАЦИЮ</b>
 
 👤 <b>Имя:</b> {consultation.get('name', 'Не указано')}
-📞 <b>Телефон:</b> {consultation.get('phone', 'Не указано')}
-✉️ <b>Email:</b> {consultation.get('email', 'Не указано')}
+💬 <b>Telegram:</b> {consultation.get('telegram', 'Не указан')}
+
+📁 <b>Категория:</b> {consultation.get('category', 'Не указана')}
+🎯 <b>Тема:</b> {consultation.get('topic', 'Не указана')}
 
 💬 <b>Запрос:</b>
 {consultation.get('request_text', 'Не указано')}
 
 🕐 <b>Дата:</b> {consultation.get('created_at', 'N/A')}
-🆔 <b>ID заявки:</b> {consultation.get('id', 'N/A')}
+🆔 <b>ID:</b> {consultation.get('id', 'N/A')}
 """
         try:
             async with aiohttp.ClientSession() as session:
@@ -207,10 +181,8 @@ class TelegramNotifier:
                 ) as response:
                     if response.status == 200:
                         logger.info("✅ Уведомление отправлено в Telegram")
-                    else:
-                        logger.error(f"❌ Ошибка Telegram: {response.status}")
         except Exception as e:
-            logger.error(f"❌ Ошибка подключения к Telegram: {e}")
+            logger.error(f"❌ Ошибка Telegram: {e}")
 
 telegram_notifier = None
 
@@ -219,34 +191,31 @@ def init_telegram():
     if TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID:
         telegram_notifier = TelegramNotifier(TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID)
         logger.info("✅ Telegram бот инициализирован")
-    else:
-        logger.warning("⚠️ Telegram бот не настроен")
 
 async def notify_consultation(consultation_data: dict):
     if telegram_notifier:
         asyncio.create_task(telegram_notifier.send_consultation_notification(consultation_data))
 
-# === МОДЕЛИ ===
+# === МОДЕЛИ SQLALCHEMY ===
+
 class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, autoincrement=True)
     login = Column(String(100), unique=True, nullable=False, index=True)
     password_hash = Column(String(255), nullable=False)
-    email = Column(String(120), unique=True, nullable=True)
-    phone = Column(String(20), nullable=True)
     telegram = Column(String(100), nullable=True)
     gender = Column(String(10), nullable=True)
     orientation = Column(String(20), nullable=True)
     role = Column(String(20), default="user", nullable=False, index=True)
     session_id = Column(String(100), unique=True, default=lambda: str(uuid.uuid4()))
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     compatibility_code = Column(String(50), unique=True, nullable=True)
     archetype_scores = Column(JSON, nullable=True)
     active_archetypes = Column(JSON, nullable=True)
     is_active = Column(Boolean, default=True)
 
-    consultations = relationship("Consultation", back_populates="user")
-    test_results = relationship("TestResult", back_populates="user")
+    consultations = relationship("Consultation", back_populates="user", cascade="all, delete", passive_deletes=True)
+    test_results = relationship("TestResult", back_populates="user", cascade="all, delete", passive_deletes=True)
 
 class Question(Base):
     __tablename__ = "questions"
@@ -263,20 +232,21 @@ class Answer(Base):
     session_id = Column(String(100), nullable=False)
     question_id = Column(Integer, ForeignKey("questions.id"), nullable=False)
     value = Column(Boolean, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 class Consultation(Base):
     __tablename__ = "consultations"
     id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=True)
     name = Column(String(100), nullable=False)
-    phone = Column(String(20), nullable=False)
-    email = Column(String(120), nullable=True)
+    telegram = Column(String(100), nullable=True)
+    category = Column(String(100), nullable=True)
+    topic = Column(String(200), nullable=True)
     request_text = Column(Text, nullable=False)
     status = Column(String(20), default="new", nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+
     user = relationship("User", back_populates="consultations")
 
 class ArchetypeDescription(Base):
@@ -300,7 +270,7 @@ class Couple(Base):
     p_count = Column(Integer, default=0)
     score = Column(Float, default=0)
     interpretation = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 class Test(Base):
     __tablename__ = "tests"
@@ -309,62 +279,59 @@ class Test(Base):
     description = Column(Text, nullable=True)
     category = Column(String(100), nullable=True)
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
-    questions = relationship("TestQuestion", back_populates="test")
-    results = relationship("TestResult", back_populates="test")
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+
+    questions = relationship("TestQuestion", back_populates="test", cascade="all, delete", passive_deletes=True)
 
 class TestQuestion(Base):
     __tablename__ = "test_questions"
     id = Column(Integer, primary_key=True, autoincrement=True)
-    test_id = Column(Integer, ForeignKey("tests.id"), nullable=False)
+    test_id = Column(Integer, ForeignKey("tests.id", ondelete="CASCADE"), nullable=False)
     text = Column(Text, nullable=False)
     order_index = Column(Integer, nullable=False)
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
     test = relationship("Test", back_populates="questions")
-    answer_options = relationship("AnswerOption", back_populates="question")
+    answer_options = relationship("AnswerOption", back_populates="question", cascade="all, delete", passive_deletes=True)
 
 class AnswerOption(Base):
     __tablename__ = "answer_options"
     id = Column(Integer, primary_key=True, autoincrement=True)
-    question_id = Column(Integer, ForeignKey("test_questions.id"), nullable=False)
+    question_id = Column(Integer, ForeignKey("test_questions.id", ondelete="CASCADE"), nullable=False)
     text = Column(String(500), nullable=False)
     score = Column(Float, default=0.0)
     order_index = Column(Integer, nullable=False)
     is_active = Column(Boolean, default=True)
-    
+
     question = relationship("TestQuestion", back_populates="answer_options")
 
 class TestResult(Base):
     __tablename__ = "test_results"
     id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    test_id = Column(Integer, ForeignKey("tests.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    user_login = Column(String(100), nullable=False)
+    user_telegram = Column(String(100), nullable=True)
+    test_type = Column(String(50), nullable=False)
+    gender = Column(String(10), nullable=True)
     total_score = Column(Float, default=0.0)
+    archetype_result = Column(String(10), nullable=True)
+    archetype_name = Column(String(200), nullable=True)
     scores_breakdown = Column(Text, nullable=True)
     result_text = Column(Text, nullable=True)
-    completed_at = Column(DateTime, default=datetime.utcnow)
-    
-    user = relationship("User", back_populates="test_results")
-    test = relationship("Test", back_populates="results")
+    completed_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
-# === PYDANTIC MODEЛИ С ВАЛИДАЦИЕЙ ===
+    user = relationship("User", back_populates="test_results")
+
+# === PYDANTIC МОДЕЛИ ===
+
 class UserCreate(BaseModel):
     login: str = Field(..., min_length=3, max_length=50)
     password: str = Field(..., min_length=8, max_length=128)
-    email: Optional[str] = None
-    phone: Optional[str] = None
     telegram: Optional[str] = None
     gender: Optional[str] = None
-
-    @validator('login')
-    def validate_login(cls, v):
-        if not re.match(r'^[a-zA-Z0-9_]+$', v):
-            raise ValueError('Логин может содержать только буквы, цифры и подчеркивания')
-        return v.strip()
+    orientation: Optional[str] = None
 
 class UserLogin(BaseModel):
     login: str = Field(..., max_length=50)
@@ -384,8 +351,9 @@ class TestComplete(BaseModel):
 class ConsultationCreate(BaseModel):
     user_id: Optional[int] = None
     name: str = Field(..., min_length=2, max_length=100)
-    phone: str = Field(..., min_length=10, max_length=20)
-    email: Optional[str] = None
+    telegram: Optional[str] = None
+    category: Optional[str] = None
+    topic: Optional[str] = None
     request_text: str = Field(..., min_length=10, max_length=2000)
 
 class CompatibilityCheck(BaseModel):
@@ -410,31 +378,35 @@ class AnswerOptionCreate(BaseModel):
 
 class TestResultCreate(BaseModel):
     user_id: int
-    test_id: int
-    total_score: float
-    scores_breakdown: Optional[Dict[str, float]] = None
-    result_text: Optional[str] = Field(None, max_length=2000)
+    test_type: str
+    total_score: float = 0.0
+    archetype_result: Optional[str] = None
+    archetype_name: Optional[str] = None
+    scores_breakdown: Optional[str] = None
+    result_text: Optional[str] = None
 
 # === АВТОРИЗАЦИЯ ===
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security), db: Session = Depends(get_db)):
     token = credentials.credentials
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id: int = payload.get("sub")
-        if user_id is None:
+        user_id_str = payload.get("sub")
+        if user_id_str is None:
             raise HTTPException(status_code=401, detail="Токен недействителен")
+        user_id = int(user_id_str)
     except JWTError:
-        raise HTTPException(status_code=401, detail="Токен недействителен или истек")
-    
+        raise HTTPException(status_code=401, detail="Токен недействителен")
+    except (ValueError, TypeError):
+        raise HTTPException(status_code=401, detail="Токен недействителен")
+
     user = db.query(User).filter(User.id == user_id).first()
     if not user or not user.is_active:
-        raise HTTPException(status_code=401, detail="Пользователь не найден или неактивен")
-    
+        raise HTTPException(status_code=401, detail="Пользователь не найден")
     return user
 
 def require_admin(current_user: User = Depends(get_current_user)):
     if current_user.role != "admin":
-        logger.warning(f"Попытка доступа админ-панели пользователем {current_user.login}")
+        logger.warning(f"Попытка доступа админ-панели: {current_user.login}")
         raise HTTPException(status_code=403, detail="Доступ запрещен")
     return current_user
 
@@ -459,32 +431,32 @@ def calculate_compatibility(scores1: Dict, scores2: Dict) -> Dict[str, Any]:
     active1 = {code: calculate_status(score) for code, score in scores1.items()}
     active2 = {code: calculate_status(score) for code, score in scores2.items()}
     A_count, P_count = 0, 0
-    
+
     for code1, status1 in active1.items():
         if status1 != "A": continue
         for comp_code in COMPLEMENTARITY.get(code1, []):
             status2 = active2.get(comp_code, "P")
             if status2 in ["A", "M"]: A_count += 1
             elif status2 == "P": P_count += 1
-    
+
     for code2, status2 in active2.items():
         if status2 != "A": continue
         for comp_code in COMPLEMENTARITY.get(code2, []):
             status1 = active1.get(comp_code, "P")
             if status1 in ["A", "M"]: A_count += 1
             elif status1 == "P": P_count += 1
-    
+
     if A_count == 7 and P_count == 0: interpretation = "Максимальная прочность союза"
     elif A_count == 0 and P_count == 7: interpretation = "Минимальная прочность (развал)"
     elif P_count > 0 and A_count > P_count: interpretation = "База есть, но есть очаги конфликтов"
     elif A_count < P_count: interpretation = "Союз временный (против больше чем за)"
     else: interpretation = "Средняя совместимость"
-    
+
     if A_count >= 3: interpretation += ". Отношения имеют тенденцию к сохранению"
-    
+
     total = A_count + P_count
     score = (A_count / total * 100) if total > 0 else 50.0
-    
+
     return {"index": f"{A_count}/{P_count}", "A_count": A_count, "P_count": P_count, "score": round(score, 1), "interpretation": interpretation}
 
 # === INIT DB ===
@@ -492,22 +464,25 @@ def calculate_compatibility(scores1: Dict, scores2: Dict) -> Dict[str, Any]:
 async def startup():
     Base.metadata.create_all(bind=engine)
     init_telegram()
-    
+
     db = SessionLocal()
     try:
+        # Создаём админа если нет
         admin = db.query(User).filter(User.login == "admin").first()
         if not admin:
-            admin_password = "admin123"  # Фиксированный пароль для первого входа
+            admin_password = "admin123"
             admin = User(
                 login="admin",
                 password_hash=hash_password(admin_password),
-                email="admin@psy.com",
-                role="admin"
+                telegram="@admin_psy",
+                role="admin",
+                session_id="admin-session-001"
             )
             db.add(admin)
             db.commit()
-            logger.info(f"✅ Админ создан. Логин: admin, Пароль: {admin_password}")
-        
+            logger.info(f"✅ Админ создан: login=admin, password={admin_password}")
+
+        # Заполняем архетипы если пусто
         if db.query(ArchetypeDescription).count() == 0:
             female_archetypes = [
                 {"code": "2.1", "name": "Ксения (Сестра/Артемида)", "color": "#4169E1", "chakra": 6,
@@ -560,7 +535,11 @@ async def startup():
             ]
             for arch in male_archetypes:
                 db.add(ArchetypeDescription(**arch))
+            db.commit()
+            logger.info("✅ Архетипы заполнены")
 
+        # Заполняем вопросы если пусто
+        if db.query(Question).count() == 0:
             female_q = [
                 ("Мне нравится быть в образе мамы, такой теплой и заботливой.", "2.5", 1),
                 ("Я с детства любила мечтать, я путешествовала в своих мирах.", "2.6", 2),
@@ -570,79 +549,78 @@ async def startup():
                 ("Я с детства планировала свою свадьбу.", "2.7", 6),
                 ("Тема секса вызывала любопытство.", "2.4", 7),
                 ("Глава семьи – отец, он опора и сила.", "2.2", 8),
-                ("С детства папа всегда был прав.", "2.2", 9),
-                ("Чтобы меня убедить, нужны аргументы.", "2.6", 10),
-                ("Мне хотелось быть как папа.", "2.2", 11),
-                ("Я верю в судьбу.", "2.3", 12),
-                ("Принять решение одной – мне нужно одобрение.", "2.6", 13),
-                ("У меня много друзей.", "2.1", 14),
-                ("Я навожу порядок когда никого нет.", "2.3", 15),
-                ("Красивые вещи меня гипнотизируют.", "2.6", 16),
-                ("Преданность и верность - главные ценности.", "2.7", 17),
-                ("Выбирая партнера, смотрю на достижения.", "2.2", 18),
-                ("Мужчина ведом, лучше будь на страже.", "2.7", 19),
-                ("Партнер – скорее друг.", "2.1", 20),
-                ("Когда готовлю, вкладываю душу.", "2.5", 21),
-                ("Ощущение своего тела важно.", "2.4", 22),
-                ("Огонь - таинство.", "2.3", 23),
-                ("Себя и близких в обиду не дам.", "2.1", 24),
-                ("Тепло и забота - главное.", "2.6", 25),
-                ("Вечеринки – это моё.", "2.1", 26),
-                ("Мужчину должен обеспечивать мужчина.", "2.7", 27),
-                ("Мужчина тот же мальчик.", "2.3", 28),
-                ("Мужская сексуальность мне нравится.", "2.4", 29),
-                ("Партнер получил удовольствие – я больше.", "2.5", 30),
-                ("Секс – физиологическая потребность.", "2.2", 31),
-                ("Близкие отношения без секса не мыслю.", "2.4", 32),
-                ("Секс – сакральное.", "2.5", 33),
-                ("Секс – супружеский долг.", "2.7", 34),
-                ("Любовь и секс не разделяю.", "2.4", 35),
+                ("С детства я была «хорошей девочкой».", "2.5", 9),
+                ("Я с детства любила командовать мальчиками.", "2.1", 10),
+                ("Мне хотелось казаться красивой и привлекательной.", "2.4", 11),
+                ("Я с детства была лидером, заводилой.", "2.1", 12),
+                ("Мне хотелось быть полезной и нужной.", "2.5", 13),
+                ("Я любила играть в «дочки-матери».", "2.5", 14),
+                ("Мне нравилось быть в центре внимания.", "2.4", 15),
+                ("Я с детства мечтала о карьере.", "2.2", 16),
+                ("Я с детства любила заботиться о других.", "2.5", 17),
+                ("Я с детства была очень чувствительной.", "2.4", 18),
+                ("Мне хотелось быть независимой.", "2.1", 19),
+                ("Я с детства любила порядок и уют.", "2.3", 20),
+                ("Я с детства мечтала о большой семье.", "2.7", 21),
+                ("Мне хотелось быть сильной и независимой.", "2.2", 22),
+                ("Я с детства любила помогать маме.", "2.5", 23),
+                ("Я с детства любила быть красивой.", "2.4", 24),
+                ("Я с детства любила командовать.", "2.1", 25),
+                ("Мне хотелось быть любимой.", "2.7", 26),
+                ("Я с детства любила уединение.", "2.3", 27),
+                ("Я с детства мечтала о путешествиях.", "2.4", 28),
+                ("Я с детства была очень эмоциональной.", "2.4", 29),
+                ("Я с детства любила планировать.", "2.2", 30),
+                ("Мне хотелось быть заботливой.", "2.5", 31),
+                ("Я с детства любила быть в центре внимания.", "2.4", 32),
+                ("Я с детства мечтала о карьере и власти.", "2.2", 33),
+                ("Я с детства любила заботиться о животных.", "2.5", 34),
+                ("Мне хотелось быть независимой и свободной.", "2.1", 35),
             ]
             for text, code, order in female_q:
                 db.add(Question(gender_type="female", text=text, archetype_code=code, order_index=order))
 
             male_q = [
-                ("Семья – мое царство. Я стремлюсь быть главой.", "1.1", 1),
-                ("Мои эмоции очень ярки.", "1.2", 2),
-                ("Мне сложно усидеть на одном месте.", "1.4", 3),
-                ("Мне комфортно в одиночестве.", "1.3", 4),
-                ("Я чувствителен и раним, но не показываю.", "1.6", 5),
-                ("У меня много знакомых.", "1.4", 6),
-                ("Я живу инстинктами здесь и сейчас.", "1.7", 7),
-                ("Живу разумом, а не сердцем.", "1.5", 8),
-                ("Я замечаю то что скрыто от других.", "1.6", 9),
-                ("Я прирожденный дипломат.", "1.5", 10),
-                ("Отец был авторитетом.", "1.1", 11),
-                ("Ставлю реальные цели.", "1.5", 12),
-                ("Карьера – основа привлекательности.", "1.1", 13),
-                ("Объективно оцениваю ситуацию.", "1.5", 14),
-                ("Выбираю женщину которая будет восхищаться.", "1.1", 15),
-                ("Настроения переменчивы.", "1.2", 16),
-                ("Привлекают спокойные женщины.", "1.2", 17),
-                ("Партнерша должна признавать авторитет.", "1.1", 18),
-                ("Предпочитаю физически выражать симпатию.", "1.7", 19),
-                ("Патриархальные инстинкты.", "1.2", 20),
-                ("Нужна мужская компания.", "1.7", 21),
-                ("Хочу жить комфортно.", "1.5", 22),
-                ("Редко достигаю планов.", "1.2", 23),
-                ("Отношения на основе ощущений.", "1.3", 24),
-                ("Нужна сильная женщина.", "1.6", 25),
-                ("События оставляют глубокий след.", "1.3", 26),
-                ("Наблюдаю за происходящим.", "1.6", 27),
-                ("Множество сценариев жизни.", "1.4", 28),
-                ("Нужны избранные друзья.", "1.3", 29),
-                ("Острый ум и обаяние.", "1.4", 30),
-                ("Интуиция развита сильнее логики.", "1.3", 31),
-                ("Страстный мужчина.", "1.7", 32),
-                ("Человек без корней.", "1.4", 33),
-                ("Общение вызывает напряжение.", "1.6", 34),
-                ("Живу инстинктами.", "1.7", 35),
+                ("Я с детства любил быть лидером.", "1.1", 1),
+                ("Я с детства был эмоциональным.", "1.2", 2),
+                ("Я с детства любил уединение.", "1.3", 3),
+                ("Я с детства любил общаться.", "1.4", 4),
+                ("Я с детства любил порядок.", "1.5", 5),
+                ("Я с детства был чувствительным.", "1.6", 6),
+                ("Я с детства был энергичным.", "1.7", 7),
+                ("Мне хотелось власти.", "1.1", 8),
+                ("Мне хотелось любить.", "1.2", 9),
+                ("Мне хотелось быть одному.", "1.3", 10),
+                ("Мне хотелось общаться.", "1.4", 11),
+                ("Мне хотелось гармонии.", "1.5", 12),
+                ("Мне хотелось творить.", "1.6", 13),
+                ("Мне хотелось побеждать.", "1.7", 14),
+                ("Я любил командовать.", "1.1", 15),
+                ("Я любил переживать.", "1.2", 16),
+                ("Я любил думать.", "1.3", 17),
+                ("Я любил говорить.", "1.4", 18),
+                ("Я любил мир.", "1.5", 19),
+                ("Я любил создавать.", "1.6", 20),
+                ("Я любил бороться.", "1.7", 21),
+                ("Я мечтал о власти.", "1.1", 22),
+                ("Я мечтал о любви.", "1.2", 23),
+                ("Я мечтал о покое.", "1.3", 24),
+                ("Я мечтал о славе.", "1.4", 25),
+                ("Я мечтал о гармонии.", "1.5", 26),
+                ("Я мечтал о творчестве.", "1.6", 27),
+                ("Я мечтал о победе.", "1.7", 28),
+                ("Я был уверенным.", "1.1", 29),
+                ("Я был страстным.", "1.2", 30),
+                ("Я был замкнутым.", "1.3", 31),
+                ("Я был общительным.", "1.4", 32),
+                ("Я был спокойным.", "1.5", 33),
+                ("Я был ранимым.", "1.6", 34),
+                ("Я был воинственным.", "1.7", 35),
             ]
             for text, code, order in male_q:
                 db.add(Question(gender_type="male", text=text, archetype_code=code, order_index=order))
-
             db.commit()
-            logger.info("✅ База данных инициализирована!")
+            logger.info("✅ Вопросы заполнены (35 мужских + 35 женских)")
     finally:
         db.close()
 
@@ -650,35 +628,27 @@ async def startup():
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     logger.error(f"Необработанная ошибка: {exc}", exc_info=True)
-    return JSONResponse(
-        status_code=500,
-        content={"detail": "Внутренняя ошибка сервера. Обратитесь к администратору."}
-    )
+    return JSONResponse(status_code=500, content={"detail": "Внутренняя ошибка сервера"})
 
 # === API ENDPOINTS ===
 
 @app.get("/")
 async def root():
-    return {"message": "Psycho Archetypes API", "status": "running", "version": "3.0.0-SECURE"}
+    return {"message": "Psycho Archetypes API", "status": "running", "version": "4.0.0"}
 
 # === AUTH ===
 @app.post("/api/auth/register")
 async def register(data: UserCreate, db: Session = Depends(get_db)):
     existing = db.query(User).filter(User.login == data.login).first()
     if existing:
-        raise HTTPException(400, "Пользователь с таким логином уже существует")
-
-    validate_password(data.password)
-    if data.email:
-        validate_email(data.email)
+        raise HTTPException(400, "Пользователь уже существует")
 
     code = generate_code()
     user = User(
-        login=sanitize_string(data.login, 50),
+        login=data.login.strip(),
         password_hash=hash_password(data.password),
         gender=data.gender,
-        email=data.email,
-        phone=data.phone,
+        orientation=data.orientation,
         telegram=data.telegram,
         compatibility_code=code,
         role="user"
@@ -693,17 +663,21 @@ async def register(data: UserCreate, db: Session = Depends(get_db)):
     return {
         "access_token": token,
         "token_type": "bearer",
-        "user": {"id": user.id, "login": user.login, "telegram": user.telegram, "email": user.email, "name": user.login, "gender": user.gender, "role": user.role, "created_at": str(user.created_at)},
+        "user": {
+            "id": user.id, "login": user.login, "telegram": user.telegram,
+            "name": user.login, "gender": user.gender, "orientation": user.orientation,
+            "role": user.role, "created_at": str(user.created_at)
+        },
         "compatibility_code": code
     }
 
 @app.post("/api/auth/login")
 async def login(data: UserLogin, request: Request, db: Session = Depends(get_db)):
     client_ip = request.client.host
-    
+
     if rate_limiter.is_login_locked(client_ip):
         raise HTTPException(429, "Слишком много попыток входа. Подождите 15 минут.")
-    
+
     user = db.query(User).filter(User.login == data.login).first()
     if not user:
         rate_limiter.record_login_attempt(client_ip, False)
@@ -714,14 +688,17 @@ async def login(data: UserLogin, request: Request, db: Session = Depends(get_db)
         raise HTTPException(401, "Неверный пароль")
 
     rate_limiter.record_login_attempt(client_ip, True)
-    
     token = create_access_token(data={"sub": user.id, "role": user.role})
-    logger.info(f"Вход: {user.login} (ID: {user.id}) с IP: {client_ip}")
-    
+    logger.info(f"Вход: {user.login} (ID: {user.id})")
+
     return {
         "access_token": token,
         "token_type": "bearer",
-        "user": {"id": user.id, "login": user.login, "telegram": user.telegram, "email": user.email, "name": user.login, "gender": user.gender, "role": user.role, "created_at": str(user.created_at)},
+        "user": {
+            "id": user.id, "login": user.login, "telegram": user.telegram,
+            "name": user.login, "gender": user.gender, "orientation": user.orientation,
+            "role": user.role, "created_at": str(user.created_at)
+        },
         "compatibility_code": user.compatibility_code
     }
 
@@ -730,25 +707,29 @@ async def login(data: UserLogin, request: Request, db: Session = Depends(get_db)
 async def get_questions(gender: str, db: Session = Depends(get_db)):
     if gender not in ["male", "female"]:
         raise HTTPException(400, "Неверный параметр пола")
-    
+
     questions = db.query(Question).filter(
         Question.gender_type == gender,
         Question.is_active == True
     ).order_by(Question.order_index).all()
-    
-    return [{"id": q.id, "text": sanitize_string(q.text, 1000) or "Вопрос в разработке", "archetype_code": q.archetype_code} for q in questions]
+
+    return [{
+        "id": q.id, "text": sanitize_string(q.text, 1000) or "Вопрос в разработке",
+        "archetype_code": q.archetype_code
+    } for q in questions]
 
 # === TEST COMPLETE ===
 @app.post("/api/test/complete")
 async def complete_test(data: TestComplete, db: Session = Depends(get_db)):
     try:
-        # Валидация gender
         if data.gender not in ["male", "female"]:
             raise HTTPException(400, "Неверный параметр пола")
-        
+
+        # Сохраняем ответы
         for ans in data.answers:
             db.add(Answer(session_id=data.session_id, question_id=ans.question_id, value=ans.value))
 
+        # Считаем баллы
         scores = {}
         for ans in data.answers:
             if ans.value:
@@ -764,20 +745,20 @@ async def complete_test(data: TestComplete, db: Session = Depends(get_db)):
 
         active_archetypes = {code: calculate_status(score) for code, score in scores.items()}
 
+        # Ищем пользователя
         user = db.query(User).filter(User.session_id == data.session_id).first()
-        
-        # Если пользователь не найден по session_id, ищем по логину
         if not user and data.login:
-            user = db.query(User).filter(User.login == sanitize_string(data.login, 50)).first()
+            user = db.query(User).filter(User.login == data.login.strip()).first()
 
         if not user:
             code = generate_code()
             temp_password = secrets.token_urlsafe(16)
             user = User(
-                login=sanitize_string(data.login or f"user_{uuid.uuid4().hex[:8]}", 50),
+                login=data.login.strip() if data.login else f"user_{uuid.uuid4().hex[:8]}",
                 password_hash=hash_password(temp_password),
                 gender=data.gender,
                 orientation=data.orientation,
+                telegram=data.login,  # временно
                 session_id=data.session_id,
                 compatibility_code=code,
                 archetype_scores=scores,
@@ -790,7 +771,6 @@ async def complete_test(data: TestComplete, db: Session = Depends(get_db)):
             user.gender = data.gender
             user.orientation = data.orientation
             user.session_id = data.session_id
-            # Если у пользователя нет compatibility_code, генерируем
             if not user.compatibility_code:
                 user.compatibility_code = generate_code()
 
@@ -799,28 +779,58 @@ async def complete_test(data: TestComplete, db: Session = Depends(get_db)):
             db.refresh(user)
         except Exception as commit_error:
             db.rollback()
-            # Если ошибка из-за уникальности login, добавляем суффикс
             if "UNIQUE constraint failed" in str(commit_error) and "login" in str(commit_error):
-                unique_login = f"{sanitize_string(data.login or 'user', 40)}_{uuid.uuid4().hex[:6]}"
-                if not user.id:  # Новый пользователь
+                unique_login = f"{data.login.strip() if data.login else 'user'}_{uuid.uuid4().hex[:6]}"
+                if not user.id:
                     user.login = unique_login
-                else:  # Существующий пользователь
+                else:
                     user.login = unique_login
                 db.commit()
                 db.refresh(user)
             else:
-                logger.error(f"Ошибка commit: {commit_error}", exc_info=True)
-                raise HTTPException(status_code=500, detail=f"Ошибка при сохранении: {str(commit_error)}")
-        
-        logger.info(f"Тест завершен для session_id={data.session_id}, gender={data.gender}")
+                raise HTTPException(status_code=500, detail=f"Ошибка сохранения: {str(commit_error)}")
 
-        return {"session_id": data.session_id, "compatibility_code": user.compatibility_code, "scores": scores, "active_archetypes": active_archetypes}
+        # Определяем основной архетип
+        main_archetype_code = max(scores, key=scores.get) if scores else None
+        main_archetype_name = None
+        if main_archetype_code:
+            arch_desc = db.query(ArchetypeDescription).filter(
+                ArchetypeDescription.code == main_archetype_code
+            ).first()
+            main_archetype_name = arch_desc.name if arch_desc else None
+
+        # === СОХРАНЯЕМ РЕЗУЛЬТАТ В test_results ===
+        test_result = TestResult(
+            user_id=user.id,
+            user_login=user.login,
+            user_telegram=user.telegram,
+            test_type="archetype",
+            gender=data.gender,
+            total_score=sum(scores.values()),
+            archetype_result=main_archetype_code,
+            archetype_name=main_archetype_name,
+            scores_breakdown=str(scores),
+            result_text=f"Архетип: {main_archetype_name or main_archetype_code or 'Не определён'}"
+        )
+        db.add(test_result)
+        db.commit()
+
+        logger.info(f"Тест завершён: user={user.login}, archetype={main_archetype_name}")
+
+        return {
+            "session_id": data.session_id,
+            "compatibility_code": user.compatibility_code,
+            "scores": scores,
+            "active_archetypes": active_archetypes,
+            "archetype_code": main_archetype_code,
+            "archetype_name": main_archetype_name
+        }
     except HTTPException:
         raise
     except Exception as e:
         db.rollback()
         logger.error(f"Ошибка complete_test: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Ошибка при сохранении: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Ошибка: {str(e)}")
 
 # === SAVE RESULTS TO AUTHORIZED USER ===
 @app.post("/api/test/save-to-account")
@@ -829,49 +839,35 @@ async def save_results_to_account(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Привязка результатов теста к авторизованному пользователю"""
-    try:
-        code = data.get('compatibility_code')
-        if not code:
-            raise HTTPException(400, "Требуется compatibility_code")
-        
-        # Проверяем что код существует
-        existing_user = db.query(User).filter(User.compatibility_code == code).first()
-        if not existing_user:
-            raise HTTPException(404, "Результаты теста не найдены по указанному коду")
-        
-        # Привязываем результаты к авторизованному пользователю
-        current_user.compatibility_code = existing_user.compatibility_code
-        current_user.archetype_scores = existing_user.archetype_scores
-        current_user.active_archetypes = existing_user.active_archetypes
-        current_user.gender = existing_user.gender
-        current_user.orientation = existing_user.orientation
-        
-        db.commit()
-        db.refresh(current_user)
-        
-        logger.info(f"Результаты {code} сохранены в аккаунт {current_user.login}")
-        
-        return {
-            "success": True,
-            "compatibility_code": code,
-            "archetype_scores": current_user.archetype_scores
-        }
-    except HTTPException:
-        raise
-    except Exception as e:
-        db.rollback()
-        logger.error(f"Ошибка save_results_to_account: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Ошибка при сохранении: {str(e)}")
+    code = data.get('compatibility_code')
+    if not code:
+        raise HTTPException(400, "Требуется compatibility_code")
 
-# === CONSULTATION ===
+    existing_user = db.query(User).filter(User.compatibility_code == code).first()
+    if not existing_user:
+        raise HTTPException(404, "Результаты не найдены")
+
+    current_user.compatibility_code = existing_user.compatibility_code
+    current_user.archetype_scores = existing_user.archetype_scores
+    current_user.active_archetypes = existing_user.active_archetypes
+    current_user.gender = existing_user.gender
+    current_user.orientation = existing_user.orientation
+
+    db.commit()
+    db.refresh(current_user)
+
+    logger.info(f"Результаты {code} сохранены в аккаунт {current_user.login}")
+    return {"success": True, "compatibility_code": code, "archetype_scores": current_user.archetype_scores}
+
+# === CONSULTATION (без phone/email!) ===
 @app.post("/api/consultation")
 async def create_consultation(data: ConsultationCreate, db: Session = Depends(get_db)):
     consultation = Consultation(
         user_id=data.user_id,
         name=sanitize_string(data.name, 100),
-        phone=sanitize_string(data.phone, 20),
-        email=data.email,
+        telegram=data.telegram,
+        category=data.category,
+        topic=data.topic,
         request_text=sanitize_string(data.request_text, 2000)
     )
     db.add(consultation)
@@ -879,13 +875,14 @@ async def create_consultation(data: ConsultationCreate, db: Session = Depends(ge
     db.refresh(consultation)
 
     logger.info(f"Новая заявка на консультацию от {consultation.name}")
-    
+
     # Telegram notification
     await notify_consultation({
         "id": consultation.id,
         "name": consultation.name,
-        "phone": consultation.phone,
-        "email": consultation.email,
+        "telegram": consultation.telegram,
+        "category": consultation.category,
+        "topic": consultation.topic,
         "request_text": consultation.request_text,
         "created_at": str(consultation.created_at)
     })
@@ -897,7 +894,7 @@ async def create_consultation(data: ConsultationCreate, db: Session = Depends(ge
 async def get_profile(code: str, db: Session = Depends(get_db)):
     if not re.match(r'^PSY-\d{8}-[A-Z0-9]{8,12}$', code):
         raise HTTPException(400, "Неверный формат кода")
-    
+
     user = db.query(User).filter(User.compatibility_code == code).first()
     if not user:
         raise HTTPException(404, "Профиль не найден")
@@ -929,7 +926,7 @@ async def check_compatibility(data: CompatibilityCheck, db: Session = Depends(ge
     user2 = db.query(User).filter(User.compatibility_code == data.code2).first()
 
     if not user1 or not user2:
-        raise HTTPException(404, "Один или оба кода не найдены")
+        raise HTTPException(404, "Коды не найдены")
 
     scores1 = user1.archetype_scores or {}
     scores2 = user2.archetype_scores or {}
@@ -947,13 +944,11 @@ async def check_compatibility(data: CompatibilityCheck, db: Session = Depends(ge
     return {"user1": {"login": user1.login, "code": data.code1}, "user2": {"login": user2.login, "code": data.code2}, **result}
 
 # ========================================
-# === ADMIN ENDPOINTS (JWT PROTECTED) ===
+# === ADMIN ENDPOINTS ===
 # ========================================
 
 @app.get("/api/admin/dashboard")
 async def get_admin_dashboard(current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
-    logger.info(f"Admin dashboard accessed by {current_user.login}")
-    
     return {
         "stats": {
             "total_users": db.query(User).count(),
@@ -963,11 +958,15 @@ async def get_admin_dashboard(current_user: User = Depends(require_admin), db: S
             "total_results": db.query(TestResult).count()
         },
         "recent_consultations": [
-            {"id": c.id, "user_id": c.user_id, "name": c.name, "status": c.status, "created_at": str(c.created_at)}
+            {
+                "id": c.id, "user_id": c.user_id, "name": c.name,
+                "telegram": c.telegram, "category": c.category, "topic": c.topic,
+                "status": c.status, "created_at": str(c.created_at)
+            }
             for c in db.query(Consultation).order_by(Consultation.created_at.desc()).limit(10).all()
         ],
         "recent_users": [
-            {"id": u.id, "login": u.login, "role": u.role, "created_at": str(u.created_at)}
+            {"id": u.id, "login": u.login, "telegram": u.telegram, "role": u.role, "created_at": str(u.created_at)}
             for u in db.query(User).order_by(User.created_at.desc()).limit(10).all()
         ]
     }
@@ -976,7 +975,11 @@ async def get_admin_dashboard(current_user: User = Depends(require_admin), db: S
 async def get_all_users(current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
     users = db.query(User).all()
     return [
-        {"id": u.id, "login": u.login, "email": u.email, "phone": u.phone, "gender": u.gender, "role": u.role, "created_at": str(u.created_at), "is_active": u.is_active}
+        {
+            "id": u.id, "login": u.login, "telegram": u.telegram,
+            "gender": u.gender, "role": u.role, "created_at": str(u.created_at),
+            "is_active": u.is_active, "compatibility_code": u.compatibility_code
+        }
         for u in users
     ]
 
@@ -984,39 +987,73 @@ async def get_all_users(current_user: User = Depends(require_admin), db: Session
 async def update_user_role(user_id: int, data: dict, current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
     role = data.get("role")
     if role not in ["admin", "user"]:
-        raise HTTPException(400, "Роль должна быть 'admin' или 'user'")
-    
+        raise HTTPException(400, "Роль: 'admin' или 'user'")
+
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(404, "Пользователь не найден")
-    
-    old_role = user.role
+
     user.role = role
     db.commit()
-    
-    logger.info(f"{current_user.login} изменил роль пользователя {user.login} с {old_role} на {role}")
+    logger.info(f"{current_user.login} изменил роль {user.login} на {role}")
     return {"message": f"Роль изменена на '{role}'", "user_id": user_id}
 
 @app.delete("/api/admin/users/{user_id}")
 async def delete_user(user_id: int, current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
     if current_user.id == user_id:
-        raise HTTPException(400, "Нельзя удалить самого себя")
-    
+        raise HTTPException(400, "Нельзя удалить себя")
+
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(404, "Пользователь не найден")
+
+    # Delete related test_results first (cascade will handle this automatically)
+    db.query(TestResult).filter(TestResult.user_id == user_id).delete()
     
     db.delete(user)
     db.commit()
-    
     logger.info(f"{current_user.login} удалил пользователя ID: {user_id}")
     return {"message": "Пользователь удален", "user_id": user_id}
+
+@app.get("/api/admin/test-results")
+async def get_all_test_results(current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
+    results = db.query(TestResult).order_by(TestResult.completed_at.desc()).all()
+    return [
+        {
+            "id": r.id, "user_id": r.user_id, "user_login": r.user_login,
+            "user_telegram": r.user_telegram, "test_type": r.test_type,
+            "gender": r.gender, "archetype_code": r.archetype_result,
+            "archetype_name": r.archetype_name, "total_score": r.total_score,
+            "scores_breakdown": r.scores_breakdown, "result_text": r.result_text,
+            "completed_at": str(r.completed_at)
+        }
+        for r in results
+    ]
+
+@app.get("/api/admin/test-results/{user_id}")
+async def get_user_test_results(user_id: int, current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
+    results = db.query(TestResult).filter(TestResult.user_id == user_id).order_by(TestResult.completed_at.desc()).all()
+    return [
+        {
+            "id": r.id, "user_login": r.user_login, "user_telegram": r.user_telegram,
+            "test_type": r.test_type, "gender": r.gender, "archetype_code": r.archetype_result,
+            "archetype_name": r.archetype_name, "total_score": r.total_score,
+            "scores_breakdown": r.scores_breakdown, "result_text": r.result_text,
+            "completed_at": str(r.completed_at)
+        }
+        for r in results
+    ]
 
 @app.get("/api/admin/consultations")
 async def get_consultations(current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
     consultations = db.query(Consultation).order_by(Consultation.created_at.desc()).all()
     return [
-        {"id": c.id, "user_id": c.user_id, "name": c.name, "phone": c.phone, "email": c.email, "request": c.request_text, "status": c.status, "created": c.created_at.isoformat()}
+        {
+            "id": c.id, "user_id": c.user_id, "name": c.name,
+            "telegram": c.telegram, "category": c.category, "topic": c.topic,
+            "request": c.request_text, "status": c.status,
+            "created_at": str(c.created_at)
+        }
         for c in consultations
     ]
 
@@ -1025,22 +1062,25 @@ async def update_consultation_status(consultation_id: int, data: dict, current_u
     status = data.get("status")
     if status not in ["new", "in_progress", "completed", "cancelled"]:
         raise HTTPException(400, "Неверный статус")
-    
+
     consultation = db.query(Consultation).filter(Consultation.id == consultation_id).first()
     if not consultation:
         raise HTTPException(404, "Консультация не найдена")
-    
+
     consultation.status = status
     db.commit()
-    
-    logger.info(f"{current_user.login} обновил статус консультации #{consultation_id} на {status}")
+    logger.info(f"{current_user.login} обновил статус заявки #{consultation_id} на {status}")
     return {"message": "Статус обновлен", "consultation_id": consultation_id, "new_status": status}
 
 @app.get("/api/admin/questions")
 async def admin_get_questions(current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
     questions = db.query(Question).all()
     return [
-        {"id": q.id, "gender_type": q.gender_type, "text": q.text, "archetype_code": q.archetype_code, "order_index": q.order_index, "is_active": q.is_active}
+        {
+            "id": q.id, "gender_type": q.gender_type, "text": q.text,
+            "archetype_code": q.archetype_code, "order_index": q.order_index,
+            "is_active": q.is_active
+        }
         for q in questions
     ]
 
@@ -1048,18 +1088,26 @@ async def admin_get_questions(current_user: User = Depends(require_admin), db: S
 async def admin_get_archetypes(current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
     archetypes = db.query(ArchetypeDescription).all()
     return [
-        {"id": a.id, "code": a.code, "name": a.name, "color": a.color, "chakra": a.chakra, "description": a.description, "strengths": a.strengths, "weaknesses": a.weaknesses}
+        {
+            "id": a.id, "code": a.code, "name": a.name, "color": a.color,
+            "chakra": a.chakra, "description": a.description,
+            "strengths": a.strengths, "weaknesses": a.weaknesses
+        }
         for a in archetypes
     ]
 
-# === TESTS (Admin Protected) ===
+# === TESTS (Admin) ===
 @app.post("/api/tests")
 async def create_test(test: TestCreate, current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
-    new_test = Test(title=sanitize_string(test.title, 200), description=sanitize_string(test.description, 2000), category=sanitize_string(test.category, 100))
+    new_test = Test(
+        title=sanitize_string(test.title, 200),
+        description=sanitize_string(test.description, 2000),
+        category=sanitize_string(test.category, 100)
+    )
     db.add(new_test)
     db.commit()
     db.refresh(new_test)
-    logger.info(f"{current_user.login} создал тест #{new_test.id}: {new_test.title}")
+    logger.info(f"{current_user.login} создал тест #{new_test.id}")
     return {"message": "Тест создан", "test_id": new_test.id, "title": new_test.title}
 
 @app.put("/api/tests/{test_id}")
@@ -1067,13 +1115,10 @@ async def update_test(test_id: int, test: TestCreate, current_user: User = Depen
     test_db = db.query(Test).filter(Test.id == test_id).first()
     if not test_db:
         raise HTTPException(404, "Тест не найден")
-    
     test_db.title = sanitize_string(test.title, 200)
     test_db.description = sanitize_string(test.description, 2000)
     test_db.category = sanitize_string(test.category, 100)
     db.commit()
-    
-    logger.info(f"{current_user.login} обновил тест #{test_id}")
     return {"message": "Тест обновлен", "test_id": test_id}
 
 @app.delete("/api/tests/{test_id}")
@@ -1090,23 +1135,40 @@ async def delete_test(test_id: int, current_user: User = Depends(require_admin),
 @app.get("/api/tests")
 async def get_all_tests(db: Session = Depends(get_db)):
     tests = db.query(Test).filter(Test.is_active == True).all()
-    return [{"id": t.id, "title": t.title, "description": t.description, "category": t.category, "created_at": str(t.created_at)} for t in tests]
+    return [
+        {"id": t.id, "title": t.title, "description": t.description,
+         "category": t.category, "created_at": str(t.created_at)}
+        for t in tests
+    ]
 
 @app.get("/api/tests/{test_id}")
 async def get_test(test_id: int, db: Session = Depends(get_db)):
     test = db.query(Test).filter(Test.id == test_id).first()
     if not test:
         raise HTTPException(404, "Тест не найден")
-    return {"id": test.id, "title": test.title, "description": test.description, "category": test.category, "is_active": test.is_active}
+    return {
+        "id": test.id, "title": test.title, "description": test.description,
+        "category": test.category, "is_active": test.is_active
+    }
 
-# === TEST QUESTIONS (Admin Protected) ===
 @app.post("/api/tests/questions")
 async def create_question(question: TestQuestionCreate, current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
-    new_question = TestQuestion(test_id=question.test_id, text=sanitize_string(question.text, 2000), order_index=question.order_index)
+    logger.info(f"Получены данные для вопроса: test_id={question.test_id}, text={question.text[:50]}..., order_index={question.order_index}")
+    
+    # Проверяем существование теста
+    test_exists = db.query(Test).filter(Test.id == question.test_id).first()
+    if not test_exists:
+        raise HTTPException(404, f"Тест с ID {question.test_id} не найден")
+    
+    new_question = TestQuestion(
+        test_id=question.test_id,
+        text=sanitize_string(question.text, 2000),
+        order_index=question.order_index
+    )
     db.add(new_question)
     db.commit()
     db.refresh(new_question)
-    logger.info(f"{current_user.login} добавил вопрос #{new_question.id} к тесту #{question.test_id}")
+    logger.info(f"{current_user.login} добавил вопрос к тесту #{question.test_id}")
     return {"message": "Вопрос добавлен", "question_id": new_question.id}
 
 @app.delete("/api/tests/questions/{question_id}")
@@ -1116,22 +1178,27 @@ async def delete_question(question_id: int, current_user: User = Depends(require
         raise HTTPException(404, "Вопрос не найден")
     db.delete(question)
     db.commit()
-    logger.info(f"{current_user.login} удалил вопрос #{question_id}")
     return {"message": "Вопрос удален", "question_id": question_id}
 
 @app.get("/api/tests/{test_id}/questions")
 async def get_test_questions(test_id: int, db: Session = Depends(get_db)):
-    questions = db.query(TestQuestion).filter(TestQuestion.test_id == test_id, TestQuestion.is_active == True).order_by(TestQuestion.order_index).all()
+    questions = db.query(TestQuestion).filter(
+        TestQuestion.test_id == test_id,
+        TestQuestion.is_active == True
+    ).order_by(TestQuestion.order_index).all()
     return [{"id": q.id, "text": q.text, "order_index": q.order_index} for q in questions]
 
-# === ANSWER OPTIONS (Admin Protected) ===
 @app.post("/api/tests/answers")
 async def create_answer_option(answer: AnswerOptionCreate, current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
-    new_answer = AnswerOption(question_id=answer.question_id, text=sanitize_string(answer.text, 500), score=answer.score, order_index=answer.order_index)
+    new_answer = AnswerOption(
+        question_id=answer.question_id,
+        text=sanitize_string(answer.text, 500),
+        score=answer.score,
+        order_index=answer.order_index
+    )
     db.add(new_answer)
     db.commit()
     db.refresh(new_answer)
-    logger.info(f"{current_user.login} добавил вариант ответа #{new_answer.id}")
     return {"message": "Вариант добавлен", "answer_id": new_answer.id}
 
 @app.put("/api/tests/answers/{answer_id}")
@@ -1152,22 +1219,30 @@ async def delete_answer_option(answer_id: int, current_user: User = Depends(requ
         raise HTTPException(404, "Вариант не найден")
     db.delete(answer)
     db.commit()
-    logger.info(f"{current_user.login} удалил вариант ответа #{answer_id}")
     return {"message": "Вариант удален", "answer_id": answer_id}
 
 @app.get("/api/questions/{question_id}/answers")
 async def get_answer_options(question_id: int, db: Session = Depends(get_db)):
-    answers = db.query(AnswerOption).filter(AnswerOption.question_id == question_id, AnswerOption.is_active == True).order_by(AnswerOption.order_index).all()
+    answers = db.query(AnswerOption).filter(
+        AnswerOption.question_id == question_id,
+        AnswerOption.is_active == True
+    ).order_by(AnswerOption.order_index).all()
     return [{"id": a.id, "text": a.text, "score": a.score, "order_index": a.order_index} for a in answers]
 
 # === TEST RESULTS ===
 @app.post("/api/test-results")
 async def save_test_result(result: TestResultCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    import json
     new_result = TestResult(
-        user_id=result.user_id, test_id=result.test_id, total_score=result.total_score,
-        scores_breakdown=json.dumps(result.scores_breakdown) if result.scores_breakdown else None,
-        result_text=sanitize_string(result.result_text, 2000)
+        user_id=result.user_id,
+        user_login=current_user.login,
+        user_telegram=current_user.telegram,
+        test_type=result.test_type,
+        gender=current_user.gender,
+        total_score=result.total_score,
+        archetype_result=result.archetype_result,
+        archetype_name=result.archetype_name,
+        scores_breakdown=result.scores_breakdown,
+        result_text=result.result_text
     )
     db.add(new_result)
     db.commit()
@@ -1179,12 +1254,21 @@ async def get_user_results(user_id: int, current_user: User = Depends(get_curren
     if current_user.id != user_id and current_user.role != "admin":
         raise HTTPException(403, "Доступ запрещен")
     results = db.query(TestResult).filter(TestResult.user_id == user_id).all()
-    return [{"id": r.id, "test_id": r.test_id, "total_score": r.total_score, "result_text": r.result_text, "completed_at": str(r.completed_at)} for r in results]
+    return [
+        {"id": r.id, "test_type": r.test_type, "total_score": r.total_score,
+         "result_text": r.result_text, "completed_at": str(r.completed_at)}
+        for r in results
+    ]
 
 @app.get("/api/tests/{test_id}/results")
 async def get_test_results(test_id: int, current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
-    results = db.query(TestResult).filter(TestResult.test_id == test_id).all()
-    return [{"id": r.id, "user_id": r.user_id, "total_score": r.total_score, "result_text": r.result_text, "completed_at": str(r.completed_at)} for r in results]
+    results = db.query(TestResult).filter(TestResult.test_type == str(test_id)).all()
+    return [
+        {"id": r.id, "user_id": r.user_id, "user_login": r.user_login,
+         "total_score": r.total_score, "result_text": r.result_text,
+         "completed_at": str(r.completed_at)}
+        for r in results
+    ]
 
 if __name__ == "__main__":
     import uvicorn

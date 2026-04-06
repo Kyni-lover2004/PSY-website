@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { adminAPI } from '../api/api';
+import api from '../api/api';
 
 const AdminPanel = () => {
   const navigate = useNavigate();
@@ -11,6 +12,7 @@ const AdminPanel = () => {
   const [tests, setTests] = useState([]);
   const [consultations, setConsultations] = useState([]);
   const [questions, setQuestions] = useState([]);
+  const [testResults, setTestResults] = useState([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(null);
   const [error, setError] = useState(null);
@@ -40,12 +42,38 @@ const AdminPanel = () => {
     setLoading(true);
     setError(null);
     try {
-      const [dashboard, usersData, consultationsData, testsData, questionsData] = await Promise.all([
-        adminAPI.getDashboard().then(r => r.data).catch(() => null),
-        adminAPI.getUsers().then(r => r.data).catch(() => []),
-        adminAPI.getConsultations().then(r => r.data).catch(() => []),
-        fetch('http://localhost:8000/api/tests').then(r => r.json()).catch(() => []),
-        adminAPI.getQuestions().then(r => r.data).catch(() => [])
+      const dashboardPromise = adminAPI.getDashboard().then(r => r.data).catch((err) => {
+        console.error('Ошибка загрузки dashboard:', err);
+        return null;
+      });
+      const usersPromise = adminAPI.getUsers().then(r => r.data).catch((err) => {
+        console.error('Ошибка загрузки users:', err);
+        return [];
+      });
+      const consultationsPromise = adminAPI.getConsultations().then(r => r.data).catch((err) => {
+        console.error('Ошибка загрузки consultations:', err);
+        return [];
+      });
+      const testsPromise = api.get('/tests').then(r => r.data).catch((err) => {
+        console.error('Ошибка загрузки tests:', err);
+        return [];
+      });
+      const questionsPromise = adminAPI.getQuestions().then(r => r.data).catch((err) => {
+        console.error('Ошибка загрузки questions:', err);
+        return [];
+      });
+      const testResultsPromise = adminAPI.getTestResults().then(r => r.data).catch((err) => {
+        console.error('Ошибка загрузки testResults:', err);
+        return [];
+      });
+
+      const [dashboard, usersData, consultationsData, testsData, questionsData, testResultsData] = await Promise.all([
+        dashboardPromise,
+        usersPromise,
+        consultationsPromise,
+        testsPromise,
+        questionsPromise,
+        testResultsPromise
       ]);
 
       if (dashboard) setStats(dashboard.stats);
@@ -53,7 +81,9 @@ const AdminPanel = () => {
       setConsultations(consultationsData);
       setTests(testsData);
       setQuestions(questionsData);
+      setTestResults(testResultsData);
     } catch (err) {
+      console.error('Критическая ошибка загрузки:', err);
       setError('Ошибка загрузки данных');
     } finally {
       setLoading(false);
@@ -101,12 +131,20 @@ const AdminPanel = () => {
   const handleAddQuestion = async (e) => {
     e.preventDefault();
     try {
-      await adminAPI.createQuestion({ ...questionForm, test_id: selectedTestId });
+      const questionData = {
+        test_id: selectedTestId,
+        text: questionForm.text,
+        order_index: parseInt(questionForm.order_index) || 1
+      };
+      console.log('Отправляем вопрос:', questionData);
+      await adminAPI.createQuestion(questionData);
       setQuestionForm({ text: '', order_index: questionForm.order_index + 1 });
       loadTestQuestions(selectedTestId);
       alert('✅ Вопрос добавлен!');
     } catch (error) {
-      alert('Ошибка: ' + (error.response?.data?.detail || error.message));
+      console.error('Ошибка при добавлении вопроса:', error);
+      const errorMsg = error.response?.data?.detail || error.message || 'Неизвестная ошибка';
+      alert('Ошибка: ' + errorMsg);
     }
   };
 
@@ -135,12 +173,21 @@ const AdminPanel = () => {
   const handleAddAnswer = async (e) => {
     e.preventDefault();
     try {
-      await adminAPI.createAnswer({ ...answerForm, question_id: selectedQuestionId });
+      const answerData = {
+        question_id: selectedQuestionId,
+        text: answerForm.text,
+        score: parseFloat(answerForm.score) || 0,
+        order_index: parseInt(answerForm.order_index) || 1
+      };
+      console.log('Отправляем ответ:', answerData);
+      await adminAPI.createAnswer(answerData);
       setAnswerForm({ text: '', score: 0, order_index: answerForm.order_index + 1 });
       loadQuestionAnswers(selectedQuestionId);
       alert('✅ Вариант добавлен!');
     } catch (error) {
-      alert('Ошибка: ' + (error.response?.data?.detail || error.message));
+      console.error('Ошибка при добавлении ответа:', error);
+      const errorMsg = error.response?.data?.detail || error.message || 'Неизвестная ошибка';
+      alert('Ошибка: ' + errorMsg);
     }
   };
 
@@ -227,6 +274,7 @@ const AdminPanel = () => {
           {[
             { id: 'dashboard', icon: '📊', label: 'Обзор' },
             { id: 'users', icon: '👥', label: 'Пользователи' },
+            { id: 'test-results', icon: '📈', label: 'Результаты тестов' },
             { id: 'consultations', icon: '📝', label: `Заявки (${consultations.filter(c => c.status === 'new').length})` },
             { id: 'tests', icon: '📋', label: `Тесты (${tests.length})` },
             { id: 'questions', icon: '❓', label: `Вопросы (${questions.length})` }
@@ -248,7 +296,7 @@ const AdminPanel = () => {
                   <div className="space-y-3">
                     {users.slice(0, 5).map(u => (
                       <div key={u.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                        <div><div className="font-semibold">{u.login}</div><div className="text-sm text-gray-500">{u.email || 'Нет email'}</div></div>
+                        <div><div className="font-semibold">{u.login}</div><div className="text-sm text-gray-500">{u.telegram ? '@' + u.telegram : 'Нет Telegram'}</div></div>
                         <span className={`px-3 py-1 rounded-full text-xs font-semibold ${u.role === 'admin' ? 'bg-red-100 text-red-800' : 'bg-gray-200 text-gray-700'}`}>{u.role}</span>
                       </div>
                     ))}
@@ -263,7 +311,7 @@ const AdminPanel = () => {
                           <span className="font-semibold">{c.name}</span>
                           <span className={`px-2 py-1 rounded text-xs font-semibold ${c.status === 'new' ? 'bg-green-100 text-green-800' : c.status === 'in_progress' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-200 text-gray-700'}`}>{c.status === 'new' ? 'Новая' : c.status === 'in_progress' ? 'В работе' : 'Завершена'}</span>
                         </div>
-                        <div className="text-sm text-gray-600 truncate">{c.request}</div>
+                        <div className="text-sm text-gray-600 truncate">{c.topic || c.category || c.request}</div>
                       </div>
                     ))}
                   </div>
@@ -279,14 +327,14 @@ const AdminPanel = () => {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead><tr className="bg-gray-100">
-                    <th className="p-3 text-left">ID</th><th className="p-3 text-left">Логин</th><th className="p-3 text-left">Email</th>
-                    <th className="p-3 text-left">Телефон</th><th className="p-3 text-left">Пол</th><th className="p-3 text-left">Роль</th><th className="p-3 text-left">Действия</th>
+                    <th className="p-3 text-left">ID</th><th className="p-3 text-left">Логин</th><th className="p-3 text-left">Telegram</th>
+                    <th className="p-3 text-left">Пол</th><th className="p-3 text-left">Роль</th><th className="p-3 text-left">Действия</th>
                   </tr></thead>
                   <tbody>
                     {users.map(u => (
                       <tr key={u.id} className="border-b hover:bg-gray-50">
-                        <td className="p-3">{u.id}</td><td className="p-3 font-semibold">{u.login}</td><td className="p-3">{u.email || '-'}</td>
-                        <td className="p-3">{u.phone || '-'}</td><td className="p-3">{u.gender || '-'}</td>
+                        <td className="p-3">{u.id}</td><td className="p-3 font-semibold">{u.login}</td><td className="p-3">{u.telegram || '-'}</td>
+                        <td className="p-3">{u.gender || '-'}</td>
                         <td className="p-3"><span className={`px-3 py-1 rounded-full text-xs font-semibold ${u.role === 'admin' ? 'bg-red-100 text-red-800' : 'bg-gray-200 text-gray-700'}`}>{u.role}</span></td>
                         <td className="p-3">
                           <button onClick={() => handleUserRoleUpdate(u.id, u.role)} className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-lg text-sm hover:bg-yellow-200 mr-2 transition">Изменить роль</button>
@@ -300,30 +348,110 @@ const AdminPanel = () => {
             </div>
           )}
 
+          {/* Результаты тестов */}
+          {activeTab === 'test-results' && (
+            <div>
+              <h2 className="text-2xl font-bold text-gray-800 mb-6">📈 Результаты тестов</h2>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead><tr className="bg-gray-100">
+                    <th className="p-3 text-left">ID</th>
+                    <th className="p-3 text-left">Пользователь</th>
+                    <th className="p-3 text-left">Telegram</th>
+                    <th className="p-3 text-left">Пол</th>
+                    <th className="p-3 text-left">Тип теста</th>
+                    <th className="p-3 text-left">Архетип</th>
+                    <th className="p-3 text-left">Баллы</th>
+                    <th className="p-3 text-left">Дата</th>
+                  </tr></thead>
+                  <tbody>
+                    {testResults.length > 0 ? (
+                      testResults.map(r => (
+                        <tr key={r.id} className="border-b hover:bg-gray-50">
+                          <td className="p-3">{r.id}</td>
+                          <td className="p-3 font-semibold">{r.user_login}</td>
+                          <td className="p-3">{r.user_telegram ? '@' + r.user_telegram : '-'}</td>
+                          <td className="p-3">{r.gender === 'male' ? 'Мужской' : r.gender === 'female' ? 'Женский' : '-'}</td>
+                          <td className="p-3"><span className="px-2 py-1 bg-purple-100 text-purple-800 rounded-lg text-sm font-semibold">{r.test_type}</span></td>
+                          <td className="p-3">
+                            <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-lg text-sm font-semibold">
+                              {r.archetype_name || r.archetype_code || '-'}
+                            </span>
+                          </td>
+                          <td className="p-3 font-bold text-primary">{r.total_score}</td>
+                          <td className="p-3 text-gray-500 text-sm">{new Date(r.completed_at).toLocaleString('ru-RU')}</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="8" className="p-6 text-center text-gray-500">Пока нет результатов тестов</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              {testResults.length > 0 && (
+                <div className="mt-6">
+                  <h3 className="text-lg font-bold text-gray-700 mb-4">Детализация результатов</h3>
+                  <div className="space-y-3">
+                    {testResults.map(r => (
+                      <div key={r.id} className="bg-gray-50 rounded-xl p-4">
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <span className="font-semibold">{r.user_login}</span>
+                            {r.user_telegram && <span className="text-gray-500 text-sm ml-2">@{r.user_telegram}</span>}
+                          </div>
+                          <span className="text-gray-500 text-sm">{new Date(r.completed_at).toLocaleDateString('ru-RU')}</span>
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                          <div>🎯 Архетип: <strong>{r.archetype_name || r.archetype_code || '-'}</strong></div>
+                          <div>📊 Баллы: <strong>{r.total_score}</strong></div>
+                          <div>⚤ {r.gender === 'male' ? 'Мужской' : 'Женский'}</div>
+                          <div>📋 {r.test_type}</div>
+                        </div>
+                        {r.scores_breakdown && (
+                          <div className="mt-2 text-xs text-gray-600">
+                            Детализация: {r.scores_breakdown}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Consultations */}
           {activeTab === 'consultations' && (
             <div>
               <h2 className="text-2xl font-bold text-gray-800 mb-6">📝 Заявки на консультацию</h2>
               <div className="space-y-4">
-                {consultations.map(c => (
-                  <div key={c.id} className="border-2 border-gray-200 rounded-xl p-5 hover:border-primary transition">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-3">
-                        <span className="font-semibold text-lg">{c.name}</span>
-                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${c.status === 'new' ? 'bg-green-100 text-green-800' : c.status === 'in_progress' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-200 text-gray-700'}`}>{c.status === 'new' ? 'Новая' : c.status === 'in_progress' ? 'В работе' : 'Завершена'}</span>
+                {consultations.length > 0 ? (
+                  consultations.map(c => (
+                    <div key={c.id} className="border-2 border-gray-200 rounded-xl p-5 hover:border-primary transition">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <span className="font-semibold text-lg">{c.name}</span>
+                          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${c.status === 'new' ? 'bg-green-100 text-green-800' : c.status === 'in_progress' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-200 text-gray-700'}`}>{c.status === 'new' ? 'Новая' : c.status === 'in_progress' ? 'В работе' : 'Завершена'}</span>
+                        </div>
+                        <span className="text-gray-500 text-sm">{new Date(c.created_at).toLocaleString('ru-RU')}</span>
                       </div>
-                      <span className="text-gray-500 text-sm">{new Date(c.created).toLocaleString('ru-RU')}</span>
+                      <div className="grid md:grid-cols-3 gap-3 mb-3 text-sm text-gray-600">
+                        {c.telegram && <div>💬 Telegram: <strong>@{c.telegram}</strong></div>}
+                        {c.category && <div>📁 Категория: <strong>{c.category}</strong></div>}
+                        {c.topic && <div>🎯 Тема: <strong>{c.topic}</strong></div>}
+                      </div>
+                      <p className="text-gray-700 mb-4 p-3 bg-gray-50 rounded-lg">{c.request}</p>
+                      <div className="flex gap-2">
+                        <button onClick={() => handleConsultationStatusUpdate(c.id, 'in_progress')} className="px-4 py-2 bg-yellow-100 text-yellow-800 rounded-lg text-sm hover:bg-yellow-200 transition">В работу</button>
+                        <button onClick={() => handleConsultationStatusUpdate(c.id, 'completed')} className="px-4 py-2 bg-green-100 text-green-800 rounded-lg text-sm hover:bg-green-200 transition">Завершить</button>
+                      </div>
                     </div>
-                    <div className="grid md:grid-cols-2 gap-3 mb-3 text-sm text-gray-600">
-                      <div>📞 {c.phone}</div><div>✉️ {c.email || 'Нет email'}</div>
-                    </div>
-                    <p className="text-gray-700 mb-4 p-3 bg-gray-50 rounded-lg">{c.request}</p>
-                    <div className="flex gap-2">
-                      <button onClick={() => handleConsultationStatusUpdate(c.id, 'in_progress')} className="px-4 py-2 bg-yellow-100 text-yellow-800 rounded-lg text-sm hover:bg-yellow-200 transition">В работу</button>
-                      <button onClick={() => handleConsultationStatusUpdate(c.id, 'completed')} className="px-4 py-2 bg-green-100 text-green-800 rounded-lg text-sm hover:bg-green-200 transition">Завершить</button>
-                    </div>
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  <div className="text-center py-12 text-gray-500">Заявок пока нет</div>
+                )}
               </div>
             </div>
           )}

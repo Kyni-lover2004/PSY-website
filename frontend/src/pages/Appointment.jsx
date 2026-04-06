@@ -129,6 +129,11 @@ const Appointment = () => {
     try {
       const telegramToSend = formData.telegram || user?.telegram;
       const requestData = {
+        user_id: user?.id || null,
+        name: user?.name || user?.login || 'Неизвестно',
+        telegram: telegramToSend || null,
+        category: formData.category,
+        topic: formData.topic,
         request_text: `
 Категория: ${formData.category}
 Тема: ${formData.topic}

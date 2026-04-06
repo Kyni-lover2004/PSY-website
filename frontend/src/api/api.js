@@ -21,9 +21,10 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+      console.error('401 Unauthorized - ошибка авторизации:', error.config?.url);
+      console.error('Detail:', error.response?.data);
+      // Не редиректим автоматически, пусть компонент сам обрабатывает
+      return Promise.reject(error);
     }
     return Promise.reject(error);
   }
@@ -60,6 +61,7 @@ export const adminAPI = {
   getUsers: () => api.get('/admin/users'),
   updateUserRole: (userId, role) => api.post(`/admin/users/${userId}/role`, { role }),
   deleteUser: (userId) => api.delete(`/admin/users/${userId}`),
+  getTestResults: () => api.get('/admin/test-results'),
   getConsultations: () => api.get('/admin/consultations'),
   updateConsultationStatus: (id, status) => api.post(`/admin/consultations/${id}/status`, { status }),
   getQuestions: () => api.get('/admin/questions'),
