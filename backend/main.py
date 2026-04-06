@@ -347,6 +347,7 @@ class TestComplete(BaseModel):
     gender: str
     login: Optional[str] = None
     orientation: Optional[str] = None
+    user_id: Optional[int] = None  # Добавляем ID авторизованного пользователя
 
 class ConsultationCreate(BaseModel):
     user_id: Optional[int] = None
@@ -643,14 +644,13 @@ async def register(data: UserCreate, db: Session = Depends(get_db)):
     if existing:
         raise HTTPException(400, "Пользователь уже существует")
 
-    code = generate_code()
     user = User(
         login=data.login.strip(),
         password_hash=hash_password(data.password),
         gender=data.gender,
         orientation=data.orientation,
         telegram=data.telegram,
-        compatibility_code=code,
+        compatibility_code=None,  # Будет сгенерирован после прохождения теста
         role="user"
     )
     db.add(user)
@@ -668,7 +668,7 @@ async def register(data: UserCreate, db: Session = Depends(get_db)):
             "name": user.login, "gender": user.gender, "orientation": user.orientation,
             "role": user.role, "created_at": str(user.created_at)
         },
-        "compatibility_code": code
+        "compatibility_code": None  # Тест ещё не пройден
     }
 
 @app.post("/api/auth/login")
@@ -745,11 +745,20 @@ async def complete_test(data: TestComplete, db: Session = Depends(get_db)):
 
         active_archetypes = {code: calculate_status(score) for code, score in scores.items()}
 
-        # Ищем пользователя
-        user = db.query(User).filter(User.session_id == data.session_id).first()
-        if not user and data.login:
-            user = db.query(User).filter(User.login == data.login.strip()).first()
+        # Ищем пользователя ТОЛЬКО по user_id (если авторизован)
+        user = None
+        if data.user_id:
+            user = db.query(User).filter(User.id == data.user_id).first()
+            if user:
+                logger.info(f"Найден авторизованный пользователь: {user.login} (ID: {user.id})")
+        
+        # Если не авторизован, ищем по session_id или login
+        if not user:
+            user = db.query(User).filter(User.session_id == data.session_id).first()
+            if not user and data.login:
+                user = db.query(User).filter(User.login == data.login.strip()).first()
 
+        # Если пользователя всё ещё нет — создаём
         if not user:
             code = generate_code()
             temp_password = secrets.token_urlsafe(16)
@@ -765,14 +774,18 @@ async def complete_test(data: TestComplete, db: Session = Depends(get_db)):
                 active_archetypes=active_archetypes
             )
             db.add(user)
+            logger.info(f"Создан новый временный пользователь: {user.login}")
         else:
+            # Обновляем данные существующего пользователя
             user.archetype_scores = scores
             user.active_archetypes = active_archetypes
             user.gender = data.gender
             user.orientation = data.orientation
             user.session_id = data.session_id
+            # Генерируем код только если его ещё нет
             if not user.compatibility_code:
                 user.compatibility_code = generate_code()
+                logger.info(f"Сгенерирован новый compatibility_code для {user.login}")
 
         try:
             db.commit()
@@ -815,7 +828,7 @@ async def complete_test(data: TestComplete, db: Session = Depends(get_db)):
         db.add(test_result)
         db.commit()
 
-        logger.info(f"Тест завершён: user={user.login}, archetype={main_archetype_name}")
+        logger.info(f"Тест завершён: user={user.login}, archetype={main_archetype_name}, code={user.compatibility_code}")
 
         return {
             "session_id": data.session_id,

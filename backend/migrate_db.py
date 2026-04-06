@@ -17,7 +17,6 @@ def hash_password(password: str) -> str:
     return pwd_context.hash(password)
 
 def migrate_database():
-    # Удаляем старую БД
     if os.path.exists(DB_PATH):
         try:
             os.remove(DB_PATH)

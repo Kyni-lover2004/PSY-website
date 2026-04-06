@@ -27,6 +27,11 @@ const Login = () => {
         password: formData.password
       });
 
+      // Очищаем sessionStorage перед входом пользователя
+      sessionStorage.removeItem('testData');
+      sessionStorage.removeItem('sessionId');
+      sessionStorage.removeItem('compatibilityCode');
+
       const user = { ...response.data.user, compatibility_code: response.data.compatibility_code, created_at: response.data.user.created_at };
       const token = response.data.access_token;
 

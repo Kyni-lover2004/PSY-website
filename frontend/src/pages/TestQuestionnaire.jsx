@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { questionsAPI, testAPI } from '../api/api';
+import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { CheckCircle, XCircle, ArrowLeft, ArrowRight } from 'lucide-react';
 
 const TestQuestionnaire = () => {
   const navigate = useNavigate();
+  const { user } = useAuth(); // Получаем данные авторизованного пользователя
   const { isDark } = useTheme();
   const [questions, setQuestions] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -17,14 +19,14 @@ const TestQuestionnaire = () => {
 
   console.log('TestQuestionnaire - testData:', testData);
   console.log('TestQuestionnaire - gender:', testData?.gender);
+  console.log('TestQuestionnaire - авторизованный пользователь:', user?.id, user?.login);
 
+  // Создаём НОВЫЙ sessionId для каждого прохождения теста
   const [sessionId] = useState(() => {
-    let stored = sessionStorage.getItem('sessionId');
-    if (!stored) {
-      stored = 'sess_' + Math.random().toString(36).substr(2, 9);
-      sessionStorage.setItem('sessionId', stored);
-    }
-    return stored;
+    // Всегда создаём новую сессию для нового прохождения теста
+    const newSessionId = 'sess_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    console.log('Создан новый sessionId:', newSessionId);
+    return newSessionId;
   });
 
   // Формируем login из имени и фамилии, если он не был установлен
@@ -86,7 +88,8 @@ const TestQuestionnaire = () => {
         answers_count: answersArray.length,
         gender: testData.gender,
         login: login,
-        orientation: testData.orientation
+        orientation: testData.orientation,
+        user_id: user?.id || null
       });
 
       const response = await testAPI.complete({
@@ -94,7 +97,8 @@ const TestQuestionnaire = () => {
         answers: answersArray,
         gender: testData.gender,
         login: login,
-        orientation: testData.orientation
+        orientation: testData.orientation,
+        user_id: user?.id || null  // Передаём ID авторизованного пользователя
       });
 
       console.log('Ответ от сервера:', response.data);

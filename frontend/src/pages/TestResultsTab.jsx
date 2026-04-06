@@ -1,17 +1,21 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { profileAPI } from '../api/api';
+import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { BarChart3, Palette, Zap, Heart, Link2, Gem, MessageCircle, Shield, AlertTriangle, Award, Trophy } from 'lucide-react';
 
 const TestResultsTab = () => {
+  const { user } = useAuth();
   const { isDark } = useTheme();
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(true);
   const [expandedTest, setExpandedTest] = useState(null);
 
   useEffect(() => {
-    const code = sessionStorage.getItem('compatibilityCode');
+    // Сначала пробуем получить код из профиля авторизованного пользователя
+    const code = user?.compatibility_code || sessionStorage.getItem('compatibilityCode');
+    
     if (code) {
       profileAPI.getProfile(code)
         .then(response => {
@@ -20,12 +24,18 @@ const TestResultsTab = () => {
             ...response.data
           });
         })
-        .catch(console.error)
+        .catch(err => {
+          console.error('Ошибка загрузки профиля:', err);
+          // Если ошибка 404, очищаем incompatibilityCode
+          if (err.response?.status === 404) {
+            sessionStorage.removeItem('compatibilityCode');
+          }
+        })
         .finally(() => setLoading(false));
     } else {
       setLoading(false);
     }
-  }, []);
+  }, [user]);
 
   const toggleExpand = (testId) => {
     setExpandedTest(expandedTest === testId ? null : testId);

@@ -13,6 +13,11 @@ export const AuthProvider = ({ children }) => {
     if (storedToken && userData) {
       setToken(storedToken);
       setUser(JSON.parse(userData));
+    } else {
+      // Если не авторизован, очищаем старые данные теста
+      sessionStorage.removeItem('testData');
+      sessionStorage.removeItem('sessionId');
+      sessionStorage.removeItem('compatibilityCode');
     }
     setLoading(false);
   }, []);
@@ -22,6 +27,10 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('user', JSON.stringify(userData));
     setToken(accessToken);
     setUser(userData);
+    // Очищаем данные теста предыдущего пользователя
+    sessionStorage.removeItem('testData');
+    sessionStorage.removeItem('sessionId');
+    sessionStorage.removeItem('compatibilityCode');
   };
 
   const logout = () => {
@@ -29,6 +38,10 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('user');
     setToken(null);
     setUser(null);
+    // Очищаем все данные сессии при выходе
+    sessionStorage.removeItem('testData');
+    sessionStorage.removeItem('sessionId');
+    sessionStorage.removeItem('compatibilityCode');
   };
 
   const isAdmin = () => {
