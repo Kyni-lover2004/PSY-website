@@ -6,10 +6,6 @@ import { User, ArrowLeft, Brain } from 'lucide-react';
 const TestAnketa = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [formData, setFormData] = useState({
-    orientation: '',
-    consent: false,
-  });
 
   if (!user) {
     return null;
@@ -17,16 +13,10 @@ const TestAnketa = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formData.consent) {
-      alert('Необходимо согласие на обработку данных');
-      return;
-    }
 
     const testData = {
       login: user.login,
       gender: user.gender,
-      orientation: formData.orientation,
-      consent: formData.consent,
     };
 
     sessionStorage.setItem('testData', JSON.stringify(testData));
@@ -78,39 +68,12 @@ const TestAnketa = () => {
         </div>
 
         <div className="bg-white rounded-3xl shadow-2xl p-8 fade-in">
-          <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">Анкета</h2>
+          <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">Готовы?</h2>
+          <p className="text-center text-gray-600 mb-6">
+            Пол определён автоматически: <strong>{user.gender === 'female' ? 'Женский' : 'Мужской'}</strong>
+          </p>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label className="block text-gray-700 font-semibold mb-2">Ориентация *</label>
-              <select
-                required
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition"
-                value={formData.orientation}
-                onChange={(e) => setFormData({...formData, orientation: e.target.value})}
-              >
-                <option value="">Выберите...</option>
-                <option value="hetero">Гетеро</option>
-                <option value="homo">Гомо</option>
-                <option value="bi">Бисексуальная</option>
-                <option value="pan">Пансексуальная</option>
-              </select>
-            </div>
-
-            <div className="bg-blue-50 p-4 rounded-xl">
-              <label className="flex items-start gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  className="mt-1 w-5 h-5 text-primary rounded focus:ring-primary"
-                  checked={formData.consent}
-                  onChange={(e) => setFormData({...formData, consent: e.target.checked})}
-                />
-                <span className="text-sm text-gray-700">
-                  Я даю согласие на обработку моих персональных данных
-                </span>
-              </label>
-            </div>
-
+          <form onSubmit={handleSubmit}>
             <div className="flex gap-4">
               <button
                 type="button"

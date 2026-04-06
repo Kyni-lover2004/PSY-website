@@ -1,14 +1,14 @@
-import { Wallet, Clock, Users, Baby, GraduationCap } from 'lucide-react';
+import { Wallet, Clock, Users, Baby, GraduationCap, Heart } from 'lucide-react';
 
 const Price = () => {
   const categories = [
     {
       title: 'Взрослые',
-      icon: Users,
-      headerBg: 'bg-violet-300',
-      iconColor: 'text-violet-600',
-      bgColor: 'bg-violet-50',
-      borderColor: 'border-violet-200',
+      icon: Heart,
+      headerBg: '#AEB5B0',
+      iconColor: '#6B7270',
+      bgColor: '#F0F1F0',
+      borderColor: '#D1D5D3',
       sessions: [
         { duration: '1 час', price: '2 800 ₽' },
         { duration: '1 час 20 мин', price: '3 500 ₽' },
@@ -17,10 +17,10 @@ const Price = () => {
     {
       title: 'Юноши (15–21 год)',
       icon: GraduationCap,
-      headerBg: 'bg-sky-300',
-      iconColor: 'text-sky-600',
-      bgColor: 'bg-sky-50',
-      borderColor: 'border-sky-200',
+      headerBg: '#5A5D6B',
+      iconColor: '#3D3F4A',
+      bgColor: '#E5E7EB',
+      borderColor: '#C2C5CE',
       sessions: [
         { duration: '1 час', price: '2 200 ₽' },
       ]
@@ -28,12 +28,23 @@ const Price = () => {
     {
       title: 'Дети и подростки (4–14 лет)',
       icon: Baby,
-      headerBg: 'bg-rose-300',
-      iconColor: 'text-rose-600',
-      bgColor: 'bg-rose-50',
-      borderColor: 'border-rose-200',
+      headerBg: '#7FB3B3',
+      iconColor: '#4A7A7A',
+      bgColor: '#E0F0F0',
+      borderColor: '#A8D5D5',
       sessions: [
         { duration: '1 час', price: '2 000 ₽' },
+      ]
+    },
+    {
+      title: 'Семейная консультация (пара)',
+      icon: Users,
+      headerBg: '#4A7A7A',
+      iconColor: '#2D5050',
+      bgColor: '#D0E8E8',
+      borderColor: '#8AC0C0',
+      sessions: [
+        { duration: '1 час 20 мин', price: '4 000 ₽' },
       ]
     },
   ];
@@ -63,7 +74,7 @@ const Price = () => {
                 style={{ animationDelay: `${index * 0.15}s` }}
               >
                 {/* Шапка карточки */}
-                <div className={`${cat.headerBg} px-8 py-6`}>
+                <div style={{ backgroundColor: cat.headerBg }} className="px-8 py-6">
                   <div className="flex items-center gap-4">
                     <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center">
                       <Icon className="w-7 h-7 text-white" />
@@ -78,17 +89,20 @@ const Price = () => {
                     {cat.sessions.map((session, i) => (
                       <div
                         key={i}
-                        className={`flex items-center justify-between ${cat.bgColor} rounded-2xl px-6 py-5 border ${cat.borderColor}`}
+                        className="rounded-2xl px-6 py-5 border"
+                        style={{ backgroundColor: cat.bgColor, borderColor: cat.borderColor }}
                       >
-                        <div className="flex items-center gap-3">
-                          <Clock className={`w-5 h-5 ${cat.iconColor}`} />
-                          <span className="text-gray-800 font-semibold text-lg">
-                            Сессия {session.duration}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <Clock style={{ color: cat.iconColor }} className="w-5 h-5" />
+                            <span className="text-gray-800 font-semibold text-lg">
+                              Сессия {session.duration}
+                            </span>
+                          </div>
+                          <span className="text-2xl font-bold" style={{ color: cat.iconColor }}>
+                            {session.price}
                           </span>
                         </div>
-                        <span className={`text-2xl font-bold ${cat.iconColor}`}>
-                          {session.price}
-                        </span>
                       </div>
                     ))}
                   </div>
@@ -96,13 +110,6 @@ const Price = () => {
               </div>
             );
           })}
-        </div>
-
-        {/* Примечание */}
-        <div className="mt-10 bg-white/10 backdrop-blur-lg rounded-2xl p-6 text-center">
-          <p className="text-white/80 text-sm">
-            Стоимость семейной консультации (пара) — <strong className="text-white">4 000 ₽</strong> (80 минут)
-          </p>
         </div>
 
         {/* Кнопка записи */}

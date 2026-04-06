@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import psychologistPhoto from '../assets/psychologist.jpg';
 import vkIcon from '../assets/vk-icon.avif';
 import maxIcon from '../assets/max-icon.jpg';
-import { ArrowRight, User, Baby, Users, MessageCircle, UsersRound, Waves, AlertTriangle, Flame, Frown, Lightbulb, Compass, Lock, Shield, BookOpen, Tablet, Moon, HeartHandshake, GraduationCap, Droplets, Stethoscope, Scale, HeartCrack, KeyRound, BabyIcon, MessageSquare, Building2, DoorOpen, PersonStanding } from 'lucide-react';
+import { ArrowRight, User, Baby, Users, MessageCircle, UsersRound, Waves, AlertTriangle, Flame, Frown, Lightbulb, Compass, Lock, Shield, BookOpen, Tablet, Moon, HeartHandshake, GraduationCap, Droplets, Stethoscope, Scale, HeartCrack, KeyRound, BabyIcon, MessageSquare, Building2, DoorOpen, PersonStanding, Ghost } from 'lucide-react';
 
 const Home = () => {
   const [activeTab, setActiveTab] = useState('personal');
@@ -13,13 +13,9 @@ const Home = () => {
       { icon: MessageCircle, title: 'Контакт с ребёнком или родителем', desc: 'Наладить отношения с ребёнком или со своим родителем.', link: '/appointment?category=Личные запросы&topic=Контакт с ребёнком или родителем', linkText: 'Записаться на консультацию' },
       { icon: UsersRound, title: 'Отношения в паре', desc: 'Наладить отношения в паре.', link: '/appointment?category=Личные запросы&topic=Отношения в паре', linkText: 'Проверить совместимость' },
       { icon: Waves, title: 'Тревожность и ПА', desc: 'Тревожность, панические атаки, постоянное беспокойство.', link: '/appointment?category=Личные запросы&topic=Тревожность и ПА', linkText: 'Записаться на консультацию' },
-      { icon: Flame, title: 'Переживание утраты', desc: 'Помощь в проживании горя и утраты.', link: '/appointment?category=Личные запросы&topic=Переживания утраты', linkText: 'Записаться на консультацию' },
+      { icon: Frown, title: 'Переживание утраты', desc: 'Помощь в проживании горя и утраты.', link: '/appointment?category=Личные запросы&topic=Переживания утраты', linkText: 'Записаться на консультацию' },
       { icon: AlertTriangle, title: 'Травмы и тяжёлые переживания', desc: 'Работа с травмирующим опытом и сложными переживаниями.', link: '/appointment?category=Личные запросы&topic=Травмы и тяжёлые переживания', linkText: 'Записаться на консультацию' },
-      { icon: Frown, title: 'Страхи', desc: 'Помощь в работе со страхами и фобиями.', link: '/appointment?category=Личные запросы&topic=Страхи', linkText: 'Записаться на консультацию' },
-      { icon: Lightbulb, title: 'Трудности в принятии решения', desc: 'Поддержка в сложных выборах и жизненных решениях.', link: '/appointment?category=Личные запросы&topic=Трудности в принятии решения', linkText: 'Записаться на консультацию' },
-      { icon: Shield, title: 'Самоценность и самоопределение', desc: 'Работа с самооценкой и определением себя.', link: '/appointment?category=Личные запросы&topic=Самоценность и самоопределение', linkText: 'Записаться на консультацию' },
-      { icon: Compass, title: 'Профессиональное развитие', desc: 'Помощь в профессиональном самоопределении и росте.', link: '/appointment?category=Личные запросы&topic=Профессиональное развитие', linkText: 'Записаться на консультацию' },
-      { icon: Lock, title: 'Сексологические вопросы', desc: 'Деликатная работа с интимными вопросами.', link: '/appointment?category=Личные запросы&topic=Сексологические вопросы', linkText: 'Записаться на консультацию' },
+      { icon: Ghost, title: 'Страхи', desc: 'Помощь в работе со страхами и фобиями.', link: '/appointment?category=Личные запросы&topic=Страхи', linkText: 'Записаться на консультацию' },
     ],
     children: [
       { icon: Waves, title: 'Тревожность', desc: 'Повышенная тревожность, беспокойство, неуверенность у ребёнка.', link: '/appointment?category=Детские запросы&topic=Тревожность', linkText: 'Записаться на консультацию' },
@@ -28,12 +24,6 @@ const Home = () => {
       { icon: UsersRound, title: 'Нарушения общения', desc: 'Трудности в общении со сверстниками, замкнутость, конфликты.', link: '/appointment?category=Детские запросы&topic=Нарушения общения', linkText: 'Записаться на консультацию' },
       { icon: Tablet, title: 'Зависимость от гаджетов', desc: 'Чрезмерное увлечение экранами, играми, социальными сетями.', link: '/appointment?category=Детские запросы&topic=Зависимость от гаджетов', linkText: 'Записаться на консультацию' },
       { icon: Moon, title: 'Страхи и кошмары', desc: 'Ночные кошмары, страхи темноты, одиночества и другие.', link: '/appointment?category=Детские запросы&topic=Страхи и кошмары', linkText: 'Записаться на консультацию' },
-      { icon: AlertTriangle, title: 'Травмы и переживания', desc: 'Помощь ребёнку после травмирующих событий и тяжёлых переживаний.', link: '/appointment?category=Детские запросы&topic=Травмы и переживания', linkText: 'Записаться на консультацию' },
-      { icon: GraduationCap, title: 'Готовность к школе', desc: 'Психологическая диагностика и подготовка к школьному обучению.', link: '/appointment?category=Детские запросы&topic=Готовность к школе', linkText: 'Записаться на консультацию' },
-      { icon: HeartHandshake, title: 'Адаптация в саду', desc: 'Помощь в адаптации ребёнка к детскому саду.', link: '/appointment?category=Детские запросы&topic=Адаптация в саду', linkText: 'Записаться на консультацию' },
-      { icon: Scale, title: 'Представительство в суде', desc: 'Представление интересов ребёнка в судебных разбирательствах.', link: '/appointment?category=Детские запросы&topic=Представительство в суде', linkText: 'Записаться на консультацию' },
-      { icon: Droplets, title: 'Энурез, энкопрез', desc: 'Психологическая помощь при недержании мочи и кала.', link: '/appointment?category=Детские запросы&topic=Энурез, энкопрез', linkText: 'Записаться на консультацию' },
-      { icon: Stethoscope, title: 'Сопровождение развития', desc: 'Психологическое сопровождение развития детей от 1 месяца.', link: '/appointment?category=Детские запросы&topic=Сопровождение развития', linkText: 'Записаться на консультацию' },
     ],
     family: [
       { icon: Waves, title: 'Кризисы семейной жизни', desc: 'Помощь в преодолении кризисов в отношениях и восстановлении близости.', link: '/appointment?category=Семейные запросы&topic=Кризисы семейной жизни', linkText: 'Записаться на консультацию' },
@@ -42,8 +32,6 @@ const Home = () => {
       { icon: KeyRound, title: 'Начало семьи и добрачное консультирование', desc: 'Подготовка к совместной жизни и осознанный выбор партнёра.', link: '/appointment?category=Семейные запросы&topic=Начало семьи и добрачное консультирование', linkText: 'Записаться на консультацию' },
       { icon: DoorOpen, title: 'Развод', desc: 'Психологическая поддержка в процессе развода.', link: '/appointment?category=Семейные запросы&topic=Развод', linkText: 'Записаться на консультацию' },
       { icon: MessageSquare, title: 'Коммуникация в семье', desc: 'Организация эффективной коммуникации между членами семьи.', link: '/appointment?category=Семейные запросы&topic=Коммуникация в семье', linkText: 'Записаться на консультацию' },
-      { icon: Building2, title: 'Семейная структура и система', desc: 'Консультирование по вопросам семейной структуры и ролей.', link: '/appointment?category=Семейные запросы&topic=Семейная структура и система', linkText: 'Записаться на консультацию' },
-      { icon: BabyIcon, title: 'Незавершённая сепарация', desc: 'Работа с незавершённой сепарацией с родителями.', link: '/appointment?category=Семейные запросы&topic=Незавершённая сепарация', linkText: 'Записаться на консультацию' },
     ],
     teenagers: [
       { icon: Waves, title: 'Тревожность', desc: 'Повышенная тревожность, беспокойство, неуверенность у подростка.', link: '/appointment?category=Подростковые запросы&topic=Тревожность', linkText: 'Записаться на консультацию' },
@@ -52,10 +40,6 @@ const Home = () => {
       { icon: UsersRound, title: 'Нарушения общения', desc: 'Трудности в общении со сверстниками, замкнутость, конфликты.', link: '/appointment?category=Подростковые запросы&topic=Нарушения общения', linkText: 'Записаться на консультацию' },
       { icon: Tablet, title: 'Зависимость от гаджетов', desc: 'Чрезмерное увлечение экранами, играми, социальными сетями.', link: '/appointment?category=Подростковые запросы&topic=Зависимость от гаджетов', linkText: 'Записаться на консультацию' },
       { icon: Moon, title: 'Страхи и кошмары', desc: 'Ночные кошмары, страхи, панические атаки.', link: '/appointment?category=Подростковые запросы&topic=Страхи и кошмары', linkText: 'Записаться на консультацию' },
-      { icon: AlertTriangle, title: 'Травмы и переживания', desc: 'Помощь подростку после травмирующих событий и тяжёлых переживаний.', link: '/appointment?category=Подростковые запросы&topic=Травмы и переживания', linkText: 'Записаться на консультацию' },
-      { icon: GraduationCap, title: 'Готовность к школе', desc: 'Психологическая диагностика и подготовка к учебному процессу.', link: '/appointment?category=Подростковые запросы&topic=Готовность к школе', linkText: 'Записаться на консультацию' },
-      { icon: HeartHandshake, title: 'Адаптация в коллективе', desc: 'Помощь в адаптации подростка в новом коллективе или школе.', link: '/appointment?category=Подростковые запросы&topic=Адаптация в коллективе', linkText: 'Записаться на консультацию' },
-      { icon: Droplets, title: 'Энурез, энкопрез', desc: 'Психологическая помощь при недержании мочи и кала.', link: '/appointment?category=Подростковые запросы&topic=Энурез, энкопрез', linkText: 'Записаться на консультацию' },
     ],
   };
 
@@ -161,6 +145,14 @@ const Home = () => {
                 </div>
                 <div className="flex items-center gap-3 bg-primary-light/30 rounded-xl p-3">
                   <div className="w-2 h-2 bg-primary rounded-full flex-shrink-0"></div>
+                  <span className="text-gray-700 font-medium text-sm">Сексолог</span>
+                </div>
+                <div className="flex items-center gap-3 bg-primary-light/30 rounded-xl p-3">
+                  <div className="w-2 h-2 bg-primary rounded-full flex-shrink-0"></div>
+                  <span className="text-gray-700 font-medium text-sm">Арт-терапевт</span>
+                </div>
+                <div className="flex items-center gap-3 bg-primary-light/30 rounded-xl p-3">
+                  <div className="w-2 h-2 bg-primary rounded-full flex-shrink-0"></div>
                   <span className="text-gray-700 font-medium text-sm">Ведущая психологических групп</span>
                 </div>
                 <div className="flex items-center gap-3 bg-primary-light/30 rounded-xl p-3 sm:col-span-2">
@@ -211,7 +203,7 @@ const Home = () => {
                     <span className="text-xs text-gray-600 text-center group-hover:text-primary transition">Мессенджер Макс</span>
                   </a>
                   <a
-                    href="https://t.me/+oBt1XAigVGA2ZjU"
+                    href="https://t.me/+oBt1XAigVGA2ZjUy"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="group flex flex-col items-center gap-2"
@@ -264,21 +256,21 @@ const Home = () => {
               {[
                 {
                   year: '2023 — н.в.',
-                  title: 'Кабинет семейной психологии К. Панкратовой',
-                  role: 'Создатель, психолог',
-                  desc: 'Частная практика: индивидуальное консультирование, работа с парами, диагностика архетипов.'
+                  title: 'Частная практика',
+                  role: 'Психолог',
+                  desc: 'Индивидуальное консультирование, работа с парами, диагностика архетипов, подростковая и арт-терапия.'
                 },
                 {
                   year: '2021 — 2023',
                   title: 'Детский центр "МОРСКАЯ ШКОЛА"',
                   role: 'Психолог-педагог',
-                  desc: 'Диагностика и коррекция эмоционального состояния детей, профориентация, работа с родителями.'
+                  desc: 'Диагностика и коррекция эмоционального состояния детей, работа с родителями.'
                 },
                 {
                   year: '2019 — 2020',
                   title: 'Центр детского творчества «Феникс»',
                   role: 'Педагог-психолог',
-                  desc: 'Психологическое сопровождение творческого развития детей, групповые занятия.'
+                  desc: 'Психологическое сопровождение детей, групповые занятия.'
                 },
                 {
                   year: '2018 — 2020',
@@ -364,6 +356,20 @@ const Home = () => {
                 </a>
               </div>
             ))}
+          </div>
+
+          {/* Примечание о других темах */}
+          <div className="text-center mt-10">
+            <p className="text-gray-600 text-sm">
+              Остальные темы указаны в разделе <a href="/appointment" className="text-primary font-semibold hover:underline">«Записаться на консультацию»</a>
+            </p>
+          </div>
+
+          {/* Дисклеймер: с чем не работаю */}
+          <div className="text-center mt-6 bg-red-50 border border-red-200 rounded-2xl p-5 max-w-2xl mx-auto">
+            <p className="text-red-700 font-semibold text-sm">
+              Не работаю с онкологией и суицидальным поведением
+            </p>
           </div>
         </div>
       </section>

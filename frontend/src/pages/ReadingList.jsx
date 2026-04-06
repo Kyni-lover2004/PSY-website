@@ -103,7 +103,7 @@ const ReadingList = () => {
               Подписывайтесь на мой Telegram-канал! Там ещё больше полезной литературы, разборов и практических упражнений для самопознания и работы над собой.
             </p>
             <a
-              href="https://t.me/+oBt1XAigVGA2ZjU"
+              href="https://t.me/+oBt1XAigVGA2ZjUy"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-3 bg-[#2AABEE] text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-[#229ED9] hover:shadow-xl transition transform hover:scale-105"
