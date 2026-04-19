@@ -74,6 +74,17 @@ export const adminAPI = {
   createAnswer: (data) => api.post('/tests/answers', data),
   getAnswers: (questionId) => api.get(`/questions/${questionId}/answers`),
   deleteAnswer: (answerId) => api.delete(`/tests/answers/${answerId}`),
+  getAllComments: () => api.get('/admin/comments'),
+  deleteCommentAdmin: (commentId) => api.delete(`/admin/comments/${commentId}`),
+};
+
+export const commentsAPI = {
+  create: (data) => api.post('/comments', data),
+  getAll: (targetType = 'general', targetId = null) =>
+    api.get(`/comments?target_type=${targetType}${targetId !== null ? `&target_id=${targetId}` : ''}`),
+  getOne: (commentId) => api.get(`/comments/${commentId}`),
+  update: (commentId, data) => api.put(`/comments/${commentId}`, data),
+  delete: (commentId) => api.delete(`/comments/${commentId}`),
 };
 
 export default api;

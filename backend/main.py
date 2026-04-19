@@ -324,6 +324,22 @@ class TestResult(Base):
 
     user = relationship("User", back_populates="test_results")
 
+class Comment(Base):
+    __tablename__ = "comments"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    user_login = Column(String(100), nullable=False)
+    content = Column(Text, nullable=False)
+    target_type = Column(String(50), default="general", nullable=False, index=True)
+    target_id = Column(Integer, nullable=True, index=True)
+    parent_id = Column(Integer, ForeignKey("comments.id", ondelete="CASCADE"), nullable=True, index=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    is_deleted = Column(Boolean, default=False)
+
+    user = relationship("User", backref="comments")
+    replies = relationship("Comment", backref="parent_comment", remote_side=[id])
+
 # === PYDANTIC МОДЕЛИ ===
 
 class UserCreate(BaseModel):
@@ -385,6 +401,15 @@ class TestResultCreate(BaseModel):
     archetype_name: Optional[str] = None
     scores_breakdown: Optional[str] = None
     result_text: Optional[str] = None
+
+class CommentCreate(BaseModel):
+    content: str = Field(..., min_length=1, max_length=2000)
+    target_type: Optional[str] = "general"
+    target_id: Optional[int] = None
+    parent_id: Optional[int] = None
+
+class CommentUpdate(BaseModel):
+    content: str = Field(..., min_length=1, max_length=2000)
 
 # === АВТОРИЗАЦИЯ ===
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security), db: Session = Depends(get_db)):
@@ -1287,6 +1312,213 @@ async def get_test_results(test_id: int, current_user: User = Depends(require_ad
          "completed_at": str(r.completed_at)}
         for r in results
     ]
+
+# ========================================
+# === COMMENTS ENDPOINTS ===
+# ========================================
+
+@app.post("/api/comments")
+async def create_comment(
+    comment: CommentCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Создать новый комментарий"""
+    content = sanitize_string(comment.content, 2000)
+    if not content or len(content.strip()) == 0:
+        raise HTTPException(400, "Текст комментария не может быть пустым")
+
+    # Если это ответ на комментарий, проверяем существование родителя
+    if comment.parent_id:
+        parent = db.query(Comment).filter(Comment.id == comment.parent_id).first()
+        if not parent or parent.is_deleted:
+            raise HTTPException(404, "Родительский комментарий не найден")
+        # Привязываем к тому же объекту, что и родитель
+        target_type = parent.target_type
+        target_id = parent.target_id
+    else:
+        target_type = comment.target_type or "general"
+        target_id = comment.target_id
+
+    new_comment = Comment(
+        user_id=current_user.id,
+        user_login=current_user.login,
+        content=content,
+        target_type=target_type,
+        target_id=target_id,
+        parent_id=comment.parent_id
+    )
+    db.add(new_comment)
+    db.commit()
+    db.refresh(new_comment)
+
+    logger.info(f"Пользователь {current_user.login} создал комментарий #{new_comment.id}")
+
+    return {
+        "id": new_comment.id,
+        "user_login": new_comment.user_login,
+        "content": new_comment.content,
+        "target_type": new_comment.target_type,
+        "target_id": new_comment.target_id,
+        "parent_id": new_comment.parent_id,
+        "created_at": str(new_comment.created_at)
+    }
+
+@app.get("/api/comments")
+async def get_comments(
+    target_type: str = "general",
+    target_id: Optional[int] = None,
+    db: Session = Depends(get_db)
+):
+    """Получить комментарии для указанного объекта"""
+    query = db.query(Comment).filter(
+        Comment.target_type == target_type,
+        Comment.is_deleted == False
+    )
+
+    if target_id is not None:
+        query = query.filter(Comment.target_id == target_id)
+
+    comments = query.order_by(Comment.created_at.asc()).all()
+
+    result = []
+    for c in comments:
+        result.append({
+            "id": c.id,
+            "user_login": c.user_login,
+            "content": c.content,
+            "target_type": c.target_type,
+            "target_id": c.target_id,
+            "parent_id": c.parent_id,
+            "created_at": str(c.created_at),
+            "updated_at": str(c.updated_at) if c.updated_at else None
+        })
+
+    return result
+
+@app.get("/api/comments/{comment_id}")
+async def get_comment(comment_id: int, db: Session = Depends(get_db)):
+    """Получить конкретный комментарий"""
+    comment = db.query(Comment).filter(
+        Comment.id == comment_id,
+        Comment.is_deleted == False
+    ).first()
+
+    if not comment:
+        raise HTTPException(404, "Комментарий не найден")
+
+    return {
+        "id": comment.id,
+        "user_login": comment.user_login,
+        "content": comment.content,
+        "target_type": comment.target_type,
+        "target_id": comment.target_id,
+        "parent_id": comment.parent_id,
+        "created_at": str(comment.created_at),
+        "updated_at": str(comment.updated_at) if comment.updated_at else None
+    }
+
+@app.put("/api/comments/{comment_id}")
+async def update_comment(
+    comment_id: int,
+    comment_data: CommentUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Обновить комментарий (только автор может редактировать)"""
+    comment = db.query(Comment).filter(Comment.id == comment_id).first()
+
+    if not comment:
+        raise HTTPException(404, "Комментарий не найден")
+
+    if comment.user_id != current_user.id and current_user.role != "admin":
+        raise HTTPException(403, "Только автор может редактировать свой комментарий")
+
+    if comment.is_deleted:
+        raise HTTPException(404, "Комментарий был удален")
+
+    content = sanitize_string(comment_data.content, 2000)
+    if not content or len(content.strip()) == 0:
+        raise HTTPException(400, "Текст комментария не может быть пустым")
+
+    comment.content = content
+    comment.updated_at = datetime.now(timezone.utc)
+    db.commit()
+
+    logger.info(f"Пользователь {current_user.login} обновил комментарий #{comment_id}")
+
+    return {
+        "id": comment.id,
+        "content": comment.content,
+        "updated_at": str(comment.updated_at)
+    }
+
+@app.delete("/api/comments/{comment_id}")
+async def delete_comment(
+    comment_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Удалить комментарий (мягкое удаление)"""
+    comment = db.query(Comment).filter(Comment.id == comment_id).first()
+
+    if not comment:
+        raise HTTPException(404, "Комментарий не найден")
+
+    # Удалять может только автор или админ
+    if comment.user_id != current_user.id and current_user.role != "admin":
+        raise HTTPException(403, "Только автор или админ может удалить комментарий")
+
+    comment.is_deleted = True
+    comment.updated_at = datetime.now(timezone.utc)
+    db.commit()
+
+    logger.info(f"Пользователь {current_user.login} удалил комментарий #{comment_id}")
+
+    return {"message": "Комментарий удален", "comment_id": comment_id}
+
+@app.get("/api/admin/comments")
+async def get_all_comments(
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    """Получить все комментарии (админ)"""
+    comments = db.query(Comment).order_by(Comment.created_at.desc()).all()
+
+    return [
+        {
+            "id": c.id,
+            "user_id": c.user_id,
+            "user_login": c.user_login,
+            "content": c.content,
+            "target_type": c.target_type,
+            "target_id": c.target_id,
+            "parent_id": c.parent_id,
+            "created_at": str(c.created_at),
+            "is_deleted": c.is_deleted
+        }
+        for c in comments
+    ]
+
+@app.delete("/api/admin/comments/{comment_id}")
+async def admin_delete_comment(
+    comment_id: int,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    """Административное удаление комментария"""
+    comment = db.query(Comment).filter(Comment.id == comment_id).first()
+
+    if not comment:
+        raise HTTPException(404, "Комментарий не найден")
+
+    comment.is_deleted = True
+    comment.updated_at = datetime.now(timezone.utc)
+    db.commit()
+
+    logger.info(f"Админ {current_user.login} удалил комментарий #{comment_id} от {comment.user_login}")
+
+    return {"message": "Комментарий удален администратором", "comment_id": comment_id}
 
 if __name__ == "__main__":
     import uvicorn
