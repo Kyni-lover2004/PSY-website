@@ -1,11 +1,13 @@
 import axios from 'axios';
-import { API_CONFIG } from '../config/api';
+
+// Получаем URL из переменной окружения
+const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 const api = axios.create({
-  baseURL: API_CONFIG.baseURL,
+  baseURL: API_URL,
   headers: { 'Content-Type': 'application/json' },
   withCredentials: true,
-  timeout: API_CONFIG.timeout,
+  timeout: 30000,
 });
 
 // Добавляем JWT токен к каждому запросу
