@@ -34,14 +34,16 @@ DATABASE_URL = "sqlite:///./psycho.db"
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:3000")
 # Добавляем все возможные домены для CORS
 FRONTEND_URLS = [
-    FRONTEND_URL,
-    "http://localhost:3000",
-    "http://localhost:5173",
-    "http://127.0.0.1:3000",
-    "http://127.0.0.1:5173",
-    "https://psy-website-7b5i.vercel.app",
-    "https://psy-website-7b5i.vercel.app/",
-    os.environ.get("FRONTEND_URL_PRODUCTION", ""),
+  FRONTEND_URL,
+  "http://localhost:3000",
+  "http://localhost:5173",
+  "http://127.0.0.1:3000",
+  "http://127.0.0.1:5173",
+  "https://psy-website-7b5i.vercel.app",
+  "https://psy-website-7b5i.vercel.app/",
+  "https://psy-rzn.vercel.app",
+  "https://psy-rzn.vercel.app/",
+  os.environ.get("FRONTEND_URL_PRODUCTION", ""),
 ]
 # Удаляем пустые строки
 FRONTEND_URLS = [url for url in FRONTEND_URLS if url]
