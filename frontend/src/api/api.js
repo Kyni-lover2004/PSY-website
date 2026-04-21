@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-// Production URL для Render
-const PRODUCTION_URL = 'https://psy-website-3.onrender.com';
+// Production URL для Render с префиксом /api
+const PRODUCTION_URL = 'https://psy-website-3.onrender.com/api';
 
 // Получаем URL из переменной окружения или используем production
 const API_URL = import.meta.env.VITE_API_URL || PRODUCTION_URL;
