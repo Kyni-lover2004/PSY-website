@@ -32,7 +32,19 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24
 DATABASE_URL = "sqlite:///./psycho.db"
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:3000")
-FRONTEND_URLS = [FRONTEND_URL, "http://localhost:5173", "http://127.0.0.1:3000", "http://127.0.0.1:5173"]
+# Добавляем все возможные домены для CORS
+FRONTEND_URLS = [
+    FRONTEND_URL,
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:5173",
+    "https://psy-website-7b5i.vercel.app",
+    "https://psy-website-7b5i.vercel.app/",
+    os.environ.get("FRONTEND_URL_PRODUCTION", ""),
+]
+# Удаляем пустые строки
+FRONTEND_URLS = [url for url in FRONTEND_URLS if url]
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
 
@@ -343,11 +355,10 @@ class Comment(Base):
 # === PYDANTIC МОДЕЛИ ===
 
 class UserCreate(BaseModel):
-    login: str = Field(..., min_length=3, max_length=50)
-    password: str = Field(..., min_length=8, max_length=128)
-    telegram: Optional[str] = None
-    gender: Optional[str] = None
-    orientation: Optional[str] = None
+  login: str = Field(..., min_length=3, max_length=50)
+  password: str = Field(..., min_length=8, max_length=128)
+  gender: Optional[str] = None
+  orientation: Optional[str] = None
 
 class UserLogin(BaseModel):
     login: str = Field(..., max_length=50)
@@ -665,36 +676,35 @@ async def root():
 # === AUTH ===
 @app.post("/api/auth/register")
 async def register(data: UserCreate, db: Session = Depends(get_db)):
-    existing = db.query(User).filter(User.login == data.login).first()
-    if existing:
-        raise HTTPException(400, "Пользователь уже существует")
+  existing = db.query(User).filter(User.login == data.login).first()
+  if existing:
+    raise HTTPException(400, "Пользователь уже существует")
 
-    user = User(
-        login=data.login.strip(),
-        password_hash=hash_password(data.password),
-        gender=data.gender,
-        orientation=data.orientation,
-        telegram=data.telegram,
-        compatibility_code=None,  # Будет сгенерирован после прохождения теста
-        role="user"
-    )
-    db.add(user)
-    db.commit()
-    db.refresh(user)
+  user = User(
+    login=data.login.strip(),
+    password_hash=hash_password(data.password),
+    gender=data.gender,
+    orientation=data.orientation,
+    compatibility_code=None, # Будет сгенерирован после прохождения теста
+    role="user"
+  )
+  db.add(user)
+  db.commit()
+  db.refresh(user)
 
-    token = create_access_token(data={"sub": user.id, "role": user.role})
-    logger.info(f"Новый пользователь: {user.login} (ID: {user.id})")
+  token = create_access_token(data={"sub": user.id, "role": user.role})
+  logger.info(f"Новый пользователь: {user.login} (ID: {user.id})")
 
-    return {
-        "access_token": token,
-        "token_type": "bearer",
-        "user": {
-            "id": user.id, "login": user.login, "telegram": user.telegram,
-            "name": user.login, "gender": user.gender, "orientation": user.orientation,
-            "role": user.role, "created_at": str(user.created_at)
-        },
-        "compatibility_code": None  # Тест ещё не пройден
-    }
+  return {
+    "access_token": token,
+    "token_type": "bearer",
+    "user": {
+      "id": user.id, "login": user.login, "telegram": None,
+      "name": user.login, "gender": user.gender, "orientation": user.orientation,
+      "role": user.role, "created_at": str(user.created_at)
+    },
+    "compatibility_code": None # Тест ещё не пройден
+  }
 
 @app.post("/api/auth/login")
 async def login(data: UserLogin, request: Request, db: Session = Depends(get_db)):
