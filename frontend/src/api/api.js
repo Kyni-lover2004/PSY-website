@@ -1,10 +1,11 @@
 import axios from 'axios';
-
-const API_URL = '/api';
+import { API_CONFIG } from '../config/api';
 
 const api = axios.create({
-  baseURL: API_URL,
+  baseURL: API_CONFIG.baseURL,
   headers: { 'Content-Type': 'application/json' },
+  withCredentials: true,
+  timeout: API_CONFIG.timeout,
 });
 
 // Добавляем JWT токен к каждому запросу

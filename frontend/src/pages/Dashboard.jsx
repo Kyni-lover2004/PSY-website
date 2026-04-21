@@ -62,12 +62,13 @@ const Dashboard = () => {
             <div className="fade-in">
               <h2 className="text-2xl font-bold mb-6 flex items-center gap-2" style={{ color: isDark ? 'var(--text-primary)' : '#1F2937' }}><User className="w-6 h-6" /> Профиль</h2>
 
-              {/* Комментарии */}
-              <Comments targetType="dashboard" targetId={null} />
-              {user ? (
-                <div className="space-y-6">
-                  {/* Карточка пользователя */}
-                  <div className="bg-gradient-to-r from-primary to-secondary rounded-2xl p-6 text-white">
+  {/* Комментарии */}
+  <Comments targetType="dashboard" targetId={null} />
+  
+  {user ? (
+    <div className="space-y-6 mt-6">
+      {/* Карточка пользователя */}
+      <div className="bg-gradient-to-r from-primary to-secondary rounded-2xl p-6 text-white">
                     <div className="flex items-center gap-4 mb-4">
                       <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
                         <User className="w-8 h-8" />

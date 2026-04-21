@@ -10,13 +10,12 @@ const Register = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { login } = useAuth();
-  const [formData, setFormData] = useState({
-    login: '',
-    password: '',
-    confirmPassword: '',
-    telegram: '',
-    gender: 'female'
-  });
+const [formData, setFormData] = useState({
+  login: '',
+  password: '',
+  confirmPassword: '',
+  gender: 'female'
+});
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -41,13 +40,12 @@ const Register = () => {
 
     setLoading(true);
 
-    try {
-      const response = await authAPI.register({
-        login: formData.login,
-        password: formData.password,
-        telegram: formData.telegram || null,
-        gender: formData.gender
-      });
+try {
+  const response = await authAPI.register({
+    login: formData.login,
+    password: formData.password,
+    gender: formData.gender
+  });
 
       // Очищаем sessionStorage перед входом нового пользователя
       sessionStorage.removeItem('testData');
@@ -105,21 +103,7 @@ const Register = () => {
             />
           </div>
 
-          <div>
-            <label className="block font-semibold mb-2" style={{ color: isDark ? 'var(--text-secondary)' : '#374151' }}>
-              Telegram <span style={{ color: isDark ? 'var(--text-muted)' : '#9CA3AF', fontWeight: 'normal' }}>(для связи)</span>
-            </label>
-            <input
-              type="text"
-              className="w-full px-4 py-3 border-2 rounded-xl focus:outline-none transition"
-              style={{ borderColor: isDark ? 'var(--border-color)' : '#E5E7EB', backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)' }}
-              value={formData.telegram}
-              onChange={(e) => setFormData({...formData, telegram: e.target.value})}
-              placeholder="@username"
-            />
-          </div>
-
-          <div>
+  <div>
             <label className="block font-semibold mb-2" style={{ color: isDark ? 'var(--text-secondary)' : '#374151' }}>Пароль *</label>
             <input
               type="password"
