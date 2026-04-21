@@ -72,6 +72,7 @@ export const adminAPI = {
   updateConsultationStatus: (id, status) => api.post(`/admin/consultations/${id}/status`, { status }),
   getQuestions: () => api.get('/admin/questions'),
   getArchetypes: () => api.get('/admin/archetypes'),
+  getTests: () => api.get('/tests'),
   createTest: (data) => api.post('/tests', data),
   deleteTest: (testId) => api.delete(`/tests/${testId}`),
   getTestQuestions: (testId) => api.get(`/tests/${testId}/questions`),

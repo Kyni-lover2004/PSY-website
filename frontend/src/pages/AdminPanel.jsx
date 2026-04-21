@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { adminAPI } from '../api/api';
-import api from '../api/api';
 
 const AdminPanel = () => {
   const navigate = useNavigate();
@@ -54,10 +53,10 @@ const AdminPanel = () => {
         console.error('Ошибка загрузки consultations:', err);
         return [];
       });
-      const testsPromise = api.get('/tests').then(r => r.data).catch((err) => {
-        console.error('Ошибка загрузки tests:', err);
-        return [];
-      });
+const testsPromise = adminAPI.getTests().then(r => r.data).catch((err) => {
+  console.error('Ошибка загрузки tests:', err);
+  return [];
+});
       const questionsPromise = adminAPI.getQuestions().then(r => r.data).catch((err) => {
         console.error('Ошибка загрузки questions:', err);
         return [];
