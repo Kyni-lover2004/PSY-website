@@ -7,7 +7,27 @@ import {
   CheckCircle, Calendar, MessageCircle,
   User, Users, Baby, PersonStanding, ArrowRight, ChevronDown, ChevronUp,
   FileText, CreditCard, ThumbsUp, ThumbsDown, Send
-} from 'lucide-react';
+  } from 'lucide-react';
+
+const SOCIAL_LINKS = {
+  vk: 'https://vk.ru/pankratova_kseniya',
+  instagram: 'https://www.instagram.com/kse.ny.psy?igsh=MXdmbTRtMjg4eG9xaA==',
+  max: 'https://max.ru/u/f9LHodD0cOJsOsd9T9s9AxV2pxLF4yrWCq_LLEaC_7wL1ApJ_ppOqC9wEoM',
+  telegram: 'https://t.me/Ksenya_psyho'
+};
+
+const SocialButton = ({ href, color, label, children }) => (
+  <a
+    href={href}
+    target="_blank"
+    rel="noopener noreferrer"
+    className="flex items-center justify-center gap-3 p-4 rounded-xl font-semibold transition hover:shadow-lg"
+    style={{ backgroundColor: color, color: 'white' }}
+  >
+    <span>{children}</span>
+    <span>{label}</span>
+  </a>
+);
 
 const categories = {
   personal: {
@@ -94,8 +114,7 @@ const Appointment = () => {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     category: '',
-    topic: '',
-    telegram: ''
+    topic: ''
   });
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -133,13 +152,13 @@ const Appointment = () => {
     const cat = categories[categoryKey];
     setFormData(prev => ({ ...prev, category: cat.label, topic }));
     setOpenCategory(null);
-    setStep(2);
+    setStep(3);
   };
 
-  const submitConsultation = async () => {
+const submitConsultation = async () => {
     setLoading(true);
     try {
-      const telegramToSend = formData.telegram || user?.telegram;
+      const telegramToSend = user?.telegram;
       const requestData = {
         user_id: user?.id || null,
         name: user?.name || user?.login || 'Неизвестно',
@@ -147,10 +166,10 @@ const Appointment = () => {
         category: formData.category,
         topic: formData.topic,
         request_text: `
-Категория: ${formData.category}
-Тема: ${formData.topic}
-Telegram: ${telegramToSend ? '@' + telegramToSend : 'Не указан'}
-Пользователь: ${user?.name || user?.login || 'Неизвестно'}
+        Категория: ${formData.category}
+        Тема: ${formData.topic}
+        Telegram: ${telegramToSend ? '@' + telegramToSend : 'Не указан'}
+        Пользователь: ${user?.name || user?.login || 'Неизвестно'}
         `.trim()
       };
       await consultationAPI.create(requestData);
@@ -163,33 +182,69 @@ Telegram: ${telegramToSend ? '@' + telegramToSend : 'Не указан'}
     }
   };
 
-  // ===================== ЭКРАН ПОДТВЕРЖДЕНИЯ =====================
-  if (submitted) {
-    return (
-      <div className="py-20 px-4" style={{ background: 'var(--bg-gradient-hero)', minHeight: '100vh' }}>
-        <div className="max-w-2xl mx-auto rounded-3xl shadow-2xl p-8 text-center fade-in" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(34, 197, 94, 0.1)' }}>
-            <CheckCircle className="w-10 h-10 text-green-600" />
+// ===================== ШАГ 5: Выбор соцсети =====================
+if (step === 5) {
+  return (
+    <div className="py-20 px-4" style={{ background: 'var(--bg-gradient-hero)', minHeight: '100vh' }}>
+      <div className="max-w-2xl mx-auto">
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 mx-auto mb-4 bg-white/10 rounded-full flex items-center justify-center">
+            <MessageCircle className="w-8 h-8 text-white" />
           </div>
-          <h2 className="text-3xl font-bold mb-4" style={{ color: 'var(--text-primary)' }}>Заявка отправлена!</h2>
-          <p className="mb-6" style={{ color: 'var(--text-secondary)' }}>
-            Ксения свяжется с вами в Telegram для подтверждения.
-          </p>
-          <div className="rounded-xl p-4 mb-6" style={{ backgroundColor: 'var(--primary-light)' }}>
-            <p className="text-sm" style={{ color: 'var(--text-secondary)' }}><strong>Тип:</strong> {formData.category}</p>
-            <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}><strong>Тема:</strong> {formData.topic}</p>
+          <h1 className="text-3xl font-bold text-white mb-2">Выберите соцсеть для связи</h1>
+          <p className="text-white/80">Ксения свяжется с вами через выбранную соцсеть</p>
+        </div>
+
+        <div className="rounded-3xl shadow-2xl p-8 fade-in" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <SocialButton href={SOCIAL_LINKS.vk} color="#0077FF" label="ВКонтакте">VK</SocialButton>
+            <SocialButton href={SOCIAL_LINKS.instagram} color="#E4405F" label="Instagram">IG</SocialButton>
+            <SocialButton href={SOCIAL_LINKS.max} color="#000000" label="MAX">MAX</SocialButton>
+            <SocialButton href={SOCIAL_LINKS.telegram} color="#24A1DE" label="Telegram">TG</SocialButton>
           </div>
-          <button
-            onClick={() => navigate('/')}
-            className="text-white px-8 py-3 rounded-xl font-semibold hover:shadow-lg transition"
-            style={{ backgroundColor: 'var(--bg-gradient-from)' }}
-          >
-            На главную
-          </button>
+
+          <div className="mt-8 pt-4 border-t" style={{ borderColor: isDark ? 'var(--border-color)' : '#e5e7eb' }}>
+            <button
+              onClick={() => setStep(3)}
+              className="w-full py-4 rounded-xl font-semibold transition"
+              style={{ backgroundColor: isDark ? 'var(--bg-card-alt)' : '#f3f4f6', color: 'var(--text-secondary)' }}
+            >
+              ← Назад к правилам
+            </button>
+          </div>
         </div>
       </div>
-    );
-  }
+    </div>
+  );
+}
+
+// ===================== ЭКРАН ПОДТВЕРЖДЕНИЯ =====================
+if (submitted) {
+  return (
+    <div className="py-20 px-4" style={{ background: 'var(--bg-gradient-hero)', minHeight: '100vh' }}>
+      <div className="max-w-2xl mx-auto rounded-3xl shadow-2xl p-8 text-center fade-in" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>
+        <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(34, 197, 94, 0.1)' }}>
+          <CheckCircle className="w-10 h-10 text-green-600" />
+        </div>
+        <h2 className="text-3xl font-bold mb-4" style={{ color: 'var(--text-primary)' }}>Заявка отправлена!</h2>
+        <p className="mb-6" style={{ color: 'var(--text-secondary)' }}>
+          Ксения свяжется с вами в выбранной соцсети.
+        </p>
+        <div className="rounded-xl p-4 mb-6" style={{ backgroundColor: 'var(--primary-light)' }}>
+          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}><strong>Тип:</strong> {formData.category}</p>
+          <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}><strong>Тема:</strong> {formData.topic}</p>
+        </div>
+        <button
+          onClick={() => navigate('/')}
+          className="text-white px-8 py-3 rounded-xl font-semibold hover:shadow-lg transition"
+          style={{ backgroundColor: 'var(--bg-gradient-from)' }}
+        >
+          На главную
+        </button>
+      </div>
+    </div>
+  );
+}
 
   // ===================== ЕСЛИ НЕ АВТОРИЗОВАН =====================
   if (!user || !token) {
@@ -246,20 +301,18 @@ Telegram: ${telegramToSend ? '@' + telegramToSend : 'Не указан'}
               >
                 <ThumbsDown className="w-5 h-5" /> Мне не подходит
               </button>
-              <button
-                onClick={() => {
-                  submitConsultation();
-                }}
-                disabled={!agreedToPayment || loading}
-                className={`flex-1 py-4 rounded-xl font-semibold text-lg transition flex items-center justify-center gap-2 ${
-                  agreedToPayment && !loading
-                    ? 'text-white hover:shadow-lg'
-                    : 'cursor-not-allowed'
-                }`}
-                style={{ backgroundColor: agreedToPayment && !loading ? '#22c55e' : (isDark ? 'var(--bg-card-alt)' : '#d1d5db'), color: agreedToPayment && !loading ? 'white' : 'var(--text-muted)' }}
-              >
-                {loading ? 'Отправка...' : <><ThumbsUp className="w-5 h-5" /> Мне подходит</>}
-              </button>
+<button
+        onClick={() => setStep(5)}
+        disabled={!agreedToPayment}
+        className={`flex-1 py-4 rounded-xl font-semibold text-lg transition flex items-center justify-center gap-2 ${
+          agreedToPayment
+            ? 'text-white hover:shadow-lg'
+            : 'cursor-not-allowed'
+        }`}
+        style={{ backgroundColor: agreedToPayment ? 'var(--bg-gradient-from)' : (isDark ? 'var(--bg-card-alt)' : '#d1d5db'), color: agreedToPayment ? 'white' : 'var(--text-muted)' }}
+      >
+        <><ThumbsUp className="w-5 h-5" /><span>Далее</span></>
+      </button>
             </div>
           </div>
         </div>
@@ -304,13 +357,13 @@ Telegram: ${telegramToSend ? '@' + telegramToSend : 'Не указан'}
             </label>
 
             <div className="flex gap-4 mt-8">
-              <button
-                onClick={() => { setStep(2); setAgreedToRules(false); }}
-                className="flex-1 py-4 rounded-xl font-semibold hover:shadow-lg transition"
-                style={{ backgroundColor: isDark ? 'var(--bg-card-alt)' : '#f3f4f6', color: 'var(--text-secondary)' }}
-              >
-                ← Назад
-              </button>
+<button
+        onClick={() => { setStep(1); setAgreedToRules(false); }}
+        className="flex-1 py-4 rounded-xl font-semibold hover:shadow-lg transition"
+        style={{ backgroundColor: isDark ? 'var(--bg-card-alt)' : '#f3f4f6', color: 'var(--text-secondary)' }}
+      >
+        ← Назад
+      </button>
               <button
                 onClick={() => setStep(4)}
                 disabled={!agreedToRules}
@@ -351,17 +404,17 @@ Telegram: ${telegramToSend ? '@' + telegramToSend : 'Не указан'}
         </div>
 
         <div className="rounded-3xl shadow-2xl p-8 fade-in" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>
-          {/* Индикатор шагов */}
-          <div className="flex items-center justify-center gap-2 mb-8">
-            {[1, 2, 3].map((s) => (
-              <div key={s} className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition ${
-                s <= step ? 'text-white' : ''
-              }`}
-              style={{ backgroundColor: s <= step ? 'var(--bg-gradient-from)' : (isDark ? 'var(--bg-card-alt)' : '#e5e7eb'), color: s <= step ? 'white' : 'var(--text-muted)' }}>
-                {s}
-              </div>
-            ))}
-          </div>
+{/* Индикатор шагов */}
+<div className="flex items-center justify-center gap-2 mb-8">
+  {[1, 2, 3, 4].map((s) => (
+    <div key={s} className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition ${
+      s <= step ? 'text-white' : ''
+    }`}
+    style={{ backgroundColor: s <= step ? 'var(--bg-gradient-from)' : (isDark ? 'var(--bg-card-alt)' : '#e5e7eb'), color: s <= step ? 'white' : 'var(--text-muted)' }}>
+      {s}
+    </div>
+  ))}
+</div>
 
           {/* ===== ШАГ 1: Выбор категории и темы ===== */}
           {step === 1 && (
@@ -421,96 +474,32 @@ Telegram: ${telegramToSend ? '@' + telegramToSend : 'Не указан'}
                 })}
               </div>
 
-              {formData.category && formData.topic && (
-                <div className="mt-6 rounded-xl p-4 text-center" style={{ backgroundColor: 'var(--primary-light)' }}>
-                  <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Выбрано:</p>
-                  <p className="font-bold text-lg" style={{ color: 'var(--bg-gradient-from)' }}>{formData.category}</p>
-                  <p style={{ color: 'var(--text-secondary)' }}>{formData.topic}</p>
-                  <button
-                    type="button"
-                    onClick={() => setStep(2)}
-                    className="mt-3 text-white px-8 py-3 rounded-xl font-semibold hover:shadow-lg transition flex items-center gap-2 mx-auto"
-                    style={{ backgroundColor: 'var(--bg-gradient-from)' }}
-                  >
-                    Далее <ArrowRight className="w-4 h-4" />
-                  </button>
-                </div>
-              )}
+{formData.category && formData.topic && (
+  <div className="mt-6 rounded-xl p-4 text-center" style={{ backgroundColor: 'var(--primary-light)' }}>
+    <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Выбрано:</p>
+    <p className="font-bold text-lg" style={{ color: 'var(--bg-gradient-from)' }}>{formData.category}</p>
+    <p style={{ color: 'var(--text-secondary)' }}>{formData.topic}</p>
+    <button
+      type="button"
+      onClick={() => setStep(3)}
+      className="mt-3 text-white px-8 py-3 rounded-xl font-semibold hover:shadow-lg transition flex items-center gap-2 mx-auto"
+      style={{ backgroundColor: 'var(--bg-gradient-from)' }}
+    >
+      Далее <ArrowRight className="w-4 h-4" />
+    </button>
+  </div>
+)}
+
+{/* Дисклеймер: с чем не работаю */}
+<div className="text-center mt-6 rounded-2xl p-5 max-w-2xl mx-auto" style={{ backgroundColor: 'var(--disclaimer-bg)', borderColor: 'var(--disclaimer-border)', borderWidth: '1px', borderStyle: 'solid' }}>
+  <p className="font-semibold text-sm" style={{ color: 'var(--disclaimer-text)' }}>
+    Не работаю с онкологией и суицидальным поведением
+  </p>
+</div>
             </div>
           )}
 
-          {/* ===== ШАГ 2: Telegram ===== */}
-          {step === 2 && (
-            <div className="space-y-6">
-              <h2 className="text-2xl font-bold mb-2 text-center" style={{ color: 'var(--text-primary)' }}>Контакт для связи</h2>
 
-              <div className="rounded-xl p-4 flex items-center justify-between" style={{ backgroundColor: 'var(--primary-light)' }}>
-                <div>
-                  <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Тема обращения:</p>
-                  <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>{formData.topic}</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setStep(1)}
-                  className="text-sm font-semibold hover:underline"
-                  style={{ color: 'var(--bg-gradient-from)' }}
-                >
-                  Изменить
-                </button>
-              </div>
-
-              {!user?.telegram ? (
-                <div>
-                  <label className="flex items-center gap-2 font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
-                    <MessageCircle className="w-4 h-4" /> Telegram для связи *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    className="w-full px-4 py-3 border-2 rounded-xl focus:outline-none transition"
-                    style={{ borderColor: isDark ? 'var(--border-color)' : '#e5e7eb', backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)' }}
-                    value={formData.telegram}
-                    onChange={(e) => {
-                      let val = e.target.value.replace('@', '').replace(/[^a-zA-Z0-9_]/g, '');
-                      setFormData({...formData, telegram: val});
-                    }}
-                    placeholder="username"
-                  />
-                  <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>Ксения свяжется с вами в Telegram</p>
-                </div>
-              ) : (
-                <div className="rounded-xl p-4 flex items-center gap-3" style={{ backgroundColor: 'var(--primary-light)' }}>
-                  <MessageCircle className="w-5 h-5" style={{ color: 'var(--bg-gradient-from)' }} />
-                  <span style={{ color: 'var(--text-secondary)' }}>Telegram: <strong>@{user.telegram}</strong></span>
-                  <span className="text-sm ml-auto" style={{ color: '#22c55e' }}>✓ Указан</span>
-                </div>
-              )}
-
-              <div className="flex gap-4 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setStep(1)}
-                  className="flex-1 py-4 rounded-xl font-semibold hover:shadow-lg transition"
-                  style={{ backgroundColor: isDark ? 'var(--bg-card-alt)' : '#f3f4f6', color: 'var(--text-secondary)' }}
-                >
-                  ← Назад
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setStep(3)}
-                  disabled={!user?.telegram && !formData.telegram}
-                  className={`flex-1 py-4 rounded-xl font-semibold text-lg transition flex items-center justify-center gap-2 ${
-                    user?.telegram || formData.telegram
-                      ? 'text-white hover:shadow-lg'
-                      : 'cursor-not-allowed'
-                  }`}
-                  style={{ backgroundColor: (user?.telegram || formData.telegram) ? 'var(--bg-gradient-from)' : (isDark ? 'var(--bg-card-alt)' : '#d1d5db'), color: (user?.telegram || formData.telegram) ? 'white' : 'var(--text-muted)' }}
-                >
-                  Далее <ArrowRight className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>
