@@ -120,9 +120,7 @@ const TestQuestionnaire = () => {
     sessionStorage.setItem('compatibilityCode', code);
   }
 
-  // Показываем код пользователю перед навигацией
-  alert(`✅ Тест успешно завершён!\n\nВаш код совместимости: ${code}\n\nСохраните его — он понадобится для проверки совместимости.\n\nСейчас вы перейдёте к результатам.`);
-
+  // Автоматический переход к результатам без алерта
   console.log('Навигация на:', `/test/results/${code}`);
   navigate(`/test/results/${code}`);
     } catch (error) {
