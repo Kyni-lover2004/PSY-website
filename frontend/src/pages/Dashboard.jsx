@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import TestResultsTab from './TestResultsTab';
-import Comments from '../components/Comments';
 import { User, BarChart3, Calendar, Award, Palette, Copy, CheckCircle, ArrowRight } from 'lucide-react';
 
 const Dashboard = () => {
@@ -70,13 +69,10 @@ const Dashboard = () => {
 
         <div className="rounded-3xl shadow-2xl p-8 min-h-[400px]" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>
           {activeTab === 'profile' && (
-            <div className="fade-in">
-              <h2 className="text-2xl font-bold mb-6 flex items-center gap-2" style={{ color: isDark ? 'var(--text-primary)' : '#1F2937' }}><User className="w-6 h-6" /> Профиль</h2>
+      <div className="fade-in">
+        <h2 className="text-2xl font-bold mb-6 flex items-center gap-2" style={{ color: isDark ? 'var(--text-primary)' : '#1F2937' }}><User className="w-6 h-6" /> Профиль</h2>
 
-  {/* Комментарии */}
-  <Comments targetType="dashboard" targetId={null} />
-  
-  {user ? (
+        {user ? (
     <div className="space-y-6 mt-6">
       {/* Карточка пользователя */}
       <div className="bg-gradient-to-r from-primary to-secondary rounded-2xl p-6 text-white">

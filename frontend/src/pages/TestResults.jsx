@@ -5,7 +5,6 @@ import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Responsi
 import { Trophy, Shield, AlertTriangle, Heart, Copy, ArrowRight, Save, UserPlus, LogIn, CheckCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import Comments from '../components/Comments';
 
 const TestResults = () => {
   const { code } = useParams();
@@ -328,15 +327,11 @@ const TestResults = () => {
                   <LogIn className="w-5 h-5 inline mr-2" />
                   Войти
                 </button>
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* Комментарии к результатам теста */}
-        <Comments targetType="test_result" targetId={code} />
-      </div>
-    </div>
+</div>
+</>
+)}
+</div>
+</div>
   );
 };
 
