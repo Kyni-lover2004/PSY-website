@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { Wallet, Clock, Users, Baby, GraduationCap, Heart } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 
@@ -117,19 +118,19 @@ const Price = () => {
           })}
         </div>
 
-        {/* Кнопка записи */}
-        <div className="text-center mt-10">
-          <a
-            href="/appointment"
-            className="inline-flex items-center gap-2 px-10 py-4 rounded-xl font-semibold text-lg text-white hover:shadow-2xl hover:scale-105 transition transform"
-            style={{ background: 'var(--bg-gradient-from)' }}
-          >
-            Записаться на консультацию
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </a>
-        </div>
+{/* Кнопка записи */}
+<div className="text-center mt-10">
+<Link
+to="/appointment"
+className="inline-flex items-center gap-2 px-10 py-4 rounded-xl font-semibold text-lg text-white hover:shadow-2xl hover:scale-105 transition transform"
+style={{ background: 'var(--bg-gradient-from)' }}
+>
+Записаться на консультацию
+<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+</svg>
+</Link>
+</div>
       </div>
     </div>
   );
