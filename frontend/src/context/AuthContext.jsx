@@ -11,8 +11,16 @@ export const AuthProvider = ({ children }) => {
     const storedToken = localStorage.getItem('token');
     const userData = localStorage.getItem('user');
     if (storedToken && userData) {
+      const parsedUser = JSON.parse(userData);
       setToken(storedToken);
-      setUser(JSON.parse(userData));
+      setUser(parsedUser);
+      // Если у пользователя есть compatibility_code в sessionStorage, обновляем
+      const storedCode = sessionStorage.getItem('compatibilityCode');
+      if (storedCode && !parsedUser.compatibility_code) {
+        const updatedUser = { ...parsedUser, compatibility_code: storedCode };
+        setUser(updatedUser);
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+      }
     } else {
       // Если не авторизован, очищаем старые данные теста
       sessionStorage.removeItem('testData');
@@ -31,6 +39,13 @@ export const AuthProvider = ({ children }) => {
     sessionStorage.removeItem('testData');
     sessionStorage.removeItem('sessionId');
     sessionStorage.removeItem('compatibilityCode');
+  };
+
+  const updateUserCompatibilityCode = (code) => {
+    const updatedUser = { ...user, compatibility_code: code };
+    setUser(updatedUser);
+    localStorage.setItem('user', JSON.stringify(updatedUser));
+    sessionStorage.setItem('compatibilityCode', code);
   };
 
   const logout = () => {
@@ -55,7 +70,7 @@ export const AuthProvider = ({ children }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, isAdmin }}>
+    <AuthContext.Provider value={{ user, token, login, logout, isAdmin, updateUserCompatibilityCode }}>
       {children}
     </AuthContext.Provider>
   );

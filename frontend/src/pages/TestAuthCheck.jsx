@@ -6,7 +6,7 @@ import { UserSearch, Heart, ArrowRight, CheckCircle, Loader2 } from 'lucide-reac
 
 const TestAuthCheck = () => {
   const navigate = useNavigate();
-  const { user, token } = useAuth();
+  const { user, token, updateUserCompatibilityCode } = useAuth();
   const { isDark } = useTheme();
   const [checking, setChecking] = useState(true);
   const [hasResults, setHasResults] = useState(false);
@@ -16,10 +16,18 @@ const TestAuthCheck = () => {
       sessionStorage.setItem('redirectAfterLogin', '/test/archetypes');
       navigate('/register?redirect=test');
     } else {
-      setHasResults(!!user.compatibility_code);
+      // Проверяем compatibility_code из user или sessionStorage
+      const code = user?.compatibility_code || sessionStorage.getItem('compatibilityCode');
+      
+      // Если код есть в sessionStorage но нет в user, обновляем
+      if (!user?.compatibility_code && code) {
+        updateUserCompatibilityCode(code);
+      }
+      
+      setHasResults(!!code);
     }
     setChecking(false);
-  }, [user, token, navigate]);
+  }, [user, token, navigate, updateUserCompatibilityCode]);
 
   if (checking) {
     return (

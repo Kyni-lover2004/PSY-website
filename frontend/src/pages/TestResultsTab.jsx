@@ -13,25 +13,25 @@ const TestResultsTab = () => {
   const [expandedTest, setExpandedTest] = useState(null);
 
   useEffect(() => {
-    // Сначала пробуем получить код из профиля авторизованного пользователя
+    // Сначала пробуем получить код из профиля авторизованного пользователя или sessionStorage
     const code = user?.compatibility_code || sessionStorage.getItem('compatibilityCode');
     
     if (code) {
       profileAPI.getProfile(code)
-        .then(response => {
-          setResults({
-            code,
-            ...response.data
-          });
-        })
-        .catch(err => {
-          console.error('Ошибка загрузки профиля:', err);
-          // Если ошибка 404, очищаем incompatibilityCode
-          if (err.response?.status === 404) {
-            sessionStorage.removeItem('compatibilityCode');
-          }
-        })
-        .finally(() => setLoading(false));
+      .then(response => {
+        setResults({
+          code,
+          ...response.data
+        });
+      })
+      .catch(err => {
+        console.error('Ошибка загрузки профиля:', err);
+        // Если ошибка 404, очищаем compatibilityCode
+        if (err.response?.status === 404) {
+          sessionStorage.removeItem('compatibilityCode');
+        }
+      })
+      .finally(() => setLoading(false));
     } else {
       setLoading(false);
     }

@@ -7,7 +7,7 @@ import { CheckCircle, XCircle, ArrowLeft, ArrowRight } from 'lucide-react';
 
 const TestQuestionnaire = () => {
   const navigate = useNavigate();
-  const { user } = useAuth(); // Получаем данные авторизованного пользователя
+  const { user, updateUserCompatibilityCode } = useAuth(); // Получаем данные авторизованного пользователя
   const { isDark } = useTheme();
   const [questions, setQuestions] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -101,24 +101,30 @@ const TestQuestionnaire = () => {
         user_id: user?.id || null  // Передаём ID авторизованного пользователя
       });
 
-      console.log('Ответ от сервера:', response.data);
-      
-      const code = response.data.compatibility_code;
-      console.log('Получен compatibility_code:', code);
-      
-      if (!code) {
-        console.error('Сервер не вернул compatibility_code!');
-        alert('Ошибка: сервер не вернул код совместимости. Попробуйте ещё раз.');
-        return;
-      }
-      
-      sessionStorage.setItem('compatibilityCode', code);
-      
-      // Показываем код пользователю перед навигацией
-      alert(`✅ Тест успешно завершён!\n\nВаш код совместимости: ${code}\n\nСохраните его — он понадобится для проверки совместимости.\n\nСейчас вы перейдёте к результатам.`);
-      
-      console.log('Навигация на:', `/test/results/${code}`);
-      navigate(`/test/results/${code}`);
+  console.log('Ответ от сервера:', response.data);
+
+  const code = response.data.compatibility_code;
+  console.log('Получен compatibility_code:', code);
+
+  if (!code) {
+    console.error('Сервер не вернул compatibility_code!');
+    alert('Ошибка: сервер не вернул код совместимости. Попробуйте ещё раз.');
+    return;
+  }
+
+  // Обновляем код в AuthContext и localStorage
+  if (updateUserCompatibilityCode) {
+    updateUserCompatibilityCode(code);
+    console.log('compatibility_code обновлён в AuthContext');
+  } else {
+    sessionStorage.setItem('compatibilityCode', code);
+  }
+
+  // Показываем код пользователю перед навигацией
+  alert(`✅ Тест успешно завершён!\n\nВаш код совместимости: ${code}\n\nСохраните его — он понадобится для проверки совместимости.\n\nСейчас вы перейдёте к результатам.`);
+
+  console.log('Навигация на:', `/test/results/${code}`);
+  navigate(`/test/results/${code}`);
     } catch (error) {
       console.error('Ошибка отправки:', error);
       console.error('Error details:', error.response?.data || error.message);

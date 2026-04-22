@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -7,14 +7,25 @@ import Comments from '../components/Comments';
 import { User, BarChart3, Calendar, Award, Palette, Copy, CheckCircle, ArrowRight } from 'lucide-react';
 
 const Dashboard = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, updateUserCompatibilityCode } = useAuth();
   const { isDark } = useTheme();
   const [activeTab, setActiveTab] = useState('profile');
   const [copied, setCopied] = useState(false);
 
+  // Проверяем compatibility_code при монтировании
+  useEffect(() => {
+    if (user && !user.compatibility_code) {
+      const storedCode = sessionStorage.getItem('compatibilityCode');
+      if (storedCode) {
+        updateUserCompatibilityCode(storedCode);
+      }
+    }
+  }, [user, updateUserCompatibilityCode]);
+
   const handleCopyCode = () => {
-    if (user?.compatibility_code) {
-      navigator.clipboard.writeText(user.compatibility_code);
+    const code = user?.compatibility_code || sessionStorage.getItem('compatibilityCode');
+    if (code) {
+      navigator.clipboard.writeText(code);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
@@ -86,32 +97,32 @@ const Dashboard = () => {
                     </div>
                   </div>
 
-                  {/* Код совместимости */}
-                  {user.compatibility_code ? (
-                    <div className="rounded-2xl p-6" style={{ backgroundColor: isDark ? 'var(--bg-card-alt)' : '#F3F4F6' }}>
-                      <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-lg font-bold flex items-center gap-2" style={{ color: isDark ? 'var(--text-primary)' : '#1F2937' }}>
-                          <Palette className="w-5 h-5 text-primary" />
-                          Код совместимости
-                        </h3>
-                        <button
-                          onClick={handleCopyCode}
-                          className="text-sm text-primary hover:underline flex items-center gap-1"
-                        >
-                          {copied ? <><CheckCircle className="w-4 h-4" /> Скопировано</> : <><Copy className="w-4 h-4" /> Копировать</>}
-                        </button>
-                      </div>
-                      <div className="rounded-xl px-4 py-3 border-2 border-dashed border-primary/30" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>
-                        <code className="text-xl font-mono font-bold text-primary">{user.compatibility_code}</code>
-                      </div>
-                      <Link
-                        to="/compatibility"
-                        className="mt-3 inline-flex items-center gap-2 text-sm text-gray-600 hover:text-primary transition"
-                      >
-                        Проверить совместимость <ArrowRight className="w-4 h-4" />
-                      </Link>
-                    </div>
-                  ) : (
+{/* Код совместимости */}
+{(user.compatibility_code || sessionStorage.getItem('compatibilityCode')) ? (
+  <div className="rounded-2xl p-6" style={{ backgroundColor: isDark ? 'var(--bg-card-alt)' : '#F3F4F6' }}>
+    <div className="flex items-center justify-between mb-3">
+      <h3 className="text-lg font-bold flex items-center gap-2" style={{ color: isDark ? 'var(--text-primary)' : '#1F2937' }}>
+        <Palette className="w-5 h-5 text-primary" />
+        Код совместимости
+      </h3>
+      <button
+        onClick={handleCopyCode}
+        className="text-sm text-primary hover:underline flex items-center gap-1"
+      >
+        {copied ? <><CheckCircle className="w-4 h-4" /> Скопировано</> : <><Copy className="w-4 h-4" /> Копировать</>}
+      </button>
+    </div>
+    <div className="rounded-xl px-4 py-3 border-2 border-dashed border-primary/30" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>
+      <code className="text-xl font-mono font-bold text-primary">{user.compatibility_code || sessionStorage.getItem('compatibilityCode')}</code>
+    </div>
+    <Link
+      to="/compatibility"
+      className="mt-3 inline-flex items-center gap-2 text-sm text-gray-600 hover:text-primary transition"
+    >
+      Проверить совместимость <ArrowRight className="w-4 h-4" />
+    </Link>
+  </div>
+) : (
                     <div className="bg-amber-50 rounded-2xl p-6 border border-amber-200">
                       <div className="flex items-start gap-3">
                         <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
