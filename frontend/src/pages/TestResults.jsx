@@ -316,20 +316,21 @@ const TestResults = () => {
                   <UserPlus className="w-5 h-5 inline mr-2" />
                   Зарегистрироваться
                 </button>
-                <button
-                  onClick={() => {
-                    sessionStorage.setItem('redirectAfterLogin', window.location.pathname);
-                    navigate('/login');
-                  }}
-                  className="px-8 py-4 rounded-xl font-semibold hover:shadow-lg transition transform hover:scale-105"
-                  style={{ backgroundColor: isDark ? 'var(--bg-card-alt)' : '#f3f4f6', color: 'var(--text-secondary)' }}
-                >
-                  <LogIn className="w-5 h-5 inline mr-2" />
-                  Войти
-                </button>
+<button
+  onClick={() => {
+    sessionStorage.setItem('redirectAfterLogin', window.location.pathname);
+    navigate('/login');
+  }}
+  className="px-8 py-4 rounded-xl font-semibold hover:shadow-lg transition transform hover:scale-105"
+  style={{ backgroundColor: isDark ? 'var(--bg-card-alt)' : '#f3f4f6', color: 'var(--text-secondary)' }}
+>
+  <LogIn className="w-5 h-5 inline mr-2" />
+  Войти
+</button>
 </div>
 </>
 )}
+</div>
 </div>
 </div>
   );
