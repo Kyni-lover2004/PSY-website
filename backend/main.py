@@ -1083,7 +1083,11 @@ async def get_all_test_results(current_user: User = Depends(require_admin), db: 
             "completed_at": str(r.completed_at)
         }
         for r in results
-    ]
+]
+
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
 
 @app.get("/api/admin/test-results/{user_id}")
 async def get_user_test_results(user_id: int, current_user: User = Depends(require_admin), db: Session = Depends(get_db)):

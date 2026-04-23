@@ -1,10 +1,8 @@
 import axios from 'axios';
+import { API_BASE } from '../config/apiConfig.js';
 
-// Production URL для Render с префиксом /api
-const PRODUCTION_URL = 'https://psy-website-3.onrender.com/api';
-
-// Получаем URL из переменной окружения или используем production
-const API_URL = import.meta.env.VITE_API_URL || PRODUCTION_URL;
+// API URL (центр. конфигурация)
+const API_URL = API_BASE;
 
 const api = axios.create({
   baseURL: API_URL,
