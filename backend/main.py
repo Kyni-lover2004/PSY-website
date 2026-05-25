@@ -23,8 +23,7 @@ import uuid
 import os
 import re
 import secrets
-import asyncio
-import aiohttp
+
 
 # === КОНФИГУРАЦИЯ ===
 SECRET_KEY = os.environ.get("SECRET_KEY", "psycho-secure-key-2026-" + "a" * 40)
@@ -47,8 +46,6 @@ FRONTEND_URLS = [
 ]
 # Удаляем пустые строки
 FRONTEND_URLS = [url for url in FRONTEND_URLS if url]
-TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
-TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
 
 # === ЛОГИРОВАНИЕ ===
 logging.basicConfig(
@@ -163,52 +160,6 @@ def sanitize_string(value: str, max_length: int = 500) -> str:
     value = value.strip()[:max_length]
     value = re.sub(r'[<>&\'"\\]', '', value)
     return value
-
-# === TELEGRAM ===
-class TelegramNotifier:
-    def __init__(self, bot_token: str, chat_id: str):
-        self.bot_token = bot_token
-        self.chat_id = chat_id
-        self.base_url = f"https://api.telegram.org/bot{bot_token}"
-
-    async def send_consultation_notification(self, consultation: dict):
-        message = f"""
-📝 <b>НОВАЯ ЗАЯВКА НА КОНСУЛЬТАЦИЮ</b>
-
-👤 <b>Имя:</b> {consultation.get('name', 'Не указано')}
-💬 <b>Telegram:</b> {consultation.get('telegram', 'Не указан')}
-
-📁 <b>Категория:</b> {consultation.get('category', 'Не указана')}
-🎯 <b>Тема:</b> {consultation.get('topic', 'Не указана')}
-
-💬 <b>Запрос:</b>
-{consultation.get('request_text', 'Не указано')}
-
-🕐 <b>Дата:</b> {consultation.get('created_at', 'N/A')}
-🆔 <b>ID:</b> {consultation.get('id', 'N/A')}
-"""
-        try:
-            async with aiohttp.ClientSession() as session:
-                async with session.post(
-                    f"{self.base_url}/sendMessage",
-                    json={"chat_id": self.chat_id, "text": message.strip(), "parse_mode": "HTML"}
-                ) as response:
-                    if response.status == 200:
-                        logger.info("✅ Уведомление отправлено в Telegram")
-        except Exception as e:
-            logger.error(f"❌ Ошибка Telegram: {e}")
-
-telegram_notifier = None
-
-def init_telegram():
-    global telegram_notifier
-    if TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID:
-        telegram_notifier = TelegramNotifier(TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID)
-        logger.info("✅ Telegram бот инициализирован")
-
-async def notify_consultation(consultation_data: dict):
-    if telegram_notifier:
-        asyncio.create_task(telegram_notifier.send_consultation_notification(consultation_data))
 
 # === МОДЕЛИ SQLALCHEMY ===
 
@@ -502,7 +453,6 @@ def calculate_compatibility(scores1: Dict, scores2: Dict) -> Dict[str, Any]:
 @app.on_event("startup")
 async def startup():
     Base.metadata.create_all(bind=engine)
-    init_telegram()
 
     db = SessionLocal()
     try:
@@ -930,17 +880,6 @@ async def create_consultation(data: ConsultationCreate, db: Session = Depends(ge
     db.refresh(consultation)
 
     logger.info(f"Новая заявка на консультацию от {consultation.name}")
-
-    # Telegram notification
-    await notify_consultation({
-        "id": consultation.id,
-        "name": consultation.name,
-        "telegram": consultation.telegram,
-        "category": consultation.category,
-        "topic": consultation.topic,
-        "request_text": consultation.request_text,
-        "created_at": str(consultation.created_at)
-    })
 
     return {"message": "Заявка отправлена", "id": consultation.id}
 
