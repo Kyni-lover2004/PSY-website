@@ -26,35 +26,47 @@ import secrets
 
 
 # === КОНФИГУРАЦИЯ ===
-SECRET_KEY = os.environ.get("SECRET_KEY", "psycho-secure-key-2026-" + "a" * 40)
+ENVIRONMENT = os.environ.get("ENVIRONMENT", "development").lower()
+DEFAULT_DEV_SECRET_KEY = "psycho-secure-key-2026-" + "a" * 40
+SECRET_KEY = os.environ.get("SECRET_KEY") or (
+    DEFAULT_DEV_SECRET_KEY if ENVIRONMENT != "production" else secrets.token_urlsafe(64)
+)
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24
-DATABASE_URL = "sqlite:///./psycho.db"
+DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite:///./psycho.db")
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:3000")
+
+def normalize_origin(url: str) -> str:
+    return url.rstrip('/')
+
 # Добавляем все возможные домены для CORS
 FRONTEND_URLS = [
-  FRONTEND_URL,
-  "http://localhost:3000",
-  "http://localhost:5173",
-  "http://127.0.0.1:3000",
-  "http://127.0.0.1:5173",
-  "https://psy-website-7b5i.vercel.app",
-  "https://psy-website-7b5i.vercel.app/",
-  "https://psy-rzn.vercel.app",
-  "https://psy-rzn.vercel.app/",
-  os.environ.get("FRONTEND_URL_PRODUCTION", ""),
+  normalize_origin(url) for url in [
+    FRONTEND_URL,
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:5173",
+    "https://psy-website-7b5i.vercel.app",
+    "https://psy-rzn.vercel.app",
+    os.environ.get("FRONTEND_URL_PRODUCTION", ""),
+  ] if url
 ]
-# Удаляем пустые строки
-FRONTEND_URLS = [url for url in FRONTEND_URLS if url]
+FRONTEND_URLS = list(dict.fromkeys(FRONTEND_URLS))
 
 # === ЛОГИРОВАНИЕ ===
+log_handlers = [logging.StreamHandler()]
+log_file = os.environ.get("LOG_FILE", "psycho.log")
+if log_file:
+    try:
+        log_handlers.insert(0, logging.FileHandler(log_file))
+    except OSError:
+        pass
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('psycho.log'),
-        logging.StreamHandler()
-    ]
+    handlers=log_handlers
 )
 logger = logging.getLogger(__name__)
 
@@ -1477,4 +1489,9 @@ async def admin_delete_comment(
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000, log_level="info")
+    uvicorn.run(
+        app,
+        host=os.environ.get("HOST", "0.0.0.0"),
+        port=int(os.environ.get("PORT", 8000)),
+        log_level=os.environ.get("LOG_LEVEL", "info")
+    )

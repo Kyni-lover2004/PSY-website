@@ -91,6 +91,8 @@ const Layout = () => {
             <Link to="/practices" onClick={closeDrawer} className={navLinkClass()}>Практики</Link>
             <Link to="/price" onClick={closeDrawer} className={navLinkClass()}>Прайс</Link>
             <Link to="/reading-list" onClick={closeDrawer} className={navLinkClass()}>Список литературы</Link>
+            <Link to="/privacy-policy" onClick={closeDrawer} className={navLinkClass()}>Политика конфиденциальности</Link>
+            <Link to="/public-offer" onClick={closeDrawer} className={navLinkClass()}>Публичная оферта</Link>
             <div className={`px-4 py-3 opacity-50 cursor-not-allowed`}>
               <span className={`text-lg flex items-center gap-2 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
                 Курсы <span className={`text-xs px-2 py-0.5 rounded-full ${isDark ? 'bg-gray-700 text-gray-500' : 'bg-gray-200 text-gray-500'}`}>скоро</span>
