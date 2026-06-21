@@ -225,7 +225,7 @@ const TestResultsTab = () => {
                 </div>
                 <div className="min-w-0">
                   <div className="font-semibold" style={{ color: 'var(--text-primary)' }}>{test.name}</div>
-                  <div className="text-sm" style={{ color: 'var(--text-muted)' }}>Скоро появится в приложении</div>
+                  <div className="text-sm" style={{ color: 'var(--text-muted)' }}>Скоро появится на сайте</div>
                 </div>
               </div>
               <span

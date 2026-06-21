@@ -114,7 +114,7 @@ const TestsList = () => {
               >
                 <Sparkles className="w-4 h-4" /> Новые тесты в разработке
               </div>
-              <h2 className="text-3xl font-bold text-white mb-3">Скоро в приложении</h2>
+              <h2 className="text-3xl font-bold text-white mb-3">Скоро на сайте</h2>
               <p className="text-white/80 max-w-2xl leading-relaxed">
                 Мы работаем над новыми тестами, чтобы вы могли узнать себя ещё глубже: понять стиль общения, эмоциональные реакции,
                 ценности и особенности привязанности. Следите за обновлениями — раздел будет постепенно расширяться.
