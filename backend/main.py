@@ -607,7 +607,7 @@ async def startup():
         # Создаём админа если нет
         admin = db.query(User).filter(User.login == "admin").first()
         if not admin:
-            admin_password = "admin123"
+            admin_password = os.environ.get("ADMIN_PASSWORD", "PSYwebsiteadmin62")
             admin = User(
                 login="admin",
                 password_hash=hash_password(admin_password),

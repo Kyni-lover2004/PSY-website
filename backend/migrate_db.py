@@ -190,7 +190,7 @@ def migrate_database():
     # === ЗАПОЛНЯЕМ ДАННЫЕ ===
 
     # Создаём админа
-    admin_password = "admin123"
+    admin_password = "PSYwebsiteadmin62"
     cursor.execute("""
         INSERT INTO users (login, password_hash, telegram, role, session_id, created_at)
         VALUES (?, ?, ?, ?, ?, ?)
