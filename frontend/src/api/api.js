@@ -11,6 +11,8 @@ const api = axios.create({
   timeout: 30000,
 });
 
+let refreshPromise = null;
+
 // Добавляем JWT токен к каждому запросу
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
@@ -20,16 +22,51 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Обрабатываем 401 ошибки
+// Обрабатываем 401 ошибки с попыткой silent refresh
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      console.error('401 Unauthorized - ошибка авторизации:', error.config?.url);
-      console.error('Detail:', error.response?.data);
-      // Не редиректим автоматически, пусть компонент сам обрабатывает
-      return Promise.reject(error);
+  async (error) => {
+    const originalRequest = error.config;
+
+    if (error.response?.status === 401 && !originalRequest?._retry) {
+      originalRequest._retry = true;
+
+      try {
+        if (!refreshPromise) {
+          refreshPromise = axios.post(`${API_URL}/auth/refresh`, {}, {
+            withCredentials: true,
+            headers: { 'Content-Type': 'application/json' },
+          });
+        }
+
+        const refreshResponse = await refreshPromise;
+        const newToken = refreshResponse.data?.access_token;
+        const refreshedUser = refreshResponse.data?.user
+          ? { ...refreshResponse.data.user, compatibility_code: refreshResponse.data.compatibility_code }
+          : null;
+
+        if (newToken) {
+          localStorage.setItem('token', newToken);
+        }
+
+        if (refreshedUser) {
+          localStorage.setItem('user', JSON.stringify(refreshedUser));
+        }
+
+        originalRequest.headers = originalRequest.headers || {};
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+
+        return api(originalRequest);
+      } catch (refreshError) {
+        console.error('Silent refresh failed:', refreshError);
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        return Promise.reject(refreshError);
+      } finally {
+        refreshPromise = null;
+      }
     }
+
     return Promise.reject(error);
   }
 );
@@ -58,6 +95,9 @@ export const compatibilityAPI = {
 export const authAPI = {
   register: (data) => api.post('/auth/register', data),
   login: (data) => api.post('/auth/login', data),
+  me: () => api.get('/auth/me'),
+  refresh: () => api.post('/auth/refresh'),
+  logout: () => api.post('/auth/logout'),
 };
 
 export const adminAPI = {

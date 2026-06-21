@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { profileAPI } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { BarChart3, Palette, Zap, Heart, Link2, Gem, MessageCircle, Shield, AlertTriangle, Award, Trophy } from 'lucide-react';
+import { BarChart3, Palette, Zap, Heart, Link2, Gem, MessageCircle, Shield, AlertTriangle, Trophy, Sparkles } from 'lucide-react';
 
 const TestResultsTab = () => {
   const { user } = useAuth();
@@ -15,7 +15,7 @@ const TestResultsTab = () => {
   useEffect(() => {
     // Сначала пробуем получить код из профиля авторизованного пользователя или sessionStorage
     const code = user?.compatibility_code || sessionStorage.getItem('compatibilityCode');
-    
+
     if (code) {
       profileAPI.getProfile(code)
       .then(response => {
@@ -40,6 +40,14 @@ const TestResultsTab = () => {
   const toggleExpand = (testId) => {
     setExpandedTest(expandedTest === testId ? null : testId);
   };
+
+  const upcomingTests = [
+    { id: 'temperament', name: 'Тест на темперамент', icon: Zap },
+    { id: 'love-language', name: 'Языки любви', icon: Heart },
+    { id: 'attachment', name: 'Тип привязанности', icon: Link2 },
+    { id: 'values', name: 'Ценности в отношениях', icon: Gem },
+    { id: 'communication', name: 'Стиль коммуникации', icon: MessageCircle },
+  ];
 
   if (loading) {
     return (
@@ -120,7 +128,7 @@ const TestResultsTab = () => {
       <div className="rounded-2xl shadow-lg p-6 fade-in" style={{ backgroundColor: 'var(--bg-card)' }}>
         <h4 className="text-lg font-bold mb-4" style={{ color: 'var(--text-primary)' }}>Все архетипы</h4>
           <div className="space-y-4">
-            {allArchetypes.map((arch, index) => (
+            {allArchetypes.map((arch) => (
               <div
                 key={arch.code}
                 className="border rounded-xl p-4 hover:shadow-md transition"
@@ -186,36 +194,46 @@ const TestResultsTab = () => {
       )}
 
       <div className="rounded-2xl p-6" style={{ backgroundColor: isDark ? 'var(--bg-card-alt)' : '#f9fafb' }}>
-        <h3 className="text-xl font-bold mb-4" style={{ color: 'var(--text-primary)' }}>Другие тесты</h3>
+        <div className="flex items-start justify-between gap-4 mb-5 flex-col sm:flex-row sm:items-center">
+          <div>
+            <h3 className="text-xl font-bold mb-2 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+              <Sparkles className="w-5 h-5" style={{ color: 'var(--bg-gradient-from)' }} /> Новые тесты в разработке
+            </h3>
+            <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+              Мы постепенно расширяем раздел тестов, сохраняя ту же глубину интерпретации и качество рекомендаций.
+            </p>
+          </div>
+          <Link
+            to="/tests"
+            className="px-4 py-2 rounded-lg font-semibold transition hover:shadow-lg"
+            style={{ backgroundColor: 'var(--primary-light)', color: 'var(--bg-gradient-from)' }}
+          >
+            Смотреть раздел тестов
+          </Link>
+        </div>
+
         <div className="space-y-3">
-          {[
-            { id: 'temperament', name: 'Тест на темперамент', icon: Zap, status: 'available' },
-            { id: 'love-language', name: 'Языки любви', icon: Heart, status: 'available' },
-            { id: 'attachment', name: 'Тип привязанности', icon: Link2, status: 'available' },
-            { id: 'values', name: 'Ценности в отношениях', icon: Gem, status: 'available' },
-            { id: 'communication', name: 'Стиль коммуникации', icon: MessageCircle, status: 'available' },
-          ].map((test) => (
+          {upcomingTests.map((test) => (
             <div
               key={test.id}
-              className="flex items-center justify-between rounded-xl p-4"
+              className="flex items-center justify-between rounded-xl p-4 gap-4"
               style={{ backgroundColor: 'var(--bg-card)' }}
             >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'var(--primary-light)' }}>
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'var(--primary-light)' }}>
                   <test.icon className="w-5 h-5" style={{ color: 'var(--bg-gradient-from)' }} />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <div className="font-semibold" style={{ color: 'var(--text-primary)' }}>{test.name}</div>
-                  <div className="text-sm" style={{ color: 'var(--text-muted)' }}>Доступен для прохождения</div>
+                  <div className="text-sm" style={{ color: 'var(--text-muted)' }}>Скоро появится в приложении</div>
                 </div>
               </div>
-              <Link
-                to="/tests"
-                className="px-4 py-2 rounded-lg font-semibold hover:shadow-lg transition"
+              <span
+                className="px-3 py-1 rounded-full text-xs font-semibold flex-shrink-0"
                 style={{ backgroundColor: 'var(--primary-light)', color: 'var(--bg-gradient-from)' }}
               >
-                Пройти
-              </Link>
+                Скоро
+              </span>
             </div>
           ))}
         </div>

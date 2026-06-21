@@ -15,6 +15,7 @@ import Practices from './pages/Practices';
 import ReadingList from './pages/ReadingList';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
 
 const TestResults = lazy(() => import('./pages/TestResults'));
@@ -59,7 +60,14 @@ function App() {
               <Route path="public-offer" element={<PublicOffer />} />
               <Route path="login" element={<Login />} />
               <Route path="register" element={<Register />} />
-              <Route path="dashboard" element={<Dashboard />} />
+              <Route
+                path="dashboard"
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
               <Route
                 path="admin"
                 element={

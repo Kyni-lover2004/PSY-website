@@ -5,11 +5,12 @@ PSY Website Backend v4.0 - FULL DB REBUILD
 - Все результаты тестов сохраняются
 - Админка получает все данные
 """
-from fastapi import FastAPI, Depends, HTTPException, Request
+from fastapi import FastAPI, Depends, HTTPException, Request, Response, Cookie
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from sqlalchemy import create_engine, Column, Integer, String, Boolean, Text, DateTime, ForeignKey, JSON, Float
+from sqlalchemy import create_engine, Column, Integer, String, Boolean, Text, DateTime, ForeignKey, JSON, Float, text
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError, OperationalError
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session, relationship
 from datetime import datetime, timedelta, timezone
@@ -28,13 +29,22 @@ import secrets
 # === КОНФИГУРАЦИЯ ===
 ENVIRONMENT = os.environ.get("ENVIRONMENT", "development").lower()
 DEFAULT_DEV_SECRET_KEY = "psycho-secure-key-2026-" + "a" * 40
-SECRET_KEY = os.environ.get("SECRET_KEY") or (
-    DEFAULT_DEV_SECRET_KEY if ENVIRONMENT != "production" else secrets.token_urlsafe(64)
-)
+
+if ENVIRONMENT == "production":
+    SECRET_KEY = os.environ.get("SECRET_KEY")
+    if not SECRET_KEY:
+        raise RuntimeError("SECRET_KEY must be set in production environment")
+else:
+    SECRET_KEY = os.environ.get("SECRET_KEY", DEFAULT_DEV_SECRET_KEY)
+
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.environ.get("ACCESS_TOKEN_EXPIRE_MINUTES", 15))
+REFRESH_TOKEN_EXPIRE_DAYS = int(os.environ.get("REFRESH_TOKEN_EXPIRE_DAYS", 7))
 DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite:///./psycho.db")
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:3000")
+COOKIE_SECURE = ENVIRONMENT == "production"
+COOKIE_SAMESITE = "none" if COOKIE_SECURE else "lax"
+REFRESH_COOKIE_NAME = "refresh_token"
 
 def normalize_origin(url: str) -> str:
     return url.rstrip('/')
@@ -135,11 +145,70 @@ async def security_middleware(request: Request, call_next):
     return response
 
 # === DATABASE ===
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+IS_SQLITE = DATABASE_URL.startswith("sqlite")
+
+if ENVIRONMENT == "production" and not os.environ.get("DATABASE_URL"):
+    raise RuntimeError("DATABASE_URL must be set in production environment")
+
+engine_kwargs = {
+    "pool_pre_ping": not IS_SQLITE,
+}
+
+if IS_SQLITE:
+    engine_kwargs["connect_args"] = {"check_same_thread": False}
+else:
+    engine_kwargs.update({
+        "pool_recycle": int(os.environ.get("DB_POOL_RECYCLE", 300)),
+        "pool_size": int(os.environ.get("DB_POOL_SIZE", 5)),
+        "max_overflow": int(os.environ.get("DB_MAX_OVERFLOW", 10)),
+    })
+
+engine = create_engine(DATABASE_URL, **engine_kwargs)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security = HTTPBearer()
+
+
+def safe_rollback(db: Session):
+    try:
+        db.rollback()
+    except SQLAlchemyError as rollback_error:
+        logger.error(f"Ошибка rollback: {rollback_error}", exc_info=True)
+
+
+def safe_commit(db: Session, *, action: str = "database operation"):
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        safe_rollback(db)
+        logger.warning(f"Integrity error during {action}: {exc}", exc_info=True)
+        raise HTTPException(status_code=409, detail="Конфликт данных при сохранении")
+    except OperationalError as exc:
+        safe_rollback(db)
+        logger.error(f"Operational DB error during {action}: {exc}", exc_info=True)
+        raise HTTPException(status_code=503, detail="База данных временно недоступна")
+    except SQLAlchemyError as exc:
+        safe_rollback(db)
+        logger.error(f"DB error during {action}: {exc}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Ошибка базы данных")
+
+
+def wait_for_database_ready(max_attempts: int = 5, delay_seconds: int = 2):
+    last_error = None
+    for attempt in range(1, max_attempts + 1):
+        try:
+            with engine.connect() as connection:
+                connection.execute(text("SELECT 1"))
+            logger.info(f"Подключение к БД готово (attempt {attempt}/{max_attempts})")
+            return
+        except OperationalError as exc:
+            last_error = exc
+            logger.warning(f"БД недоступна (attempt {attempt}/{max_attempts}): {exc}")
+            if attempt < max_attempts:
+                import time
+                time.sleep(delay_seconds)
+    raise RuntimeError(f"Database is not ready after {max_attempts} attempts: {last_error}")
 
 def get_db():
     db = SessionLocal()
@@ -163,8 +232,61 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     if "sub" in to_encode:
         to_encode["sub"] = str(to_encode["sub"])
     expire = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
-    to_encode.update({"exp": expire, "iat": datetime.now(timezone.utc)})
+    to_encode.update({"exp": expire, "iat": datetime.now(timezone.utc), "type": "access"})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+
+def create_refresh_token(user: "User") -> tuple[str, datetime]:
+    raw_token = secrets.token_urlsafe(48)
+    expires_at = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+    user.refresh_token = raw_token
+    user.refresh_token_expires_at = expires_at
+    return raw_token, expires_at
+
+
+def clear_refresh_token(user: "User"):
+    user.refresh_token = None
+    user.refresh_token_expires_at = None
+
+
+def set_refresh_cookie(response: Response, refresh_token: str, expires_at: datetime):
+    max_age = max(int((expires_at - datetime.now(timezone.utc)).total_seconds()), 0)
+    response.set_cookie(
+        key=REFRESH_COOKIE_NAME,
+        value=refresh_token,
+        httponly=True,
+        secure=COOKIE_SECURE,
+        samesite=COOKIE_SAMESITE,
+        max_age=max_age,
+        expires=max_age,
+        path="/"
+    )
+
+
+def clear_refresh_cookie(response: Response):
+    response.delete_cookie(
+        key=REFRESH_COOKIE_NAME,
+        httponly=True,
+        secure=COOKIE_SECURE,
+        samesite=COOKIE_SAMESITE,
+        path="/"
+    )
+
+
+def build_auth_payload(user: "User") -> dict:
+    return {
+        "user": {
+            "id": user.id,
+            "login": user.login,
+            "telegram": user.telegram,
+            "name": user.login,
+            "gender": user.gender,
+            "orientation": user.orientation,
+            "role": user.role,
+            "created_at": str(user.created_at)
+        },
+        "compatibility_code": user.compatibility_code
+    }
 
 def sanitize_string(value: str, max_length: int = 500) -> str:
     if not value:
@@ -185,6 +307,8 @@ class User(Base):
     orientation = Column(String(20), nullable=True)
     role = Column(String(20), default="user", nullable=False, index=True)
     session_id = Column(String(100), unique=True, default=lambda: str(uuid.uuid4()))
+    refresh_token = Column(String(255), nullable=True, index=True)
+    refresh_token_expires_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     compatibility_code = Column(String(50), unique=True, nullable=True)
     archetype_scores = Column(JSON, nullable=True)
@@ -464,7 +588,19 @@ def calculate_compatibility(scores1: Dict, scores2: Dict) -> Dict[str, Any]:
 # === INIT DB ===
 @app.on_event("startup")
 async def startup():
+    wait_for_database_ready(
+        max_attempts=int(os.environ.get("DB_CONNECT_MAX_ATTEMPTS", 5)),
+        delay_seconds=int(os.environ.get("DB_CONNECT_RETRY_DELAY", 2))
+    )
     Base.metadata.create_all(bind=engine)
+
+    if IS_SQLITE:
+        with engine.begin() as connection:
+            columns = [row[1] for row in connection.exec_driver_sql("PRAGMA table_info(users)").fetchall()]
+            if "refresh_token" not in columns:
+                connection.exec_driver_sql("ALTER TABLE users ADD COLUMN refresh_token VARCHAR(255)")
+            if "refresh_token_expires_at" not in columns:
+                connection.exec_driver_sql("ALTER TABLE users ADD COLUMN refresh_token_expires_at DATETIME")
 
     db = SessionLocal()
     try:
@@ -480,7 +616,7 @@ async def startup():
                 session_id="admin-session-001"
             )
             db.add(admin)
-            db.commit()
+            safe_commit(db, action="create default admin")
             logger.info(f"✅ Админ создан: login=admin, password={admin_password}")
 
         # Заполняем архетипы если пусто
@@ -639,7 +775,7 @@ async def root():
 
 # === AUTH ===
 @app.post("/api/auth/register")
-async def register(data: UserCreate, db: Session = Depends(get_db)):
+async def register(data: UserCreate, response: Response, db: Session = Depends(get_db)):
   existing = db.query(User).filter(User.login == data.login).first()
   if existing:
     raise HTTPException(400, "Пользователь уже существует")
@@ -653,25 +789,24 @@ async def register(data: UserCreate, db: Session = Depends(get_db)):
     role="user"
   )
   db.add(user)
-  db.commit()
+  safe_commit(db, action="register user")
   db.refresh(user)
 
   token = create_access_token(data={"sub": user.id, "role": user.role})
+  refresh_token, refresh_expires_at = create_refresh_token(user)
+  safe_commit(db, action="store refresh token on register")
   logger.info(f"Новый пользователь: {user.login} (ID: {user.id})")
+
+  set_refresh_cookie(response, refresh_token, refresh_expires_at)
 
   return {
     "access_token": token,
     "token_type": "bearer",
-    "user": {
-      "id": user.id, "login": user.login, "telegram": None,
-      "name": user.login, "gender": user.gender, "orientation": user.orientation,
-      "role": user.role, "created_at": str(user.created_at)
-    },
-    "compatibility_code": None # Тест ещё не пройден
+    **build_auth_payload(user)
   }
 
 @app.post("/api/auth/login")
-async def login(data: UserLogin, request: Request, db: Session = Depends(get_db)):
+async def login(data: UserLogin, request: Request, response: Response, db: Session = Depends(get_db)):
     client_ip = request.client.host
 
     if rate_limiter.is_login_locked(client_ip):
@@ -688,18 +823,65 @@ async def login(data: UserLogin, request: Request, db: Session = Depends(get_db)
 
     rate_limiter.record_login_attempt(client_ip, True)
     token = create_access_token(data={"sub": user.id, "role": user.role})
+    refresh_token, refresh_expires_at = create_refresh_token(user)
+    safe_commit(db, action="store refresh token on login")
     logger.info(f"Вход: {user.login} (ID: {user.id})")
+
+    set_refresh_cookie(response, refresh_token, refresh_expires_at)
 
     return {
         "access_token": token,
         "token_type": "bearer",
-        "user": {
-            "id": user.id, "login": user.login, "telegram": user.telegram,
-            "name": user.login, "gender": user.gender, "orientation": user.orientation,
-            "role": user.role, "created_at": str(user.created_at)
-        },
-        "compatibility_code": user.compatibility_code
+        **build_auth_payload(user)
     }
+
+@app.get("/api/auth/me")
+async def get_auth_me(current_user: User = Depends(get_current_user)):
+    return build_auth_payload(current_user)
+
+@app.post("/api/auth/refresh")
+async def refresh_access_token(
+    response: Response,
+    refresh_token: Optional[str] = Cookie(default=None, alias=REFRESH_COOKIE_NAME),
+    db: Session = Depends(get_db)
+):
+    if not refresh_token:
+        raise HTTPException(status_code=401, detail="Refresh token отсутствует")
+
+    user = db.query(User).filter(User.refresh_token == refresh_token).first()
+    if not user or not user.is_active:
+        raise HTTPException(status_code=401, detail="Refresh token недействителен")
+
+    if not user.refresh_token_expires_at or user.refresh_token_expires_at < datetime.now(timezone.utc):
+        clear_refresh_token(user)
+        safe_commit(db, action="clear expired refresh token")
+        clear_refresh_cookie(response)
+        raise HTTPException(status_code=401, detail="Refresh token истек")
+
+    access_token = create_access_token(data={"sub": user.id, "role": user.role})
+    new_refresh_token, new_refresh_expires_at = create_refresh_token(user)
+    safe_commit(db, action="rotate refresh token")
+    set_refresh_cookie(response, new_refresh_token, new_refresh_expires_at)
+
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        **build_auth_payload(user)
+    }
+
+@app.post("/api/auth/logout")
+async def logout_auth(
+    response: Response,
+    refresh_token: Optional[str] = Cookie(default=None, alias=REFRESH_COOKIE_NAME),
+    db: Session = Depends(get_db)
+):
+    if refresh_token:
+        user = db.query(User).filter(User.refresh_token == refresh_token).first()
+        if user:
+            clear_refresh_token(user)
+            safe_commit(db, action="logout user")
+    clear_refresh_cookie(response)
+    return {"success": True}
 
 # === QUESTIONS ===
 @app.get("/api/questions/{gender}")
@@ -792,20 +974,16 @@ async def complete_test(data: TestComplete, db: Session = Depends(get_db)):
                 logger.info(f"Сгенерирован новый compatibility_code для {user.login}")
 
         try:
-            db.commit()
+            safe_commit(db, action="save archetype test result")
             db.refresh(user)
-        except Exception as commit_error:
-            db.rollback()
-            if "UNIQUE constraint failed" in str(commit_error) and "login" in str(commit_error):
+        except HTTPException as commit_error:
+            if commit_error.status_code == 409 and data.login:
                 unique_login = f"{data.login.strip() if data.login else 'user'}_{uuid.uuid4().hex[:6]}"
-                if not user.id:
-                    user.login = unique_login
-                else:
-                    user.login = unique_login
-                db.commit()
+                user.login = unique_login
+                safe_commit(db, action="retry save archetype test result with unique login")
                 db.refresh(user)
             else:
-                raise HTTPException(status_code=500, detail=f"Ошибка сохранения: {str(commit_error)}")
+                raise
 
         # Определяем основной архетип
         main_archetype_code = max(scores, key=scores.get) if scores else None
@@ -830,7 +1008,7 @@ async def complete_test(data: TestComplete, db: Session = Depends(get_db)):
             result_text=f"Архетип: {main_archetype_name or main_archetype_code or 'Не определён'}"
         )
         db.add(test_result)
-        db.commit()
+        safe_commit(db, action="store test_result record")
 
         logger.info(f"Тест завершён: user={user.login}, archetype={main_archetype_name}, code={user.compatibility_code}")
 
@@ -845,7 +1023,7 @@ async def complete_test(data: TestComplete, db: Session = Depends(get_db)):
     except HTTPException:
         raise
     except Exception as e:
-        db.rollback()
+        safe_rollback(db)
         logger.error(f"Ошибка complete_test: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Ошибка: {str(e)}")
 
@@ -870,7 +1048,7 @@ async def save_results_to_account(
     current_user.gender = existing_user.gender
     current_user.orientation = existing_user.orientation
 
-    db.commit()
+    safe_commit(db, action="save results to account")
     db.refresh(current_user)
 
     logger.info(f"Результаты {code} сохранены в аккаунт {current_user.login}")
@@ -888,7 +1066,7 @@ async def create_consultation(data: ConsultationCreate, db: Session = Depends(ge
         request_text=sanitize_string(data.request_text, 2000)
     )
     db.add(consultation)
-    db.commit()
+    safe_commit(db, action="create consultation")
     db.refresh(consultation)
 
     logger.info(f"Новая заявка на консультацию от {consultation.name}")
@@ -945,7 +1123,7 @@ async def check_compatibility(data: CompatibilityCheck, db: Session = Depends(ge
         interpretation=result["interpretation"]
     )
     db.add(couple)
-    db.commit()
+    safe_commit(db, action="store compatibility check")
 
     return {"user1": {"login": user1.login, "code": data.code1}, "user2": {"login": user2.login, "code": data.code2}, **result}
 

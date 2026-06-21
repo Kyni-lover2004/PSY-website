@@ -1,4 +1,5 @@
-import { useState, createContext, useContext, useEffect } from 'react';
+import { useState, createContext, useContext, useEffect, useCallback } from 'react';
+import { authAPI } from '../api/api';
 
 const AuthContext = createContext(null);
 
@@ -7,61 +8,140 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const storedToken = localStorage.getItem('token');
-    const userData = localStorage.getItem('user');
-    if (storedToken && userData) {
-      const parsedUser = JSON.parse(userData);
-      setToken(storedToken);
-      setUser(parsedUser);
-      // Если у пользователя есть compatibility_code в sessionStorage, обновляем
-      const storedCode = sessionStorage.getItem('compatibilityCode');
-      if (storedCode && !parsedUser.compatibility_code) {
-        const updatedUser = { ...parsedUser, compatibility_code: storedCode };
-        setUser(updatedUser);
-        localStorage.setItem('user', JSON.stringify(updatedUser));
-      }
-    } else {
-      // Если не авторизован, очищаем старые данные теста
-      sessionStorage.removeItem('testData');
-      sessionStorage.removeItem('sessionId');
-      sessionStorage.removeItem('compatibilityCode');
-    }
-    setLoading(false);
+  const clearAuthStorage = useCallback(() => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
   }, []);
 
-  const login = (userData, accessToken) => {
-    localStorage.setItem('token', accessToken);
-    localStorage.setItem('user', JSON.stringify(userData));
-    setToken(accessToken);
-    setUser(userData);
-    // Очищаем данные теста предыдущего пользователя
+  const clearSessionData = useCallback(() => {
     sessionStorage.removeItem('testData');
     sessionStorage.removeItem('sessionId');
     sessionStorage.removeItem('compatibilityCode');
+  }, []);
+
+  const applyUser = useCallback((userData, accessToken = null) => {
+    const normalizedUser = {
+      ...userData,
+      compatibility_code: userData.compatibility_code ?? null,
+    };
+
+    if (accessToken) {
+      localStorage.setItem('token', accessToken);
+      setToken(accessToken);
+    }
+
+    localStorage.setItem('user', JSON.stringify(normalizedUser));
+    setUser(normalizedUser);
+
+    const storedCode = sessionStorage.getItem('compatibilityCode');
+    if (storedCode && !normalizedUser.compatibility_code) {
+      const updatedUser = { ...normalizedUser, compatibility_code: storedCode };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      setUser(updatedUser);
+    }
+  }, []);
+
+  const logout = useCallback(async ({ skipRequest = false } = {}) => {
+    if (!skipRequest) {
+      try {
+        await authAPI.logout();
+      } catch (error) {
+        console.error('Logout request failed:', error);
+      }
+    }
+
+    clearAuthStorage();
+    clearSessionData();
+    setToken(null);
+    setUser(null);
+  }, [clearAuthStorage, clearSessionData]);
+
+  const restoreSession = useCallback(async () => {
+    const storedToken = localStorage.getItem('token');
+    const storedUser = localStorage.getItem('user');
+
+    if (!storedToken) {
+      try {
+        const refreshResponse = await authAPI.refresh();
+        const refreshedUser = {
+          ...refreshResponse.data.user,
+          compatibility_code: refreshResponse.data.compatibility_code,
+        };
+        applyUser(refreshedUser, refreshResponse.data.access_token);
+        return;
+      } catch {
+        clearAuthStorage();
+        clearSessionData();
+        setToken(null);
+        setUser(null);
+        return;
+      }
+    }
+
+    setToken(storedToken);
+
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch {
+        clearAuthStorage();
+      }
+    }
+
+    try {
+      const response = await authAPI.me();
+      const serverUser = {
+        ...response.data.user,
+        compatibility_code: response.data.compatibility_code,
+      };
+      applyUser(serverUser);
+    } catch (error) {
+      try {
+        const refreshResponse = await authAPI.refresh();
+        const refreshedUser = {
+          ...refreshResponse.data.user,
+          compatibility_code: refreshResponse.data.compatibility_code,
+        };
+        applyUser(refreshedUser, refreshResponse.data.access_token);
+      } catch (refreshError) {
+        console.error('Session restore failed:', error, refreshError);
+        await logout({ skipRequest: true });
+      }
+    }
+  }, [applyUser, clearAuthStorage, clearSessionData, logout]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const initAuth = async () => {
+      await restoreSession();
+      if (isMounted) {
+        setLoading(false);
+      }
+    };
+
+    initAuth();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [restoreSession]);
+
+  const login = (userData, accessToken) => {
+    clearSessionData();
+    applyUser(userData, accessToken);
   };
 
   const updateUserCompatibilityCode = (code) => {
+    if (!user) return;
+
     const updatedUser = { ...user, compatibility_code: code };
     setUser(updatedUser);
     localStorage.setItem('user', JSON.stringify(updatedUser));
     sessionStorage.setItem('compatibilityCode', code);
   };
 
-  const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    setToken(null);
-    setUser(null);
-    // Очищаем все данные сессии при выходе
-    sessionStorage.removeItem('testData');
-    sessionStorage.removeItem('sessionId');
-    sessionStorage.removeItem('compatibilityCode');
-  };
-
-  const isAdmin = () => {
-    return user && user.role === 'admin';
-  };
+  const isAdmin = () => user && user.role === 'admin';
 
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center">
@@ -70,7 +150,7 @@ export const AuthProvider = ({ children }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, isAdmin, updateUserCompatibilityCode }}>
+    <AuthContext.Provider value={{ user, token, login, logout, isAdmin, updateUserCompatibilityCode, loading }}>
       {children}
     </AuthContext.Provider>
   );

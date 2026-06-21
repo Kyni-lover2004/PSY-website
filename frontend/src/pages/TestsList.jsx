@@ -1,57 +1,49 @@
 import { Link } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
-import { Palette, Zap, Heart, Link2, Gem, MessageCircle, Lightbulb } from 'lucide-react';
+import { Palette, Zap, Heart, Link2, Gem, MessageCircle, Lightbulb, Sparkles, Clock3 } from 'lucide-react';
 
 const TestsList = () => {
   const { isDark } = useTheme();
-  const tests = [
-    {
-      id: 'archetypes',
-      title: 'Тест на архетипы',
-      description: 'Узнайте свой ведущий архетип и узнайте, какие партнёры вам подходят',
-      icon: Palette,
-      link: '/test/archetypes',
-      popular: true,
-    },
+
+  const mainTest = {
+    id: 'archetypes',
+    title: 'Тест на архетипы',
+    description: 'Узнайте свой ведущий архетип, сильные стороны личности и то, какие партнёры вам подходят лучше всего.',
+    icon: Palette,
+    link: '/test/archetypes',
+    popular: true,
+  };
+
+  const upcomingTests = [
     {
       id: 'temperament',
       title: 'Тест на темперамент',
-      description: 'Определите свой тип темперамента: сангвиник, холерик, флегматик или меланхолик',
+      description: 'Определите свой ритм, эмоциональную динамику и природный способ реагирования.',
       icon: Zap,
-      link: '/test/temperament',
-      popular: false,
     },
     {
       id: 'love-language',
       title: 'Языки любви',
-      description: 'Узнайте, как вы предпочитаете давать и получать любовь в отношениях',
+      description: 'Поймите, как вы выражаете заботу и через что лучше всего чувствуете близость.',
       icon: Heart,
-      link: '/test/love-language',
-      popular: false,
     },
     {
       id: 'attachment',
       title: 'Тип привязанности',
-      description: 'Определите свой стиль привязанности в близких отношениях',
+      description: 'Узнайте, как формируется доверие, близость и ощущение безопасности в отношениях.',
       icon: Link2,
-      link: '/test/attachment',
-      popular: true,
     },
     {
       id: 'values',
       title: 'Ценности в отношениях',
-      description: 'Выясните, что для вас наиболее важно в партнёрстве',
+      description: 'Выявите, что для вас действительно важно в партнёрстве, семье и совместной жизни.',
       icon: Gem,
-      link: '/test/values',
-      popular: false,
     },
     {
       id: 'communication',
       title: 'Стиль коммуникации',
-      description: 'Узнайте свой стиль общения и решения конфликтов',
+      description: 'Разберите свой способ общения, выражения чувств и прохождения конфликтов.',
       icon: MessageCircle,
-      link: '/test/communication',
-      popular: false,
     },
   ];
 
@@ -61,45 +53,119 @@ const TestsList = () => {
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-white mb-4">Все тесты</h1>
           <p className="text-xl text-white/80 max-w-2xl mx-auto">
-            Пройдите тесты и узнайте себя лучше. Каждый тест поможет раскрыть новые грани вашей личности
+            Начните с главного теста и постепенно открывайте для себя новые грани личности и отношений
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {tests.map((test) => (
-            <Link
-              key={test.id}
-              to={test.link}
-              className="group rounded-3xl shadow-xl p-6 hover:shadow-2xl hover:scale-105 transition-all duration-300"
-              style={{ backgroundColor: 'var(--bg-card)' }}
-            >
-              <div className="flex items-start justify-between mb-4">
-                <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg" style={{ backgroundColor: 'var(--bg-gradient-from)' }}>
-                  {<test.icon className="w-8 h-8 text-white" />}
-                </div>
-                {test.popular && (
-                  <span className="text-white text-xs font-bold px-3 py-1 rounded-full" style={{ backgroundColor: 'var(--bg-gradient-from)' }}>
-                    Популярный
-                  </span>
-                )}
+        <div className="max-w-2xl mx-auto">
+          <Link
+            to={mainTest.link}
+            className="group block rounded-3xl shadow-2xl p-7 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300"
+            style={{ backgroundColor: 'var(--bg-card)' }}
+          >
+            <div className="flex items-start justify-between mb-5 gap-4">
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg" style={{ backgroundColor: 'var(--bg-gradient-from)' }}>
+                <mainTest.icon className="w-8 h-8 text-white" />
               </div>
+              {mainTest.popular && (
+                <span className="text-white text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap" style={{ backgroundColor: 'var(--bg-gradient-from)' }}>
+                  Основной тест
+                </span>
+              )}
+            </div>
 
-              <h3 className="text-xl font-bold mb-2 group-hover:text-primary transition" style={{ color: 'var(--text-primary)' }}>
-                {test.title}
-              </h3>
+            <h2 className="text-2xl font-bold mb-3 group-hover:text-primary transition" style={{ color: 'var(--text-primary)' }}>
+              {mainTest.title}
+            </h2>
 
-              <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
-                {test.description}
-              </p>
+            <p className="text-base mb-6 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+              {mainTest.description}
+            </p>
 
+            <div className="flex flex-wrap items-center justify-between gap-4">
               <div className="flex items-center font-semibold group-hover:translate-x-2 transition-transform" style={{ color: 'var(--bg-gradient-from)' }}>
                 Пройти тест
                 <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               </div>
-            </Link>
-          ))}
+              <div className="text-sm" style={{ color: 'var(--text-muted)' }}>
+                35 вопросов • персональный результат
+              </div>
+            </div>
+          </Link>
+        </div>
+
+        <div className="mt-10 rounded-[2rem] p-8 md:p-10 shadow-2xl border backdrop-blur-xl"
+          style={{
+            background: isDark
+              ? 'linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03))'
+              : 'linear-gradient(135deg, rgba(255,255,255,0.24), rgba(255,255,255,0.12))',
+            borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.18)',
+          }}
+        >
+          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6 mb-8">
+            <div>
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold mb-4"
+                style={{
+                  backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.35)',
+                  color: '#fff',
+                }}
+              >
+                <Sparkles className="w-4 h-4" /> Новые тесты в разработке
+              </div>
+              <h2 className="text-3xl font-bold text-white mb-3">Скоро в приложении</h2>
+              <p className="text-white/80 max-w-2xl leading-relaxed">
+                Мы работаем над новыми тестами, чтобы вы могли узнать себя ещё глубже: понять стиль общения, эмоциональные реакции,
+                ценности и особенности привязанности. Следите за обновлениями — раздел будет постепенно расширяться.
+              </p>
+            </div>
+
+            <div className="rounded-2xl px-5 py-4 min-w-[220px]"
+              style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0.18)' }}
+            >
+              <div className="flex items-center gap-2 text-white font-semibold mb-2">
+                <Clock3 className="w-4 h-4" /> В планах
+              </div>
+              <p className="text-white/75 text-sm leading-relaxed">
+                Следующая серия тестов будет оформлена в том же стиле: с понятной интерпретацией результатов и практической пользой.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {upcomingTests.map((test) => (
+              <div
+                key={test.id}
+                className="rounded-2xl p-5 border transition-all duration-300"
+                style={{
+                  backgroundColor: isDark ? 'rgba(17,24,39,0.45)' : 'rgba(255,255,255,0.65)',
+                  borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.4)',
+                }}
+              >
+                <div className="flex items-start justify-between gap-3 mb-4">
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm" style={{ backgroundColor: 'var(--primary-light)' }}>
+                    <test.icon className="w-6 h-6" style={{ color: 'var(--bg-gradient-from)' }} />
+                  </div>
+                  <span className="text-xs font-semibold px-3 py-1 rounded-full"
+                    style={{
+                      backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.8)',
+                      color: 'var(--bg-gradient-from)',
+                    }}
+                  >
+                    Скоро
+                  </span>
+                </div>
+
+                <h3 className="text-lg font-bold mb-2" style={{ color: isDark ? '#fff' : 'var(--text-primary)' }}>
+                  {test.title}
+                </h3>
+                <p className="text-sm leading-relaxed" style={{ color: isDark ? 'rgba(255,255,255,0.75)' : 'var(--text-secondary)' }}>
+                  {test.description}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className="mt-12 bg-white/10 backdrop-blur-lg rounded-3xl p-8 text-center">
@@ -107,7 +173,7 @@ const TestsList = () => {
             <Lightbulb className="w-6 h-6" /> Не знаете, с чего начать?
           </h2>
           <p className="text-white/80 mb-6 max-w-xl mx-auto">
-            Рекомендуем начать с теста на архетипы — это основа для понимания себя и подбора совместимых партнёров
+            Рекомендуем начать с теста на архетипы — это основа для понимания себя, своей динамики в отношениях и подбора совместимых партнёров
           </p>
           <Link
             to="/test/archetypes"

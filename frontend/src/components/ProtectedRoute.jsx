@@ -1,8 +1,9 @@
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-const AdminRoute = ({ children }) => {
+const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center">
@@ -11,14 +12,11 @@ const AdminRoute = ({ children }) => {
   }
 
   if (!user) {
+    sessionStorage.setItem('redirectAfterLogin', `${location.pathname}${location.search}`);
     return <Navigate to="/login" replace />;
-  }
-
-  if (user.role !== 'admin') {
-    return <Navigate to="/dashboard" replace />;
   }
 
   return children;
 };
 
-export default AdminRoute;
+export default ProtectedRoute;
