@@ -1,10 +1,4 @@
-"""
-PSY Website Backend v4.0 - FULL DB REBUILD
-- Без email/phone, только telegram
-- Consultations с category/topic/telegram
-- Все результаты тестов сохраняются
-- Админка получает все данные
-"""
+
 from fastapi import FastAPI, Depends, HTTPException, Request, Response, Cookie
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -26,16 +20,12 @@ import re
 import secrets
 
 
-# === КОНФИГУРАЦИЯ ===
-ENVIRONMENT = os.environ.get("ENVIRONMENT", "development").lower()
-DEFAULT_DEV_SECRET_KEY = "psycho-secure-key-2026-" + "a" * 40
 
-if ENVIRONMENT == "production":
-    SECRET_KEY = os.environ.get("SECRET_KEY")
-    if not SECRET_KEY:
-        raise RuntimeError("SECRET_KEY must be set in production environment")
-else:
-    SECRET_KEY = os.environ.get("SECRET_KEY", DEFAULT_DEV_SECRET_KEY)
+ENVIRONMENT = os.environ.get("ENVIRONMENT", "development").lower()
+SECRET_KEY = os.environ.get("SECRET_KEY")
+
+if not SECRET_KEY:
+    raise RuntimeError("SECRET_KEY must be set in environment")
 
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.environ.get("ACCESS_TOKEN_EXPIRE_MINUTES", 15))
@@ -80,7 +70,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# === RATE LIMITING ===
+
 class RateLimiter:
     def __init__(self):
         self.requests = defaultdict(list)
@@ -117,10 +107,10 @@ class RateLimiter:
 
 rate_limiter = RateLimiter()
 
-# === FASTAPI APP ===
+
 app = FastAPI(title="Psycho Archetypes API", version="4.0.0")
 
-# === CORS ===
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=FRONTEND_URLS,
@@ -295,7 +285,7 @@ def sanitize_string(value: str, max_length: int = 500) -> str:
     value = re.sub(r'[<>&\'"\\]', '', value)
     return value
 
-# === МОДЕЛИ SQLALCHEMY ===
+
 
 class User(Base):
     __tablename__ = "users"
@@ -441,7 +431,6 @@ class Comment(Base):
     user = relationship("User", backref="comments")
     replies = relationship("Comment", backref="parent_comment", remote_side=[id])
 
-# === PYDANTIC МОДЕЛИ ===
 
 class UserCreate(BaseModel):
   login: str = Field(..., min_length=3, max_length=50)
@@ -511,7 +500,6 @@ class CommentCreate(BaseModel):
 class CommentUpdate(BaseModel):
     content: str = Field(..., min_length=1, max_length=2000)
 
-# === АВТОРИЗАЦИЯ ===
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security), db: Session = Depends(get_db)):
     token = credentials.credentials
     try:
@@ -536,7 +524,7 @@ def require_admin(current_user: User = Depends(get_current_user)):
         raise HTTPException(status_code=403, detail="Доступ запрещен")
     return current_user
 
-# === ТАБЛИЦА КОМПЛЕМЕНТАРНОСТИ ===
+
 COMPLEMENTARITY = {
     "1.1": ["2.7", "2.5"], "1.2": ["2.7", "2.4"], "1.3": ["2.6", "2.3"],
     "1.4": ["2.5", "2.3", "2.4", "2.6"], "1.5": ["2.5", "2.2", "2.1", "2.6"],
@@ -607,7 +595,9 @@ async def startup():
         # Создаём админа если нет
         admin = db.query(User).filter(User.login == "admin").first()
         if not admin:
-            admin_password = os.environ.get("ADMIN_PASSWORD", "PSYwebsiteadmin62")
+            admin_password = os.environ.get("ADMIN_PASSWORD")
+            if not admin_password:
+                raise RuntimeError("ADMIN_PASSWORD must be set to create default admin")
             admin = User(
                 login="admin",
                 password_hash=hash_password(admin_password),

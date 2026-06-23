@@ -58,7 +58,7 @@ npm run dev
 
 | Переменная | Описание | Значение по умолчанию |
 |------------|----------|-----------------------|
-| `SECRET_KEY` | Ключ для подписи JWT | `psycho-secure-key-2026-...` |
+| `SECRET_KEY` | Ключ для подписи JWT | задаётся только через окружение |
 | `FRONTEND_URL` | URL фронтенда для CORS | `http://localhost:3000` |
 | `DATABASE_URL` | Путь к БД | `sqlite:///./psycho.db` |
 

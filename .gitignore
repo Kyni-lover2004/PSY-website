@@ -11,6 +11,8 @@ env/
 *.sqlite
 *.sqlite3
 .env
+.env.local
+*.env
 
 # Node
 node_modules/

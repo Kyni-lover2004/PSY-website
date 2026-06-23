@@ -190,7 +190,9 @@ def migrate_database():
     # === ЗАПОЛНЯЕМ ДАННЫЕ ===
 
     # Создаём админа
-    admin_password = "PSYwebsiteadmin62"
+    admin_password = os.environ.get("ADMIN_PASSWORD")
+    if not admin_password:
+        raise RuntimeError("ADMIN_PASSWORD must be set in environment before migration")
     cursor.execute("""
         INSERT INTO users (login, password_hash, telegram, role, session_id, created_at)
         VALUES (?, ?, ?, ?, ?, ?)
