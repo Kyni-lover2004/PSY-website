@@ -3,13 +3,12 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import TestResultsTab from './TestResultsTab';
-import { User, BarChart3, Calendar, Award, Palette, Copy, CheckCircle, ArrowRight } from 'lucide-react';
+import { User, BarChart3, Calendar, Award, Palette, ArrowRight } from 'lucide-react';
 
 const Dashboard = () => {
   const { user, logout, updateUserCompatibilityCode } = useAuth();
   const { isDark } = useTheme();
   const [activeTab, setActiveTab] = useState('profile');
-  const [copied, setCopied] = useState(false);
 
   // Проверяем compatibility_code при монтировании
   useEffect(() => {
@@ -20,15 +19,6 @@ const Dashboard = () => {
       }
     }
   }, [user, updateUserCompatibilityCode]);
-
-  const handleCopyCode = () => {
-    const code = user?.compatibility_code || sessionStorage.getItem('compatibilityCode');
-    if (code) {
-      navigator.clipboard.writeText(code);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
 
   // Форматируем дату регистрации
   const formatDate = (dateStr) => {
@@ -93,30 +83,22 @@ const Dashboard = () => {
                     </div>
                   </div>
 
-{/* Код совместимости */}
+{/* Статус теста */}
 {(user.compatibility_code || sessionStorage.getItem('compatibilityCode')) ? (
   <div className="rounded-2xl p-6" style={{ backgroundColor: isDark ? 'var(--bg-card-alt)' : '#F3F4F6' }}>
-    <div className="flex items-center justify-between mb-3">
-      <h3 className="text-lg font-bold flex items-center gap-2" style={{ color: isDark ? 'var(--text-primary)' : '#1F2937' }}>
-        <Palette className="w-5 h-5 text-primary" />
-        Код совместимости
-      </h3>
-      <button
-        onClick={handleCopyCode}
-        className="text-sm text-primary hover:underline flex items-center gap-1"
-      >
-        {copied ? <><CheckCircle className="w-4 h-4" /> Скопировано</> : <><Copy className="w-4 h-4" /> Копировать</>}
-      </button>
-    </div>
-    <div className="rounded-xl px-4 py-3 border-2 border-dashed border-primary/30" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>
-      <code className="text-xl font-mono font-bold text-primary">{user.compatibility_code || sessionStorage.getItem('compatibilityCode')}</code>
-    </div>
-    <Link
-      to="/compatibility"
-      className="mt-3 inline-flex items-center gap-2 text-sm text-gray-600 hover:text-primary transition"
+    <h3 className="text-lg font-bold flex items-center gap-2 mb-2" style={{ color: isDark ? 'var(--text-primary)' : '#1F2937' }}>
+      <Palette className="w-5 h-5 text-primary" />
+      Тест на архетипы пройден
+    </h3>
+    <p className="text-sm mb-4" style={{ color: isDark ? 'var(--text-muted)' : '#6B7280' }}>
+      Результаты сохранены и доступны во вкладке «Результаты тестов».
+    </p>
+    <button
+      onClick={() => setActiveTab('results')}
+      className="inline-flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg text-sm font-semibold hover:shadow-lg transition"
     >
-      Проверить совместимость <ArrowRight className="w-4 h-4" />
-    </Link>
+      Смотреть результаты <ArrowRight className="w-4 h-4" />
+    </button>
   </div>
 ) : (
                     <div className="bg-amber-50 rounded-2xl p-6 border border-amber-200">
@@ -127,7 +109,7 @@ const Dashboard = () => {
                         <div>
                           <h3 className="text-lg font-bold text-amber-800 mb-1">Тест ещё не пройден</h3>
                           <p className="text-amber-700 text-sm mb-3">
-                            Пройдите тест на архетипы, чтобы получить свой код совместимости и результаты.
+                            Пройдите тест на архетипы, чтобы узнать свой ведущий архетип и сохранить результаты.
                           </p>
                           <Link
                             to="/test/archetypes"

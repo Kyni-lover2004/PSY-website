@@ -84,8 +84,8 @@ try {
         <h1 className="text-3xl font-bold text-center mb-2" style={{ color: isDark ? 'var(--text-primary)' : '#1F2937' }}>Регистрация</h1>
         <p className="text-center mb-8" style={{ color: isDark ? 'var(--text-muted)' : '#6B7280' }}>
           {searchParams.get('redirect') === 'test'
-            ? 'Зарегистрируйтесь для прохождения теста, сохранения результатов и проверки совместимости'
-            : 'Для сохранения результатов и кода совместимости'}
+            ? 'Зарегистрируйтесь для прохождения теста и сохранения результатов'
+            : 'Для сохранения результатов тестов в личном кабинете'}
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-6">

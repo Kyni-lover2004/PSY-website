@@ -1,33 +1,20 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { useTheme } from '../context/ThemeContext';
-import { UserSearch, Heart, ArrowRight, CheckCircle, Loader2 } from 'lucide-react';
+import { UserSearch, ArrowRight } from 'lucide-react';
 
 const TestAuthCheck = () => {
   const navigate = useNavigate();
-  const { user, token, updateUserCompatibilityCode } = useAuth();
-  const { isDark } = useTheme();
+  const { user, token } = useAuth();
   const [checking, setChecking] = useState(true);
-  const [hasResults, setHasResults] = useState(false);
 
   useEffect(() => {
     if (!user || !token) {
       sessionStorage.setItem('redirectAfterLogin', '/test/archetypes');
       navigate('/register?redirect=test');
-    } else {
-      // Проверяем compatibility_code из user или sessionStorage
-      const code = user?.compatibility_code || sessionStorage.getItem('compatibilityCode');
-      
-      // Если код есть в sessionStorage но нет в user, обновляем
-      if (!user?.compatibility_code && code) {
-        updateUserCompatibilityCode(code);
-      }
-      
-      setHasResults(!!code);
     }
     setChecking(false);
-  }, [user, token, navigate, updateUserCompatibilityCode]);
+  }, [user, token, navigate]);
 
   if (checking) {
     return (
@@ -46,11 +33,11 @@ const TestAuthCheck = () => {
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-white mb-4">Тест на архетипы</h1>
           <p className="text-xl text-white/80">
-            Добро пожаловать, <strong>{user?.name || user?.login}</strong>! Что вы хотите сделать?
+            Добро пожаловать, <strong>{user?.name || user?.login}</strong>! Готовы начать?
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8">
+        <div className="max-w-xl mx-auto">
           {/* Карточка: Самоисследование */}
           <div
             onClick={() => navigate('/test/archetypes/anketa')}
@@ -71,50 +58,6 @@ const TestAuthCheck = () => {
               <span className="text-xs px-3 py-1 rounded-full font-medium" style={{ backgroundColor: 'var(--primary-light)', color: 'var(--bg-gradient-from)' }}>
                 ~15 минут
               </span>
-            </div>
-          </div>
-
-          {/* Карточка: Проверка совместимости */}
-          <div
-            onClick={() => {
-              if (hasResults) {
-                navigate(`/compatibility?mycode=${user.compatibility_code}`);
-              } else {
-                alert('Сначала пройдите тест на архетипы, чтобы получить свой код совместимости.');
-                navigate('/test/archetypes/anketa');
-              }
-            }}
-            className={`group rounded-3xl shadow-2xl p-8 cursor-pointer hover:shadow-3xl hover:scale-105 transition-all duration-300 ${
-              !hasResults ? 'opacity-80' : ''
-            }`}
-            style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}
-          >
-            <div className="w-16 h-16 mx-auto mb-6 rounded-2xl flex items-center justify-center group-hover:scale-110 transition" style={{ backgroundColor: 'rgba(236,72,153,0.1)' }}>
-              <Heart className="w-8 h-8" style={{ color: '#ec4899' }} />
-            </div>
-            <h2 className="text-2xl font-bold mb-3 text-center" style={{ color: 'var(--text-primary)' }}>Проверка совместимости</h2>
-            <p className="text-center mb-6" style={{ color: 'var(--text-secondary)' }}>
-              {hasResults
-                ? `Ваш код: ${user.compatibility_code}. Введите код партнёра для проверки совместимости.`
-                : 'Сначала пройдите тест, чтобы получить свой код совместимости.'}
-            </p>
-            <div className="flex items-center justify-center gap-2 font-semibold group-hover:translate-x-2 transition-transform" style={{ color: '#ec4899' }}>
-              {hasResults ? (
-                <>Проверить <ArrowRight className="w-5 h-5" /></>
-              ) : (
-                <>Сначала тест <ArrowRight className="w-5 h-5" /></>
-              )}
-            </div>
-            <div className="mt-4 text-center">
-              {hasResults ? (
-                <span className="text-xs px-3 py-1 rounded-full font-medium flex items-center gap-1 justify-center" style={{ backgroundColor: 'rgba(34,197,94,0.1)', color: '#22c55e' }}>
-                  <CheckCircle className="w-3 h-3" /> Тест пройден
-                </span>
-              ) : (
-                <span className="text-xs px-3 py-1 rounded-full font-medium flex items-center gap-1 justify-center" style={{ backgroundColor: isDark ? 'var(--bg-card-alt)' : '#f3f4f6', color: 'var(--text-muted)' }}>
-                  <Loader2 className="w-3 h-3" /> Тест не пройден
-                </span>
-              )}
             </div>
           </div>
         </div>

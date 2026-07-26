@@ -42,7 +42,7 @@ const Home = () => {
   const requestsData = {
     personal: [
       { icon: MessageCircle, title: 'Контакт с ребёнком или родителем', desc: 'Наладить отношения с ребёнком или со своим родителем.', link: '/appointment?category=Личные запросы&topic=Контакт с ребёнком или родителем', linkText: 'Записаться на консультацию' },
-      { icon: UsersRound, title: 'Отношения в паре', desc: 'Наладить отношения в паре.', link: '/appointment?category=Личные запросы&topic=Отношения в паре', linkText: 'Проверить совместимость' },
+      { icon: UsersRound, title: 'Отношения в паре', desc: 'Наладить отношения в паре.', link: '/appointment?category=Личные запросы&topic=Отношения в паре', linkText: 'Записаться на консультацию' },
       { icon: Waves, title: 'Тревожность и ПА', desc: 'Тревожность, панические атаки, постоянное беспокойство.', link: '/appointment?category=Личные запросы&topic=Тревожность и ПА', linkText: 'Записаться на консультацию' },
       { icon: Frown, title: 'Переживание утраты', desc: 'Помощь в проживании горя и утраты.', link: '/appointment?category=Личные запросы&topic=Переживания утраты', linkText: 'Записаться на консультацию' },
       { icon: AlertTriangle, title: 'Травмы и тяжёлые переживания', desc: 'Работа с травмирующим опытом и сложными переживаниями.', link: '/appointment?category=Личные запросы&topic=Травмы и тяжёлые переживания', linkText: 'Записаться на консультацию' },

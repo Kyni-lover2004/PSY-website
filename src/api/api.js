@@ -165,16 +165,6 @@ export const testAPI = {
     return ok(data);
   },
 
-  saveToAccount: async ({ compatibility_code }) => {
-    await requireSession();
-    const { data, error } = await supabase.rpc('save_results_to_account', {
-      p_code: compatibility_code,
-    });
-    if (error) {
-      throw apiError(404, rpcErrorDetail(error, 'Результаты не найдены'));
-    }
-    return ok(data);
-  },
 };
 
 // === PROFILE (результаты по коду) ===
@@ -183,18 +173,6 @@ export const profileAPI = {
     const { data, error } = await supabase.rpc('get_profile_by_code', { p_code: code });
     if (error) throw apiError(500, rpcErrorDetail(error, 'Ошибка загрузки'));
     if (!data) throw apiError(404, 'Профиль не найден');
-    return ok(data);
-  },
-};
-
-// === COMPATIBILITY ===
-export const compatibilityAPI = {
-  check: async (code1, code2) => {
-    const { data, error } = await supabase.rpc('check_compatibility', {
-      p_code1: code1,
-      p_code2: code2,
-    });
-    if (error) throw apiError(404, rpcErrorDetail(error, 'Коды не найдены'));
     return ok(data);
   },
 };
@@ -526,4 +504,4 @@ export const adminAPI = {
   },
 };
 
-export default { authAPI, questionsAPI, testAPI, profileAPI, compatibilityAPI, consultationAPI, commentsAPI, adminAPI };
+export default { authAPI, questionsAPI, testAPI, profileAPI, consultationAPI, commentsAPI, adminAPI };

@@ -1,43 +1,26 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { profileAPI, testAPI } from '../api/api';
+import { profileAPI } from '../api/api';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
-import { Trophy, Shield, AlertTriangle, Heart, Copy, ArrowRight, Save, UserPlus, LogIn, CheckCircle } from 'lucide-react';
+import { Trophy, Shield, AlertTriangle, Download, User } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 
 const TestResults = () => {
   const { code } = useParams();
   const navigate = useNavigate();
-  const { user: authUser, token } = useAuth();
+  const { user: authUser } = useAuth();
   const { isDark } = useTheme();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [errorDetails, setErrorDetails] = useState(null);
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
-
-  const handleSaveToAccount = async () => {
-    if (!authUser || !token || !code) return;
-    setSaving(true);
-    try {
-      await testAPI.saveToAccount({ compatibility_code: code });
-      setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
-    } catch (err) {
-      console.error('Ошибка сохранения:', err);
-      alert('Ошибка при сохранении: ' + (err.response?.data?.detail || err.message));
-    } finally {
-      setSaving(false);
-    }
-  };
 
   useEffect(() => {
     console.log('TestResults - загрузка профиля для кода:', code);
     
     if (!code) {
-      setError('Код совместимости не найден');
+      setError('Код результата не найден');
       setLoading(false);
       return;
     }
@@ -81,7 +64,7 @@ const TestResults = () => {
         <div className="rounded-3xl p-8 text-center max-w-md" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>
           <div className="text-5xl mb-4">⚠️</div>
           <h2 className="text-2xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>{error || 'Ошибка'}</h2>
-          <p className="mb-4" style={{ color: 'var(--text-secondary)' }}>Проверьте код совместимости</p>
+          <p className="mb-4" style={{ color: 'var(--text-secondary)' }}>Проверьте код результата</p>
           <div className="rounded-lg p-3 mb-4" style={{ backgroundColor: isDark ? 'var(--bg-card-alt)' : '#f3f4f6' }}>
             <code className="text-sm break-all" style={{ color: 'var(--text-secondary)' }}>{code || 'Код не получен'}</code>
           </div>
@@ -125,7 +108,7 @@ const TestResults = () => {
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-8 fade-in">
           <h1 className="text-4xl font-bold text-white mb-2">Ваши результаты</h1>
-          <p className="text-white/80">Код совместимости: <span className="font-mono font-bold">{code}</span></p>
+          <p className="text-white/80">Код результата: <span className="font-mono font-bold">{code}</span></p>
         </div>
 
         {dominantArchetype && (
@@ -229,110 +212,38 @@ const TestResults = () => {
           </div>
         </div>
 
-        <div className="rounded-3xl shadow-2xl p-8 text-white text-center fade-in" style={{ background: 'var(--bg-gradient-hero)' }}>
-          <h2 className="text-2xl font-bold mb-4 flex items-center justify-center gap-2"><Heart className="w-6 h-6" /> Ваш код совместимости</h2>
-          <div className="bg-white/20 backdrop-blur-lg rounded-xl p-4 mb-4 soft-glow">
-            <p className="text-3xl font-mono font-bold tracking-wider">{code}</p>
+        {/* Скачивание результатов */}
+        <div className="rounded-3xl shadow-2xl p-8 text-center fade-in" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <Download className="w-6 h-6" style={{ color: 'var(--bg-gradient-from)' }} />
+            <h3 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>Ваши результаты</h3>
           </div>
-          <p className="text-white/80 mb-6">
-            Поделитесь этим кодом с партнёром для проверки совместимости
+          <p className="mb-6" style={{ color: 'var(--text-secondary)' }}>
+            {authUser
+              ? 'Результаты сохранены в вашем личном кабинете. Также вы можете скачать их в PDF.'
+              : 'Вы можете скачать результаты в PDF.'}
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
             <button
-              onClick={() => navigator.clipboard.writeText(code)}
-              className="px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition"
-              style={{ backgroundColor: 'var(--hero-btn-bg)', color: 'var(--hero-btn-text)' }}
+              onClick={() => window.print()}
+              className="text-white px-8 py-4 rounded-xl font-semibold hover:shadow-lg transition transform hover:scale-105"
+              style={{ backgroundColor: 'var(--bg-gradient-from)' }}
             >
-              <Copy className="w-4 h-4 inline mr-1" /> Копировать код
+              <Download className="w-5 h-5 inline mr-2" /> Скачать результаты (PDF)
             </button>
-            <a
-              href="/compatibility"
-              className="border-2 border-white px-6 py-3 rounded-xl font-semibold hover:bg-white hover:text-primary transition"
-              style={{ backgroundColor: 'transparent', color: 'white' }}
-            >
-              Проверить совместимость <ArrowRight className="w-4 h-4 inline" />
-            </a>
+            {authUser && (
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="px-8 py-4 rounded-xl font-semibold hover:shadow-lg transition transform hover:scale-105"
+                style={{ backgroundColor: isDark ? 'var(--bg-card-alt)' : '#f3f4f6', color: 'var(--text-secondary)' }}
+              >
+                <User className="w-5 h-5 inline mr-2" /> В личный кабинет
+              </button>
+            )}
           </div>
         </div>
-
-        {/* Кнопка сохранения в личный кабинет */}
-        <div className="rounded-3xl shadow-2xl p-8 text-center fade-in" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>
-          {authUser && token ? (
-            <>
-              <div className="flex items-center justify-center gap-2 mb-4">
-                {saved ? (
-                  <CheckCircle className="w-6 h-6" style={{ color: '#22c55e' }} />
-                ) : (
-                  <Save className="w-6 h-6" style={{ color: 'var(--bg-gradient-from)' }} />
-                )}
-                <h3 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
-                  {saved ? '✅ Сохранено!' : 'Сохранить результаты'}
-                </h3>
-              </div>
-              <p className="mb-6" style={{ color: 'var(--text-secondary)' }}>
-                {saved
-                  ? 'Результаты сохранены в вашем личном кабинете'
-                  : 'Результаты будут сохранены в вашем личном кабинете'}
-              </p>
-              <button
-                onClick={handleSaveToAccount}
-                disabled={saving || saved}
-                className={`px-8 py-4 rounded-xl font-semibold transition transform hover:scale-105 ${
-                  saved
-                    ? 'text-white cursor-default'
-                    : saving
-                    ? 'cursor-wait'
-                    : 'text-white hover:shadow-lg'
-                }`}
-                style={{ backgroundColor: saved ? '#22c55e' : (saving ? (isDark ? 'var(--bg-card-alt)' : '#d1d5db') : '#22c55e'), color: saved || !saving ? 'white' : 'var(--text-muted)' }}
-              >
-                {saving ? (
-                  'Сохранение...'
-                ) : saved ? (
-                  <><CheckCircle className="w-5 h-5 inline mr-2" /> Сохранено</>
-                ) : (
-                  <><Save className="w-5 h-5 inline mr-2" /> Сохранить в личный кабинет</>
-                )}
-              </button>
-            </>
-          ) : (
-            <>
-              <div className="flex items-center justify-center gap-2 mb-4">
-                <UserPlus className="w-6 h-6" style={{ color: 'var(--bg-gradient-from)' }} />
-                <h3 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>Сохранить результаты</h3>
-              </div>
-              <p className="mb-6" style={{ color: 'var(--text-secondary)' }}>
-                Зарегистрируйтесь или войдите, чтобы сохранить результаты в личном кабинете
-              </p>
-              <div className="flex flex-wrap gap-4 justify-center">
-                <button
-                  onClick={() => {
-                    sessionStorage.setItem('redirectAfterLogin', window.location.pathname);
-                    navigate('/register');
-                  }}
-                  className="text-white px-8 py-4 rounded-xl font-semibold hover:shadow-lg transition transform hover:scale-105"
-                  style={{ backgroundColor: 'var(--bg-gradient-from)' }}
-                >
-                  <UserPlus className="w-5 h-5 inline mr-2" />
-                  Зарегистрироваться
-                </button>
-<button
-  onClick={() => {
-    sessionStorage.setItem('redirectAfterLogin', window.location.pathname);
-    navigate('/login');
-  }}
-  className="px-8 py-4 rounded-xl font-semibold hover:shadow-lg transition transform hover:scale-105"
-  style={{ backgroundColor: isDark ? 'var(--bg-card-alt)' : '#f3f4f6', color: 'var(--text-secondary)' }}
->
-  <LogIn className="w-5 h-5 inline mr-2" />
-  Войти
-</button>
-</div>
-</>
-)}
-</div>
-</div>
-</div>
+      </div>
+    </div>
   );
 };
 

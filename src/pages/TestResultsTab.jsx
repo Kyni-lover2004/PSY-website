@@ -84,7 +84,6 @@ const TestResultsTab = () => {
       <div className="rounded-2xl p-6" style={{ backgroundColor: 'var(--primary-light)' }}>
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-xl font-bold flex items-center gap-2" style={{ color: 'var(--text-primary)' }}><Palette className="w-5 h-5" style={{ color: 'var(--bg-gradient-from)' }} /> Тест на архетипы</h3>
-          <span className="text-sm" style={{ color: 'var(--text-muted)' }}>Код: {results.code}</span>
         </div>
         <p className="mb-4" style={{ color: 'var(--text-secondary)' }}>
           Пройдено тестов: <span className="font-semibold">1</span>

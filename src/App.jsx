@@ -8,7 +8,6 @@ import TestsList from './pages/TestsList';
 import TestAuthCheck from './pages/TestAuthCheck';
 import TestAnketa from './pages/TestAnketa';
 import TestQuestionnaire from './pages/TestQuestionnaire';
-import CompatibilityCheck from './pages/CompatibilityCheck';
 import Appointment from './pages/Appointment';
 import Price from './pages/Price';
 import Practices from './pages/Practices';
@@ -51,7 +50,6 @@ function App() {
               <Route path="test/attachment" element={<TestsList />} />
               <Route path="test/values" element={<TestsList />} />
               <Route path="test/communication" element={<TestsList />} />
-              <Route path="compatibility" element={<CompatibilityCheck />} />
               <Route path="appointment" element={<Appointment />} />
               <Route path="price" element={<Price />} />
               <Route path="practices" element={<Practices />} />

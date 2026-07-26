@@ -17,35 +17,24 @@ const TestQuestionnaire = () => {
 
   const testData = JSON.parse(sessionStorage.getItem('testData') || '{}');
 
-  console.log('TestQuestionnaire - testData:', testData);
-  console.log('TestQuestionnaire - gender:', testData?.gender);
-  console.log('TestQuestionnaire - авторизованный пользователь:', user?.id, user?.login);
-
   // Создаём НОВЫЙ sessionId для каждого прохождения теста
-  const [sessionId] = useState(() => {
-    // Всегда создаём новую сессию для нового прохождения теста
-    const newSessionId = 'sess_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-    console.log('Создан новый sessionId:', newSessionId);
-    return newSessionId;
-  });
+  const [sessionId] = useState(
+    () => 'sess_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
+  );
 
   // Формируем login из имени и фамилии, если он не был установлен
   const login = testData.login || `${testData.name}_${testData.surname}`.toLowerCase().replace(/\s+/g, '_').replace(/[^a-zа-яё0-9_]/gi, '') || `user_${sessionId}`;
 
   useEffect(() => {
-    console.log('Fetching questions for gender:', testData?.gender);
-    
     if (!testData?.gender) {
       alert('Ошибка: пол не выбран. Возвращаемся к анкете.');
       navigate('/test');
       return;
     }
-    
+
     const fetchQuestions = async () => {
       try {
-        console.log('API call: /questions/' + testData.gender);
         const response = await questionsAPI.getQuestions(testData.gender);
-        console.log('Questions received:', response.data);
         setQuestions(response.data);
       } catch (error) {
         console.error('Ошибка загрузки вопросов:', error);
@@ -83,46 +72,29 @@ const TestQuestionnaire = () => {
         value
       }));
 
-      console.log('Отправка данных на сервер:', {
-        session_id: sessionId,
-        answers_count: answersArray.length,
-        gender: testData.gender,
-        login: login,
-        orientation: testData.orientation,
-        user_id: user?.id || null
-      });
-
       const response = await testAPI.complete({
         session_id: sessionId,
         answers: answersArray,
         gender: testData.gender,
         login: login,
         orientation: testData.orientation,
-        user_id: user?.id || null  // Передаём ID авторизованного пользователя
+        user_id: user?.id || null
       });
 
-  console.log('Ответ от сервера:', response.data);
+      const code = response.data.compatibility_code;
+      if (!code) {
+        alert('Ошибка: сервер не вернул код результата. Попробуйте ещё раз.');
+        return;
+      }
 
-  const code = response.data.compatibility_code;
-  console.log('Получен compatibility_code:', code);
+      // Обновляем код в AuthContext
+      if (updateUserCompatibilityCode) {
+        updateUserCompatibilityCode(code);
+      } else {
+        sessionStorage.setItem('compatibilityCode', code);
+      }
 
-  if (!code) {
-    console.error('Сервер не вернул compatibility_code!');
-    alert('Ошибка: сервер не вернул код совместимости. Попробуйте ещё раз.');
-    return;
-  }
-
-  // Обновляем код в AuthContext и localStorage
-  if (updateUserCompatibilityCode) {
-    updateUserCompatibilityCode(code);
-    console.log('compatibility_code обновлён в AuthContext');
-  } else {
-    sessionStorage.setItem('compatibilityCode', code);
-  }
-
-  // Автоматический переход к результатам без алерта
-  console.log('Навигация на:', `/test/results/${code}`);
-  navigate(`/test/results/${code}`);
+      navigate(`/test/results/${code}`);
     } catch (error) {
       console.error('Ошибка отправки:', error);
       console.error('Error details:', error.response?.data || error.message);
@@ -147,10 +119,6 @@ const TestQuestionnaire = () => {
   const progress = ((currentIndex + 1) / questions.length) * 100;
   const hasAnswer = answers[currentQuestion?.id] !== undefined;
   
-  console.log('currentIndex:', currentIndex);
-  console.log('questions.length:', questions.length);
-  console.log('currentQuestion:', currentQuestion);
-  console.log('currentQuestion.text:', currentQuestion?.text);
 
   return (
     <div className="py-12 px-4" style={{ background: 'var(--bg-gradient-hero)', minHeight: '100vh' }}>

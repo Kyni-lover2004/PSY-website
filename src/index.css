@@ -234,6 +234,19 @@ body {
   animation: softGlow 3s ease-in-out infinite;
 }
 
+/* Печать / сохранение результатов в PDF */
+@media print {
+  button[aria-label="Открыть меню"],
+  footer,
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: white !important;
+  }
+}
+
 ::-webkit-scrollbar {
   width: 8px;
 }
