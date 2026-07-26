@@ -17,6 +17,8 @@ function ok(data) {
 
 // Логин может содержать кириллицу, а email в Supabase Auth — нет.
 // Поэтому email детерминированно выводится из логина через SHA-256.
+// Домен должен реально существовать в DNS (Supabase отклоняет выдуманные),
+// письма на него не отправляются — подтверждение email отключено.
 async function loginToEmail(login) {
   const normalized = login.trim().toLowerCase();
   const bytes = new TextEncoder().encode(normalized);
@@ -24,7 +26,7 @@ async function loginToEmail(login) {
   const hex = Array.from(new Uint8Array(digest))
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('');
-  return `u_${hex.slice(0, 32)}@psyarch.local`;
+  return `u_${hex.slice(0, 32)}@psy-rzn.vercel.app`;
 }
 
 async function fetchOwnProfile(userId) {
