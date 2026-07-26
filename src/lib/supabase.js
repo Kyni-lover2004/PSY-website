@@ -1,20 +1,36 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// Данные проекта Supabase. Anon-ключ — публичный (он в любом случае
+// виден в собранном бандле), доступ к данным ограничивают RLS-политики.
+const DEFAULT_URL = 'https://yeswihnahnfcwkozmnhl.supabase.co';
+const DEFAULT_ANON_KEY =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inllc3dpaG5haG5mY3drb3ptbmhsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUwNzk5NDgsImV4cCI6MjEwMDY1NTk0OH0.YyznuyAB9F1WlMrhwqNsY1cso5fElPHikukjWMAEvPc';
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error(
-    'Supabase не настроен: заполните VITE_SUPABASE_URL и VITE_SUPABASE_ANON_KEY в файле .env'
-  );
+// Переменные окружения (если заданы корректно) имеют приоритет.
+// Частые ошибки в URL исправляются автоматически.
+function resolveUrl(raw) {
+  if (!raw) return DEFAULT_URL;
+  const value = String(raw).trim().replace(/\/+$/, '');
+
+  // Вставили ссылку на панель: https://supabase.com/dashboard/project/<ref>
+  const dashboard = value.match(/supabase\.com\/dashboard\/project\/([a-z0-9]+)/i);
+  if (dashboard) return `https://${dashboard[1]}.supabase.co`;
+
+  if (/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(value)) return value;
+
+  console.warn(`VITE_SUPABASE_URL выглядит неверно ("${value}"), используется адрес по умолчанию`);
+  return DEFAULT_URL;
 }
 
-// Заглушки, чтобы сайт открывался даже без настроенного .env
-// (запросы к данным при этом будут завершаться ошибкой)
-export const supabase = createClient(
-  supabaseUrl || 'https://placeholder.supabase.co',
-  supabaseAnonKey || 'placeholder-anon-key',
-  {
+function resolveKey(raw) {
+  const value = String(raw || '').trim();
+  return value.startsWith('eyJ') || value.startsWith('sb_publishable_') ? value : DEFAULT_ANON_KEY;
+}
+
+const supabaseUrl = resolveUrl(import.meta.env.VITE_SUPABASE_URL);
+const supabaseAnonKey = resolveKey(import.meta.env.VITE_SUPABASE_ANON_KEY);
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
