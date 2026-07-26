@@ -183,6 +183,57 @@ body {
   transform: translateY(0);
 }
 
+/* Плавное появление страницы при переходе по маршрутам */
+@keyframes pageEnter {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.page-enter {
+  animation: pageEnter 0.4s ease-out both;
+}
+
+/* Появление карточки вопроса в тесте */
+@keyframes questionIn {
+  from { opacity: 0; transform: translateX(24px) scale(0.98); }
+  to { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+.question-enter {
+  animation: questionIn 0.35s ease-out both;
+}
+
+/* Рост полоски баллов на странице результатов */
+@keyframes growBar {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+.bar-grow {
+  transform-origin: left;
+  animation: growBar 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Каскадное появление карточек */
+@keyframes staggerUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.stagger-item {
+  animation: staggerUp 0.5s ease-out both;
+}
+
+/* Мягкое «дыхание» для акцентных элементов (код совместимости и т.п.) */
+@keyframes softGlow {
+  0%, 100% { box-shadow: 0 0 0 rgba(255, 255, 255, 0); }
+  50% { box-shadow: 0 0 24px rgba(255, 255, 255, 0.25); }
+}
+
+.soft-glow {
+  animation: softGlow 3s ease-in-out infinite;
+}
+
 ::-webkit-scrollbar {
   width: 8px;
 }

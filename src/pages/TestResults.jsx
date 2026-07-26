@@ -196,8 +196,8 @@ const TestResults = () => {
             {profile.archetypes.map((arch, index) => (
               <div
                 key={arch.code}
-                className="border-2 rounded-xl p-4 transition hover:shadow-lg"
-                style={{ borderColor: arch.color + '40', backgroundColor: isDark ? 'transparent' : 'white' }}
+                className="border-2 rounded-xl p-4 transition hover:shadow-lg hover:-translate-y-1 duration-300 stagger-item"
+                style={{ borderColor: arch.color + '40', backgroundColor: isDark ? 'transparent' : 'white', animationDelay: `${index * 0.08}s` }}
               >
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="font-semibold" style={{ color: 'var(--text-primary)' }}>{arch.name}</h3>
@@ -218,8 +218,8 @@ const TestResults = () => {
                 <div className="flex items-center gap-2">
                   <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ backgroundColor: isDark ? 'var(--bg-card-alt)' : '#e5e7eb' }}>
                     <div
-                      className="h-full rounded-full transition-all"
-                      style={{ width: `${(arch.score / 5) * 100}%`, backgroundColor: arch.color }}
+                      className="h-full rounded-full bar-grow"
+                      style={{ width: `${(arch.score / 5) * 100}%`, backgroundColor: arch.color, animationDelay: `${0.3 + index * 0.08}s` }}
                     />
                   </div>
                   <span className="text-sm font-semibold" style={{ color: 'var(--text-secondary)' }}>{arch.score}/5</span>
@@ -231,7 +231,7 @@ const TestResults = () => {
 
         <div className="rounded-3xl shadow-2xl p-8 text-white text-center fade-in" style={{ background: 'var(--bg-gradient-hero)' }}>
           <h2 className="text-2xl font-bold mb-4 flex items-center justify-center gap-2"><Heart className="w-6 h-6" /> Ваш код совместимости</h2>
-          <div className="bg-white/20 backdrop-blur-lg rounded-xl p-4 mb-4">
+          <div className="bg-white/20 backdrop-blur-lg rounded-xl p-4 mb-4 soft-glow">
             <p className="text-3xl font-mono font-bold tracking-wider">{code}</p>
           </div>
           <p className="text-white/80 mb-6">

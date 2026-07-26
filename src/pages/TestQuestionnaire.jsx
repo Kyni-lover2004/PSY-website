@@ -162,12 +162,12 @@ const TestQuestionnaire = () => {
             <span>{Math.round(progress)}%</span>
           </div>
           <div className="h-3 bg-white/20 rounded-full overflow-hidden">
-            <div className="h-full bg-white transition-all duration-300" style={{ width: `${progress}%` }} />
+            <div className="h-full bg-white transition-all duration-500 ease-out shimmer" style={{ width: `${progress}%` }} />
           </div>
         </div>
 
-        {/* Вопрос */}
-        <div className="rounded-3xl shadow-2xl p-8 fade-in" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>
+        {/* Вопрос: key перезапускает анимацию появления на каждом вопросе */}
+        <div key={currentQuestion?.id} className="rounded-3xl shadow-2xl p-8 question-enter" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>
           <h2 className="text-2xl font-semibold mb-8 leading-relaxed" style={{ color: 'var(--text-primary)' }}>
             {currentQuestion ? (currentQuestion.text || 'Нет текста') : 'Вопрос не найден'}
           </h2>

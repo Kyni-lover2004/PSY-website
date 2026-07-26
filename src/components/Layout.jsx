@@ -1,14 +1,18 @@
-import { Outlet, Link, useNavigate } from 'react-router-dom';
+import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { Sparkles, Settings, Menu, X, Sun, Moon } from 'lucide-react';
 import { useState } from 'react';
+import useScrollReveal from '../hooks/useScrollReveal';
 
 const Layout = () => {
   const { user, logout } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+  useScrollReveal();
 
   const handleLogout = () => {
     logout();
@@ -135,7 +139,9 @@ const Layout = () => {
       </div>
 
       <main className="flex-grow">
-        <Outlet />
+        <div key={location.pathname} className="page-enter">
+          <Outlet />
+        </div>
       </main>
 
       <footer className={`py-8 ${isDark ? 'bg-gray-900' : 'bg-gray-900'} text-white`}>
