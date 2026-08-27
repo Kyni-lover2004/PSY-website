@@ -4,6 +4,8 @@ import { authAPI } from '../api/api';
 
 const AuthContext = createContext(null);
 
+const AUTH_INIT_TIMEOUT_MS = 8000;
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
@@ -47,6 +49,18 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     let isMounted = true;
+    let settled = false;
+
+    const finishLoading = () => {
+      if (!isMounted || settled) return;
+      settled = true;
+      setLoading(false);
+    };
+
+    // Предохранитель: если Supabase не ответит (холодный старт, плохая сеть,
+    // зависшая блокировка обновления токена), приложение не должно навсегда
+    // остаться в состоянии загрузки.
+    const timeoutId = setTimeout(finishLoading, AUTH_INIT_TIMEOUT_MS);
 
     const initAuth = async () => {
       try {
@@ -59,7 +73,8 @@ export const AuthProvider = ({ children }) => {
       } catch {
         // не авторизован — это нормальное состояние
       } finally {
-        if (isMounted) setLoading(false);
+        clearTimeout(timeoutId);
+        finishLoading();
       }
     };
 
@@ -78,6 +93,7 @@ export const AuthProvider = ({ children }) => {
 
     return () => {
       isMounted = false;
+      clearTimeout(timeoutId);
       subscription?.subscription?.unsubscribe?.();
     };
   }, [applyUser]);
@@ -95,12 +111,8 @@ export const AuthProvider = ({ children }) => {
 
   const isAdmin = () => user && user.role === 'admin';
 
-  if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
-    </div>;
-  }
-
+  // Приложение рендерится сразу: публичные страницы не должны ждать проверку
+  // сессии. Ожидание берут на себя ProtectedRoute и AdminRoute через loading.
   return (
     <AuthContext.Provider value={{ user, token, login, logout, isAdmin, updateUserCompatibilityCode, loading }}>
       {children}
