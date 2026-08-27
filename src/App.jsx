@@ -14,6 +14,7 @@ import Practices from './pages/Practices';
 import ReadingList from './pages/ReadingList';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import NotFound from './pages/NotFound';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
 
@@ -74,6 +75,7 @@ function App() {
                   </AdminRoute>
                 }
               />
+              <Route path="*" element={<NotFound />} />
             </Route>
           </Routes>
         </Suspense>
