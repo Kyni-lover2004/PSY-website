@@ -327,7 +327,7 @@ const Home = () => {
               ].map((item, i) => (
                 <div key={i} className={`relative flex items-center gap-8 md:gap-0 ${i % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'} ${i % 2 === 0 ? 'slide-in-left' : 'slide-in-right'}`} style={{ animationDelay: `${i * 0.1}s` }}>
                   <div className="absolute left-0 md:left-1/2 transform md:-translate-x-1/2 w-4 h-4 bg-white border-4 border-primary rounded-full z-10 hidden md:block"></div>
-                  <div className={`ml-8 md:ml-0 md:w-1/2 ${i % 2 === 0 ? 'md:pr-12' : 'md:pl-12'}`}>
+                  <div className={`md:w-1/2 ${i % 2 === 0 ? 'md:pr-12' : 'md:pl-12'}`}>
                     <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 hover:bg-white/20 transition transform hover:scale-105 duration-300 fade-in">
                       <div className="text-3xl font-bold text-white mb-2">{item.year}</div>
                       <h3 className="text-lg font-semibold text-white mb-1">{item.title}</h3>
