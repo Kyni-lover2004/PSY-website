@@ -98,14 +98,14 @@ const Price = () => {
                           borderColor: isDark ? 'var(--border-color)' : cat.borderColor
                         }}
                       >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <Clock className="w-5 h-5" style={{ color: isDark ? 'var(--bg-gradient-from)' : cat.iconColor }} />
-                            <span style={{ color: 'var(--text-primary)', fontWeight: '600', fontSize: '1.125rem' }}>
+                        <div className="flex items-center justify-between gap-4">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <Clock className="w-5 h-5 shrink-0" style={{ color: isDark ? 'var(--bg-gradient-from)' : cat.iconColor }} />
+                            <span className="text-base sm:text-lg" style={{ color: 'var(--text-primary)', fontWeight: '600' }}>
                               Сессия {session.duration}
                             </span>
                           </div>
-                          <span className="text-2xl font-bold" style={{ color: isDark ? 'var(--text-primary)' : cat.iconColor }}>
+                          <span className="text-xl sm:text-2xl font-bold shrink-0 whitespace-nowrap" style={{ color: isDark ? 'var(--text-primary)' : cat.iconColor }}>
                             {session.price}
                           </span>
                         </div>

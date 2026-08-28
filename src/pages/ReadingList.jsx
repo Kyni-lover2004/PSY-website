@@ -73,8 +73,8 @@ const ReadingList = () => {
       <div className="max-w-5xl mx-auto">
         {/* Заголовок */}
         <div className="text-center mb-16 fade-in">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <BookOpen className="w-10 h-10 text-white/80" />
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-4">
+            <BookOpen className="w-10 h-10 text-white/80 shrink-0" />
             <h1 className="text-4xl md:text-5xl font-bold text-white">Список литературы</h1>
           </div>
           <p className="text-lg text-white/80 max-w-2xl mx-auto">
