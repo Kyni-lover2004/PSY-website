@@ -6,50 +6,10 @@ import { useTheme } from '../context/ThemeContext';
 import {
   CheckCircle, Calendar, MessageCircle,
   User, Users, Baby, PersonStanding, ArrowRight, ChevronDown, ChevronUp,
-  FileText, CreditCard, ThumbsUp, ThumbsDown, Send
+  FileText, CreditCard, ThumbsUp, ThumbsDown
   } from 'lucide-react';
 
-import vkIcon from '../assets/vk-icon.png';
-import maxIcon from '../assets/max-icon.jpg';
-
-// В lucide нет иконки Instagram, поэтому рисуем её сами в том же
-// линейном стиле, что и остальные иконки на странице.
-const InstagramIcon = ({ className }) => (
-  <svg
-    className={className}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    aria-hidden="true"
-  >
-    <rect x="2" y="2" width="20" height="20" rx="5" />
-    <circle cx="12" cy="12" r="4.2" />
-    <circle cx="17.4" cy="6.6" r="1.1" fill="currentColor" stroke="none" />
-  </svg>
-);
-
-const SOCIAL_LINKS = {
-  vk: 'https://vk.ru/pankratova_kseniya',
-  instagram: 'https://www.instagram.com/kse.ny.psy?igsh=MXdmbTRtMjg4eG9xaA==',
-  max: 'https://max.ru/u/f9LHodD0cOJsOsd9T9s9AxV2pxLF4yrWCq_LLEaC_7wL1ApJ_ppOqC9wEoM',
-  telegram: 'https://t.me/Ksenya_psyho'
-};
-
-const SocialButton = ({ href, color, label, children }) => (
-  <a
-    href={href}
-    target="_blank"
-    rel="noopener noreferrer"
-    className="flex items-center justify-center gap-3 p-4 rounded-xl font-semibold transition hover:shadow-lg"
-    style={{ backgroundColor: color, color: 'white' }}
-  >
-    {children}
-    <span>{label}</span>
-  </a>
-);
+import { SOCIALS } from '../lib/contacts';
 
 const categories = {
   personal: {
@@ -219,18 +179,19 @@ if (step === 5) {
 
         <div className="rounded-3xl shadow-2xl p-8 fade-in" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <SocialButton href={SOCIAL_LINKS.vk} color="#0077FF" label="ВКонтакте">
-              <img src={vkIcon} alt="" className="w-6 h-6 shrink-0" />
-            </SocialButton>
-            <SocialButton href={SOCIAL_LINKS.instagram} color="#E4405F" label="Instagram">
-              <InstagramIcon className="w-6 h-6 shrink-0" />
-            </SocialButton>
-            <SocialButton href={SOCIAL_LINKS.max} color="#000000" label="MAX">
-              <img src={maxIcon} alt="" className="w-6 h-6 shrink-0 rounded-md" />
-            </SocialButton>
-            <SocialButton href={SOCIAL_LINKS.telegram} color="#24A1DE" label="Telegram">
-              <Send className="w-6 h-6 shrink-0" />
-            </SocialButton>
+            {SOCIALS.map(({ key, label, color, Icon, href }) => (
+              <a
+                key={key}
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-3 p-4 rounded-xl font-semibold text-white transition hover:shadow-lg"
+                style={{ backgroundColor: color }}
+              >
+                <Icon className="w-6 h-6 shrink-0" />
+                <span>{label}</span>
+              </a>
+            ))}
           </div>
 
           <div className="mt-8 pt-4 border-t" style={{ borderColor: isDark ? 'var(--border-color)' : '#e5e7eb' }}>

@@ -15,6 +15,7 @@ import ReadingList from './pages/ReadingList';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import NotFound from './pages/NotFound';
+import Contacts from './pages/Contacts';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
 
@@ -54,6 +55,7 @@ function App() {
               <Route path="price" element={<Price />} />
               <Route path="practices" element={<Practices />} />
               <Route path="reading-list" element={<ReadingList />} />
+              <Route path="contacts" element={<Contacts />} />
               <Route path="legal" element={<Legal />} />
               {/* Старые адреса документов ведут на объединённую страницу */}
               <Route path="privacy-policy" element={<Navigate to="/legal" replace />} />
