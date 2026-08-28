@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import Layout from './components/Layout';
@@ -21,8 +21,7 @@ import AdminRoute from './components/AdminRoute';
 const TestResults = lazy(() => import('./pages/TestResults'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const AdminPanel = lazy(() => import('./pages/AdminPanel'));
-const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
-const PublicOffer = lazy(() => import('./pages/PublicOffer'));
+const Legal = lazy(() => import('./pages/Legal'));
 
 function PageLoader() {
   return (
@@ -55,8 +54,10 @@ function App() {
               <Route path="price" element={<Price />} />
               <Route path="practices" element={<Practices />} />
               <Route path="reading-list" element={<ReadingList />} />
-              <Route path="privacy-policy" element={<PrivacyPolicy />} />
-              <Route path="public-offer" element={<PublicOffer />} />
+              <Route path="legal" element={<Legal />} />
+              {/* Старые адреса документов ведут на объединённую страницу */}
+              <Route path="privacy-policy" element={<Navigate to="/legal" replace />} />
+              <Route path="public-offer" element={<Navigate to="/legal?doc=offer" replace />} />
               <Route path="login" element={<Login />} />
               <Route path="register" element={<Register />} />
               <Route

@@ -2,7 +2,7 @@ const PrivacyPolicy = () => {
   return (
     <div className="py-16 px-6 bg-base">
       <div className="max-w-4xl mx-auto">
-        <h1 className="font-serif text-4xl md:text-5xl text-dark mb-8 text-center">Политика конфиденциальности</h1>
+        <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl text-dark mb-8 text-center">Политика конфиденциальности</h1>
         <p className="text-center text-dark/60 mb-12">Дата вступления в силу: 3 апреля 2026 г.</p>
 
         <div className="space-y-10 text-dark/80 leading-relaxed">

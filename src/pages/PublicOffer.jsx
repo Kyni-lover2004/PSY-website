@@ -2,14 +2,14 @@ const PublicOffer = () => {
   return (
     <div className="py-16 px-6 bg-base">
       <div className="max-w-4xl mx-auto">
-        <h1 className="font-serif text-4xl md:text-5xl text-dark mb-8 text-center">Публичная оферта</h1>
+        <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl text-dark mb-8 text-center">Публичная оферта</h1>
         <p className="text-center text-dark/60 mb-12">Дата вступления в силу: 3 апреля 2026 г.</p>
 
         <div className="space-y-10 text-dark/80 leading-relaxed">
           <section className="bg-card border border-primary/10 p-8 rounded-2xl shadow-sm">
             <h2 className="font-serif text-2xl text-dark mb-4">1. Общие положения</h2>
             <p className="mb-3">
-              Настоящий документ является официальтным предложением (публичной офертой) Панкратовой Ксении (далее — «Исполнитель») и содержит все существенные условия оказания услуг психологического консультирования через сайт (далее — «Сайт»).
+              Настоящий документ является официальным предложением (публичной офертой) Панкратовой Ксении (далее — «Исполнитель») и содержит все существенные условия оказания услуг психологического консультирования через сайт (далее — «Сайт»).
             </p>
             <p className="mb-3">
               В соответствии с пунктом 2 статьи 437 Гражданского Кодекса Российской Федерации (ГК РФ), настоящий документ является публичной офертой, и его акцепт (принятие) означает заключение договора на изложенных ниже условиях.
