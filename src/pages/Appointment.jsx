@@ -6,7 +6,7 @@ import { useTheme } from '../context/ThemeContext';
 import {
   CheckCircle, Calendar, MessageCircle,
   User, Users, Baby, PersonStanding, ArrowRight, ChevronDown, ChevronUp,
-  FileText, CreditCard, ThumbsUp, ThumbsDown, Dices, Banknote
+  FileText, CreditCard, Dices, Banknote
   } from 'lucide-react';
 
 import { SOCIALS } from '../lib/contacts';
@@ -118,7 +118,6 @@ const Appointment = () => {
   const [loading, setLoading] = useState(false);
   const [openCategory, setOpenCategory] = useState(null);
   const [agreedToRules, setAgreedToRules] = useState(false);
-  const [agreedToPayment, setAgreedToPayment] = useState(false);
 
   // У игры свои форматы и условия вместо правил консультации.
   const isGame = formData.category === GAME_CATEGORY;
@@ -310,39 +309,21 @@ if (submitted) {
               </p>
             </div>
 
-            <label className="flex items-start gap-3 mt-6 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={agreedToPayment}
-                onChange={(e) => setAgreedToPayment(e.target.checked)}
-                className="mt-1 w-5 h-5 rounded focus:ring-primary"
-                style={{ color: 'var(--bg-gradient-from)' }}
-              />
-              <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                Я ознакомлен(а) и принимаю условия оплаты
-              </span>
-            </label>
-
             <div className="flex gap-4 mt-8">
               <button
-                onClick={() => navigate('/')}
-                className="flex-1 py-4 rounded-xl font-semibold hover:shadow-lg transition flex items-center justify-center gap-2"
+                onClick={() => setStep(3)}
+                className="flex-1 py-4 rounded-xl font-semibold hover:shadow-lg transition"
                 style={{ backgroundColor: isDark ? 'var(--bg-card-alt)' : '#f3f4f6', color: 'var(--text-secondary)' }}
               >
-                <ThumbsDown className="w-5 h-5" /> Мне не подходит
+                ← Назад
               </button>
-<button
-        onClick={() => setStep(5)}
-        disabled={!agreedToPayment}
-        className={`flex-1 py-4 rounded-xl font-semibold text-lg transition flex items-center justify-center gap-2 ${
-          agreedToPayment
-            ? 'text-white hover:shadow-lg'
-            : 'cursor-not-allowed'
-        }`}
-        style={{ backgroundColor: agreedToPayment ? 'var(--bg-gradient-from)' : (isDark ? 'var(--bg-card-alt)' : '#d1d5db'), color: agreedToPayment ? 'white' : 'var(--text-muted)' }}
-      >
-        <><ThumbsUp className="w-5 h-5" /><span>Далее</span></>
-      </button>
+              <button
+                onClick={() => setStep(5)}
+                className="flex-1 py-4 rounded-xl font-semibold text-lg text-white transition hover:shadow-lg flex items-center justify-center gap-2"
+                style={{ backgroundColor: 'var(--bg-gradient-from)' }}
+              >
+                Далее <ArrowRight className="w-5 h-5" />
+              </button>
             </div>
           </div>
         </div>
