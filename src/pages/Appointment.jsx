@@ -11,6 +11,13 @@ import {
 
 import { SOCIALS } from '../lib/contacts';
 
+export const GAME_CATEGORY = 'Трансформационная игра';
+
+const GAME_FORMATS = [
+  { title: 'Группой', people: 'от 3 человек', price: '2 500 ₽', priceNote: 'с человека', time: '5–6 часов' },
+  { title: 'Индивидуально', people: 'один на один с ведущим', price: '4 000 ₽', priceNote: '', time: '4 часа' },
+];
+
 const categories = {
   personal: {
     label: 'Личная консультация',
@@ -87,7 +94,7 @@ const categories = {
     ]
   },
   games: {
-    label: 'Трансформационная игра',
+    label: GAME_CATEGORY,
     icon: Dices,
     topics: [
       'Переходы',
@@ -112,6 +119,9 @@ const Appointment = () => {
   const [openCategory, setOpenCategory] = useState(null);
   const [agreedToRules, setAgreedToRules] = useState(false);
   const [agreedToPayment, setAgreedToPayment] = useState(false);
+
+  // У игры свои форматы и условия вместо правил консультации.
+  const isGame = formData.category === GAME_CATEGORY;
 
   // Если не авторизован — перенаправляем на регистрацию
   useEffect(() => {
@@ -330,10 +340,37 @@ if (submitted) {
             <div className="w-16 h-16 mx-auto mb-4 bg-white/10 rounded-full flex items-center justify-center">
               <FileText className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-3xl font-bold text-white mb-2">Правила прохождения консультации</h1>
+            <h1 className="text-3xl font-bold text-white mb-2">
+              {isGame ? 'Форматы и условия игры' : 'Правила прохождения консультации'}
+            </h1>
           </div>
 
           <div className="rounded-3xl shadow-2xl p-8 fade-in" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>
+            {isGame ? (
+              <div className="space-y-4">
+                {GAME_FORMATS.map((format) => (
+                  <div
+                    key={format.title}
+                    className="rounded-2xl p-5 border"
+                    style={{
+                      backgroundColor: isDark ? 'var(--bg-card-alt)' : '#f9fafb',
+                      borderColor: isDark ? 'var(--border-color)' : '#e5e7eb',
+                    }}
+                  >
+                    <div className="flex items-baseline justify-between gap-4 mb-1">
+                      <h2 className="text-lg font-bold">{format.title}</h2>
+                      <div className="text-xl font-bold whitespace-nowrap" style={{ color: 'var(--bg-gradient-from)' }}>
+                        {format.price}
+                      </div>
+                    </div>
+                    <div className="flex items-baseline justify-between gap-4 text-sm" style={{ color: 'var(--text-secondary)' }}>
+                      <span>{format.people} · {format.time}</span>
+                      {format.priceNote && <span className="whitespace-nowrap">{format.priceNote}</span>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
             <div className="space-y-4 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
               <p>• Важно приходить <strong>вовремя</strong> — опоздание сокращает время сессии.</p>
               <p>• Консультация проходит в <strong>тихом и спокойном месте</strong>, где вас никто не побеспокоит.</p>
@@ -342,6 +379,7 @@ if (submitted) {
               <p>• Пожалуйста, <strong>отключите уведомления</strong> на время сессии.</p>
               <p>• Если вам нужно отменить или перенести встречу — предупредите <strong>минимум за 24 часа</strong>.</p>
             </div>
+            )}
 
             <label className="flex items-start gap-3 mt-6 cursor-pointer">
               <input
@@ -352,7 +390,9 @@ if (submitted) {
                 style={{ color: 'var(--bg-gradient-from)' }}
               />
               <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                Я ознакомлен(а) с правилами прохождения консультации
+                {isGame
+                  ? 'Я ознакомлен(а) с форматами и условиями игры'
+                  : 'Я ознакомлен(а) с правилами прохождения консультации'}
               </span>
             </label>
 

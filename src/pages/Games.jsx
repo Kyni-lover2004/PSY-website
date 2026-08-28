@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Sparkles, Compass, HeartPulse, ExternalLink, ArrowRight } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import { GAME_CATEGORY } from './Appointment';
 
 const GAMES = [
   {
@@ -155,7 +156,7 @@ const Games = () => {
 
                 <div className="flex flex-col sm:flex-row gap-3">
                   <Link
-                    to={`/appointment?category=${encodeURIComponent('Трансформационная игра')}&topic=${encodeURIComponent(title)}`}
+                    to={`/appointment?category=${encodeURIComponent(GAME_CATEGORY)}&topic=${encodeURIComponent(title)}`}
                     className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold text-white transition hover:shadow-lg"
                     style={{ backgroundColor: accent }}
                   >
