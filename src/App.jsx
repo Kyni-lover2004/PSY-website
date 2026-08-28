@@ -16,6 +16,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import NotFound from './pages/NotFound';
 import Contacts from './pages/Contacts';
+import Games from './pages/Games';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
 
@@ -23,6 +24,7 @@ const TestResults = lazy(() => import('./pages/TestResults'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const AdminPanel = lazy(() => import('./pages/AdminPanel'));
 const Legal = lazy(() => import('./pages/Legal'));
+const EthicsCode = lazy(() => import('./pages/EthicsCode'));
 
 function PageLoader() {
   return (
@@ -55,7 +57,9 @@ function App() {
               <Route path="price" element={<Price />} />
               <Route path="practices" element={<Practices />} />
               <Route path="reading-list" element={<ReadingList />} />
+              <Route path="games" element={<Games />} />
               <Route path="contacts" element={<Contacts />} />
+              <Route path="ethics" element={<EthicsCode />} />
               <Route path="legal" element={<Legal />} />
               {/* Старые адреса документов ведут на объединённую страницу */}
               <Route path="privacy-policy" element={<Navigate to="/legal" replace />} />

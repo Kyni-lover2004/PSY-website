@@ -85,7 +85,7 @@ try {
         <p className="text-center mb-8" style={{ color: isDark ? 'var(--text-muted)' : '#6B7280' }}>
           {searchParams.get('redirect') === 'test'
             ? 'Зарегистрируйтесь для прохождения теста и сохранения результатов'
-            : 'Для сохранения результатов тестов в личном кабинете'}
+            : 'Аккаунт нужен, чтобы записаться на консультацию и сохранять результаты тестов в личном кабинете'}
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-6">
