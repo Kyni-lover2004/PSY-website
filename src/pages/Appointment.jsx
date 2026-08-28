@@ -6,7 +6,7 @@ import { useTheme } from '../context/ThemeContext';
 import {
   CheckCircle, Calendar, MessageCircle,
   User, Users, Baby, PersonStanding, ArrowRight, ChevronDown, ChevronUp,
-  FileText, CreditCard, ThumbsUp, ThumbsDown
+  FileText, CreditCard, ThumbsUp, ThumbsDown, Dices
   } from 'lucide-react';
 
 import { SOCIALS } from '../lib/contacts';
@@ -86,6 +86,15 @@ const categories = {
       'Детско-родительские отношения',
     ]
   },
+  games: {
+    label: 'Трансформационная игра',
+    icon: Dices,
+    topics: [
+      'Переходы',
+      'Тревоги',
+      'Психосоматика',
+    ]
+  },
 };
 
 const Appointment = () => {
@@ -122,7 +131,7 @@ const Appointment = () => {
         category: category || '',
         topic: topic || ''
       }));
-      if (category && topic) setStep(2);
+      if (category && topic) setStep(1);
     }
   }, [searchParams]);
 
