@@ -145,7 +145,7 @@ const PrivacyPolicy = () => {
               <strong>Оператор:</strong> Панкратова Ксения
             </p>
             <p className="mb-2">
-              <strong>Сайт:</strong> psy-website
+              <strong>Сайт:</strong> psy-rzn.vercel.app
             </p>
             <p className="mb-2">
               <strong>Электронная почта:</strong> для обращений по вопросам обработки персональных данных используйте форму обратной связи на Сайте или мессенджер Макс.
