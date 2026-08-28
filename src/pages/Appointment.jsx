@@ -6,7 +6,7 @@ import { useTheme } from '../context/ThemeContext';
 import {
   CheckCircle, Calendar, MessageCircle,
   User, Users, Baby, PersonStanding, ArrowRight, ChevronDown, ChevronUp,
-  FileText, CreditCard, ThumbsUp, ThumbsDown, Dices
+  FileText, CreditCard, ThumbsUp, ThumbsDown, Dices, Banknote
   } from 'lucide-react';
 
 import { SOCIALS } from '../lib/contacts';
@@ -281,13 +281,32 @@ if (submitted) {
           </div>
 
           <div className="rounded-3xl shadow-2xl p-8 fade-in" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>
-            <div className="text-center leading-relaxed">
-              <p className="text-xl font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>
-                Уважаемые клиенты!
+            <div
+              className="rounded-2xl p-6 sm:p-7"
+              style={{
+                backgroundColor: isDark ? 'var(--bg-card-alt)' : '#f9fafb',
+                borderLeft: '4px solid var(--bg-gradient-from)',
+              }}
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div
+                  className="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0"
+                  style={{ backgroundColor: 'var(--bg-gradient-from)' }}
+                >
+                  <Banknote className="w-6 h-6 text-white" />
+                </div>
+                <p className="font-serif text-xl" style={{ color: 'var(--text-primary)' }}>
+                  Уважаемые клиенты!
+                </p>
+              </div>
+
+              <p className="leading-relaxed mb-3" style={{ color: 'var(--text-secondary)' }}>
+                В связи с перебоями в работе банков и интернета прошу вас
+                <strong style={{ color: 'var(--text-primary)' }}> приходить на сессии с наличными</strong> —
+                так оплата точно пройдёт без задержек.
               </p>
-              <p style={{ color: 'var(--text-secondary)' }}>
-                В связи с проблемами с банкингом и Интернетом, прошу приходить
-                на сессии с наличными для оплаты.
+              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+                Спасибо за понимание.
               </p>
             </div>
 
