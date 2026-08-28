@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
-import { Phone, MapPin, X } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
+import { Phone, MapPin, X, ChevronLeft, ChevronRight, Maximize2 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { PHONE, PHONE_HREF, ADDRESS, SOCIALS } from '../lib/contacts';
 import cabinet1 from '../assets/cabinet/cabinet-1.jpg';
@@ -19,15 +20,34 @@ const PHOTOS = [
 
 const Contacts = () => {
   const { isDark } = useTheme();
-  const [lightbox, setLightbox] = useState(null);
+  // Просмотр открывается по индексу — так фото можно листать, не закрывая.
+  const [viewer, setViewer] = useState(null);
+  const gallery = viewer?.list || [];
+  const current = viewer ? gallery[viewer.index] : null;
 
-  // Просмотр фото закрывается по Escape — как ожидается от модального окна.
+  const close = useCallback(() => setViewer(null), []);
+  const step = useCallback(
+    (delta) =>
+      setViewer((v) => (v ? { ...v, index: (v.index + delta + v.list.length) % v.list.length } : v)),
+    []
+  );
+
   useEffect(() => {
-    if (!lightbox) return;
-    const onKey = (e) => e.key === 'Escape' && setLightbox(null);
+    if (!viewer) return;
+    const onKey = (e) => {
+      if (e.key === 'Escape') close();
+      if (e.key === 'ArrowRight') step(1);
+      if (e.key === 'ArrowLeft') step(-1);
+    };
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [lightbox]);
+    // Фон не должен уезжать под открытым просмотром.
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [viewer, close, step]);
 
   const cardStyle = { backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' };
 
@@ -102,9 +122,9 @@ const Contacts = () => {
           {PHOTOS.map((photo, i) => (
             <button
               key={photo.src}
-              onClick={() => setLightbox(photo)}
+              onClick={() => setViewer({ list: PHOTOS, index: i })}
               className={`group relative overflow-hidden rounded-2xl shadow-xl transition hover:shadow-2xl ${
-                i === 0 ? 'col-span-2 md:col-span-2 md:row-span-2' : ''
+                i === 0 ? 'col-span-2 md:row-span-2' : ''
               }`}
             >
               <img
@@ -113,6 +133,13 @@ const Contacts = () => {
                 loading="lazy"
                 className="w-full h-full object-cover aspect-[4/5] group-hover:scale-105 transition duration-500"
               />
+              <span className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition duration-300" />
+              <span className="absolute top-3 right-3 w-9 h-9 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 translate-y-1 group-hover:translate-y-0 transition duration-300">
+                <Maximize2 className="w-4 h-4 text-white" />
+              </span>
+              <span className="absolute left-4 right-4 bottom-4 text-left text-white text-sm font-medium opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition duration-300">
+                {photo.alt}
+              </span>
             </button>
           ))}
         </div>
@@ -124,13 +151,19 @@ const Contacts = () => {
         </p>
 
         <div className="rounded-3xl shadow-2xl p-4 md:p-6" style={cardStyle}>
-          <button onClick={() => setLightbox({ src: route, alt: 'Схема прохода до кабинета' })} className="block w-full">
+          <button
+            onClick={() => setViewer({ list: [{ src: route, alt: 'Схема прохода до кабинета' }], index: 0 })}
+            className="block w-full group relative overflow-hidden rounded-2xl"
+          >
             <img
               src={route}
               alt="Схема прохода до кабинета: Быстрецкая улица, 18к2, подъезд 2"
               loading="lazy"
               className="w-full rounded-2xl"
             />
+            <span className="absolute top-3 right-3 w-9 h-9 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition duration-300">
+              <Maximize2 className="w-4 h-4 text-white" />
+            </span>
           </button>
           <p className="text-center mt-4" style={{ color: 'var(--text-secondary)' }}>
             {ADDRESS}
@@ -138,27 +171,68 @@ const Contacts = () => {
         </div>
       </div>
 
-      {/* Просмотр фото во весь экран */}
-      {lightbox && (
-        <div
-          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
-          onClick={() => setLightbox(null)}
-        >
-          <button
-            onClick={() => setLightbox(null)}
-            aria-label="Закрыть"
-            className="absolute top-4 right-4 w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition"
+      {/* Просмотр фото. Рендерится в body: у обёртки страницы есть transform,
+          а он ломает position: fixed — окно уезжало вверх страницы и пряталось
+          под кнопкой меню. */}
+      {current &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[100] flex flex-col items-center justify-center p-4 sm:p-6"
+            style={{ backgroundColor: 'rgba(15, 23, 21, 0.92)', backdropFilter: 'blur(6px)' }}
+            onClick={close}
+            role="dialog"
+            aria-modal="true"
           >
-            <X className="w-6 h-6 text-white" />
-          </button>
-          <img
-            src={lightbox.src}
-            alt={lightbox.alt}
-            className="max-w-full max-h-full rounded-2xl object-contain"
-            onClick={(e) => e.stopPropagation()}
-          />
-        </div>
-      )}
+            <button
+              onClick={close}
+              aria-label="Закрыть"
+              className="absolute top-4 right-4 w-11 h-11 rounded-full bg-white/10 hover:bg-white/25 flex items-center justify-center transition"
+            >
+              <X className="w-6 h-6 text-white" />
+            </button>
+
+            <figure
+              className="relative flex flex-col items-center max-h-full"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <img
+                src={current.src}
+                alt={current.alt}
+                className="rounded-2xl object-contain shadow-2xl max-h-[72vh] sm:max-h-[76vh] max-w-[92vw] sm:max-w-[min(88vw,760px)]"
+                style={{ border: '1px solid rgba(255,255,255,0.12)' }}
+              />
+              <figcaption className="mt-4 text-center text-white/85 text-sm px-4">
+                {current.alt}
+              </figcaption>
+            </figure>
+
+            {gallery.length > 1 && (
+              <div
+                className="mt-4 flex items-center gap-4"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  onClick={() => step(-1)}
+                  aria-label="Предыдущее фото"
+                  className="w-11 h-11 rounded-full bg-white/10 hover:bg-white/25 flex items-center justify-center transition"
+                >
+                  <ChevronLeft className="w-6 h-6 text-white" />
+                </button>
+                <span className="text-white/70 text-sm tabular-nums w-14 text-center">
+                  {viewer.index + 1} / {gallery.length}
+                </span>
+                <button
+                  onClick={() => step(1)}
+                  aria-label="Следующее фото"
+                  className="w-11 h-11 rounded-full bg-white/10 hover:bg-white/25 flex items-center justify-center transition"
+                >
+                  <ChevronRight className="w-6 h-6 text-white" />
+                </button>
+              </div>
+            )}
+          </div>,
+          document.body
+        )}
     </div>
   );
 };
