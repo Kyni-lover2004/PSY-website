@@ -301,13 +301,14 @@ if (submitted) {
           </div>
 
           <div className="rounded-3xl shadow-2xl p-8 fade-in" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>
-            <div className="space-y-4 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-              <p>• Оплата консультации производится <strong>предварительно</strong> до начала сессии.</p>
-              <p>• Стоимость индивидуальной консультации — <strong>3 000 ₽</strong> (50 минут).</p>
-              <p>• Семейная консультация (пара) — <strong>4 000 ₽</strong> (80 минут).</p>
-              <p>• При отмене менее чем за <strong>24 часа</strong> до консультации оплата не возвращается.</p>
-              <p>• При опоздании время консультации не продлевается.</p>
-              <p>• Оплата возможна переводом на карту или через СБП.</p>
+            <div className="text-center leading-relaxed">
+              <p className="text-xl font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>
+                Уважаемые клиенты!
+              </p>
+              <p style={{ color: 'var(--text-secondary)' }}>
+                В связи с проблемами с банкингом и Интернетом, прошу приходить
+                на сессии с наличными для оплаты.
+              </p>
             </div>
 
             <label className="flex items-start gap-3 mt-6 cursor-pointer">
@@ -364,7 +365,6 @@ if (submitted) {
 
           <div className="rounded-3xl shadow-2xl p-8 fade-in" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>
             <div className="space-y-4 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-              <p>• Консультация длится <strong>50 минут</strong> (индивидуальная) или <strong>80 минут</strong> (семейная).</p>
               <p>• Важно приходить <strong>вовремя</strong> — опоздание сокращает время сессии.</p>
               <p>• Консультация проходит в <strong>тихом и спокойном месте</strong>, где вас никто не побеспокоит.</p>
               <p>• Рекомендуется использовать <strong>видеосвязь</strong> для более эффективной работы.</p>
