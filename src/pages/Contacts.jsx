@@ -112,13 +112,39 @@ const Contacts = () => {
           </div>
         </div>
 
+        {/* Как добраться */}
+        <h2 className="text-3xl font-bold text-center text-white mb-2">Как добраться</h2>
+        <p className="text-center text-white/80 mb-8 max-w-2xl mx-auto">
+          Пешком от остановок около 7 минут.
+        </p>
+
+        <div className="rounded-3xl shadow-2xl p-4 md:p-6 mb-16" style={cardStyle}>
+          <button
+            onClick={() => setViewer({ list: [{ src: route, alt: 'Схема прохода до кабинета' }], index: 0 })}
+            className="block w-full group relative overflow-hidden rounded-2xl"
+          >
+            <img
+              src={route}
+              alt="Схема прохода до кабинета: Быстрецкая улица, 18к2, подъезд 2"
+              loading="lazy"
+              className="w-full rounded-2xl"
+            />
+            <span className="absolute top-3 right-3 w-9 h-9 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition duration-300">
+              <Maximize2 className="w-4 h-4 text-white" />
+            </span>
+          </button>
+          <p className="text-center mt-4" style={{ color: 'var(--text-secondary)' }}>
+            {ADDRESS}
+          </p>
+        </div>
+
         {/* Фотографии кабинета */}
         <h2 className="text-3xl font-bold text-center text-white mb-2">Кабинет</h2>
         <p className="text-center text-white/80 mb-8 max-w-2xl mx-auto">
           Спокойное место, где вас никто не побеспокоит. Нажмите на фото, чтобы рассмотреть.
         </p>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 mb-16">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
           {PHOTOS.map((photo, i) => (
             <button
               key={photo.src}
@@ -142,32 +168,6 @@ const Contacts = () => {
               </span>
             </button>
           ))}
-        </div>
-
-        {/* Как добраться */}
-        <h2 className="text-3xl font-bold text-center text-white mb-2">Как добраться</h2>
-        <p className="text-center text-white/80 mb-8 max-w-2xl mx-auto">
-          Пешком от остановок около 7 минут.
-        </p>
-
-        <div className="rounded-3xl shadow-2xl p-4 md:p-6" style={cardStyle}>
-          <button
-            onClick={() => setViewer({ list: [{ src: route, alt: 'Схема прохода до кабинета' }], index: 0 })}
-            className="block w-full group relative overflow-hidden rounded-2xl"
-          >
-            <img
-              src={route}
-              alt="Схема прохода до кабинета: Быстрецкая улица, 18к2, подъезд 2"
-              loading="lazy"
-              className="w-full rounded-2xl"
-            />
-            <span className="absolute top-3 right-3 w-9 h-9 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition duration-300">
-              <Maximize2 className="w-4 h-4 text-white" />
-            </span>
-          </button>
-          <p className="text-center mt-4" style={{ color: 'var(--text-secondary)' }}>
-            {ADDRESS}
-          </p>
         </div>
       </div>
 
