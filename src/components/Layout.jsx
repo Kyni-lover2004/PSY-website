@@ -97,7 +97,6 @@ const Layout = () => {
             <Link to="/price" onClick={closeDrawer} className={navLinkClass()}>Прайс</Link>
             <Link to="/reading-list" onClick={closeDrawer} className={navLinkClass()}>Список литературы</Link>
             <Link to="/contacts" onClick={closeDrawer} className={navLinkClass()}>Контакты</Link>
-            <Link to="/ethics" onClick={closeDrawer} className={navLinkClass()}>Этический кодекс психолога</Link>
             <Link to="/legal" onClick={closeDrawer} className={navLinkClass()}>Документы</Link>
             <div className={`px-4 py-3 opacity-50 cursor-not-allowed`}>
               <span className={`text-lg flex items-center gap-2 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
