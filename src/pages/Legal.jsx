@@ -61,39 +61,45 @@ const Legal = () => {
 
   return (
     <div>
-      <div className="pt-12 px-4" style={{ background: 'var(--bg-gradient-hero)' }}>
-        <div className="max-w-4xl mx-auto">
+      <div className="pt-12 pb-10 px-4" style={{ background: 'var(--bg-gradient-hero)' }}>
+        <div className="max-w-5xl mx-auto">
           <h1 className="font-serif text-3xl md:text-4xl text-white mb-6 text-center">Документы</h1>
 
-          <div className="flex flex-wrap gap-2 justify-center">
-            {DOCUMENTS.map((doc) => (
-              <button
-                key={doc.key}
-                onClick={() => setSearchParams(doc.key === DOCUMENTS[0].key ? {} : { doc: doc.key })}
-                className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition ${
-                  active.key === doc.key ? 'shadow-md' : 'hover:shadow'
-                }`}
-                style={
-                  active.key === doc.key
-                    ? { backgroundColor: 'var(--bg-card)', color: 'var(--bg-gradient-from)' }
-                    : { backgroundColor: 'rgba(255,255,255,0.12)', color: 'white' }
-                }
-              >
-                {doc.tab}
-              </button>
-            ))}
+          {/* Сетка, а не перенос строк: иначе последняя вкладка висит
+              одна по центру. Цвета заданы явно — фон шапки в тёмной теме
+              почти совпадает с цветом карточки. */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+            {DOCUMENTS.map((doc) => {
+              const isActive = active.key === doc.key;
+              return (
+                <button
+                  key={doc.key}
+                  onClick={() => setSearchParams(doc.key === DOCUMENTS[0].key ? {} : { doc: doc.key })}
+                  className={`px-3 py-3 rounded-xl text-sm font-semibold leading-tight transition ${
+                    isActive ? 'shadow-lg' : 'hover:bg-white/25'
+                  }`}
+                  style={
+                    isActive
+                      ? { backgroundColor: '#ffffff', color: '#2D312E' }
+                      : { backgroundColor: 'rgba(255,255,255,0.14)', color: 'white' }
+                  }
+                >
+                  {doc.tab}
+                </button>
+              );
+            })}
           </div>
 
           {active.file && (
-            <div className="flex justify-center mt-5">
+            <div className="flex justify-center mt-6">
               <a
                 href={active.file.href}
                 download={active.file.name}
-                className="inline-flex items-center gap-2 px-5 py-3 rounded-xl font-semibold transition hover:shadow-lg"
-                style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}
+                className="inline-flex items-center gap-2.5 px-6 py-3 rounded-xl font-semibold transition hover:shadow-lg"
+                style={{ backgroundColor: 'rgba(255,255,255,0.14)', color: 'white', border: '1px solid rgba(255,255,255,0.25)' }}
               >
-                <Download className="w-5 h-5" style={{ color: 'var(--bg-gradient-from)' }} />
-                Скачать «{active.file.name}»
+                <Download className="w-5 h-5" />
+                Скачать документ
               </a>
             </div>
           )}
