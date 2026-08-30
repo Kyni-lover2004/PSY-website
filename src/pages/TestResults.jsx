@@ -5,6 +5,7 @@ import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Responsi
 import { Trophy, Shield, AlertTriangle, Download, User } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import ArchetypePoster from '../components/ArchetypePoster';
 
 const TestResults = () => {
   const { code } = useParams();
@@ -128,6 +129,12 @@ const TestResults = () => {
                 }
               </p>
             </div>
+
+            <ArchetypePoster
+              code={dominantArchetype.code}
+              name={dominantArchetype.name}
+              isDark={isDark}
+            />
 
             {dominantArchetype.description && (
               <div className="rounded-xl p-6 mb-6" style={{ backgroundColor: isDark ? 'var(--bg-card-alt)' : '#f9fafb' }}>
