@@ -77,7 +77,6 @@ const TestQuestionnaire = () => {
         answers: answersArray,
         gender: testData.gender,
         login: login,
-        orientation: testData.orientation,
         user_id: user?.id || null
       });
 

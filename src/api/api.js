@@ -59,10 +59,8 @@ function buildAuthPayload(session, profile) {
     user: {
       id: profile.id,
       login: profile.login,
-      telegram: profile.telegram,
       name: profile.login,
       gender: profile.gender,
-      orientation: profile.orientation,
       role: profile.role,
       created_at: profile.created_at,
     },
@@ -85,7 +83,7 @@ function rpcErrorDetail(error, fallback) {
 
 // === AUTH ===
 export const authAPI = {
-  register: async ({ login, password, gender = null, orientation = null }) => {
+  register: async ({ login, password, gender = null }) => {
     const cleanLogin = login.trim();
 
     const { data: exists, error: existsError } = await supabase.rpc('login_exists', {
@@ -100,7 +98,7 @@ export const authAPI = {
       supabase.auth.signUp({
         email,
         password,
-        options: { data: { login: cleanLogin, gender, orientation } },
+        options: { data: { login: cleanLogin, gender } },
       }),
       'Сервер не ответил вовремя. Проверьте соединение и попробуйте ещё раз.'
     );
@@ -327,7 +325,7 @@ export const adminAPI = {
   getUsers: async () => {
     const { data, error } = await supabase
       .from('profiles')
-      .select('id, login, telegram, gender, role, created_at, is_active, compatibility_code')
+      .select('id, login, gender, role, created_at, is_active, compatibility_code')
       .order('created_at', { ascending: false });
     if (error) throw apiError(403, 'Доступ запрещен');
     return ok(data);

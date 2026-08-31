@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { consultationAPI } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import {
-  CheckCircle, Calendar, MessageCircle,
+  Calendar, MessageCircle,
   User, Users, Baby, PersonStanding, ArrowRight, ChevronDown, ChevronUp,
   FileText, CreditCard, Dices, Banknote
   } from 'lucide-react';
@@ -114,8 +113,6 @@ const Appointment = () => {
     category: '',
     topic: ''
   });
-  const [submitted, setSubmitted] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [openCategory, setOpenCategory] = useState(null);
   const [agreedToRules, setAgreedToRules] = useState(false);
 
@@ -153,33 +150,6 @@ const Appointment = () => {
     setFormData(prev => ({ ...prev, category: cat.label, topic }));
     setOpenCategory(null);
     setStep(3);
-  };
-
-const submitConsultation = async () => {
-    setLoading(true);
-    try {
-      const telegramToSend = user?.telegram;
-      const requestData = {
-        user_id: user?.id || null,
-        name: user?.name || user?.login || 'Неизвестно',
-        telegram: telegramToSend || null,
-        category: formData.category,
-        topic: formData.topic,
-        request_text: `
-        Категория: ${formData.category}
-        Тема: ${formData.topic}
-        Telegram: ${telegramToSend ? '@' + telegramToSend : 'Не указан'}
-        Пользователь: ${user?.name || user?.login || 'Неизвестно'}
-        `.trim()
-      };
-      await consultationAPI.create(requestData);
-      setSubmitted(true);
-    } catch (error) {
-      console.error('Ошибка отправки:', error);
-      alert('Ошибка при отправке заявки. Попробуйте позже.');
-    } finally {
-      setLoading(false);
-    }
   };
 
 // ===================== ШАГ 5: Выбор соцсети =====================
@@ -222,34 +192,6 @@ if (step === 5) {
             </button>
           </div>
         </div>
-      </div>
-    </div>
-  );
-}
-
-// ===================== ЭКРАН ПОДТВЕРЖДЕНИЯ =====================
-if (submitted) {
-  return (
-    <div className="py-20 px-4" style={{ background: 'var(--bg-gradient-hero)', minHeight: '100vh' }}>
-      <div className="max-w-2xl mx-auto rounded-3xl shadow-2xl p-8 text-center fade-in" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>
-        <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(34, 197, 94, 0.1)' }}>
-          <CheckCircle className="w-10 h-10 text-green-600" />
-        </div>
-        <h2 className="text-3xl font-bold mb-4" style={{ color: 'var(--text-primary)' }}>Заявка отправлена!</h2>
-        <p className="mb-6" style={{ color: 'var(--text-secondary)' }}>
-          Ксения свяжется с вами в выбранной соцсети.
-        </p>
-        <div className="rounded-xl p-4 mb-6" style={{ backgroundColor: 'var(--primary-light)' }}>
-          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}><strong>Тип:</strong> {formData.category}</p>
-          <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}><strong>Тема:</strong> {formData.topic}</p>
-        </div>
-        <button
-          onClick={() => navigate('/')}
-          className="text-white px-8 py-3 rounded-xl font-semibold hover:shadow-lg transition"
-          style={{ backgroundColor: 'var(--bg-gradient-from)' }}
-        >
-          На главную
-        </button>
       </div>
     </div>
   );

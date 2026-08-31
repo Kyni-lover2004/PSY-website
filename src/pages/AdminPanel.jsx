@@ -295,7 +295,7 @@ const testsPromise = adminAPI.getTests().then(r => r.data).catch((err) => {
                   <div className="space-y-3">
                     {users.slice(0, 5).map(u => (
                       <div key={u.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                        <div><div className="font-semibold">{u.login}</div><div className="text-sm text-gray-500">{u.telegram ? '@' + u.telegram : 'Нет Telegram'}</div></div>
+                        <div className="font-semibold">{u.login}</div>
                         <span className={`px-3 py-1 rounded-full text-xs font-semibold ${u.role === 'admin' ? 'bg-red-100 text-red-800' : 'bg-gray-200 text-gray-700'}`}>{u.role}</span>
                       </div>
                     ))}
@@ -326,13 +326,13 @@ const testsPromise = adminAPI.getTests().then(r => r.data).catch((err) => {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead><tr className="bg-gray-100">
-                    <th className="p-3 text-left">ID</th><th className="p-3 text-left">Логин</th><th className="p-3 text-left">Telegram</th>
+                    <th className="p-3 text-left">ID</th><th className="p-3 text-left">Логин</th>
                     <th className="p-3 text-left">Пол</th><th className="p-3 text-left">Роль</th><th className="p-3 text-left">Действия</th>
                   </tr></thead>
                   <tbody>
                     {users.map(u => (
                       <tr key={u.id} className="border-b hover:bg-gray-50">
-                        <td className="p-3">{u.id}</td><td className="p-3 font-semibold">{u.login}</td><td className="p-3">{u.telegram || '-'}</td>
+                        <td className="p-3">{u.id}</td><td className="p-3 font-semibold">{u.login}</td>
                         <td className="p-3">{u.gender || '-'}</td>
                         <td className="p-3"><span className={`px-3 py-1 rounded-full text-xs font-semibold ${u.role === 'admin' ? 'bg-red-100 text-red-800' : 'bg-gray-200 text-gray-700'}`}>{u.role}</span></td>
                         <td className="p-3">
