@@ -15,6 +15,19 @@ function ok(data) {
   return { data };
 }
 
+// Ни один вход или регистрация не должны висеть бесконечно: без ответа
+// форма остаётся с крутящейся кнопкой и человек не понимает, что произошло.
+const AUTH_REQUEST_TIMEOUT_MS = 25000;
+
+function withTimeout(promise, message) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) =>
+      setTimeout(() => reject(apiError(504, message)), AUTH_REQUEST_TIMEOUT_MS)
+    ),
+  ]);
+}
+
 // Логин может содержать кириллицу, а email в Supabase Auth — нет.
 // Поэтому email детерминированно выводится из логина через SHA-256.
 // Домен должен реально существовать в DNS (Supabase отклоняет выдуманные),
@@ -83,11 +96,14 @@ export const authAPI = {
     }
 
     const email = await loginToEmail(cleanLogin);
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { login: cleanLogin, gender, orientation } },
-    });
+    const { data, error } = await withTimeout(
+      supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { login: cleanLogin, gender, orientation } },
+      }),
+      'Сервер не ответил вовремя. Проверьте соединение и попробуйте ещё раз.'
+    );
     if (error) {
       if (error.message?.includes('already registered')) {
         throw apiError(400, 'Пользователь уже существует');
@@ -107,7 +123,10 @@ export const authAPI = {
 
   login: async ({ login, password }) => {
     const email = await loginToEmail(login);
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await withTimeout(
+      supabase.auth.signInWithPassword({ email, password }),
+      'Сервер не ответил вовремя. Проверьте соединение и попробуйте ещё раз.'
+    );
     if (error) {
       throw apiError(401, 'Неверный логин или пароль');
     }
@@ -128,7 +147,7 @@ export const authAPI = {
   },
 
   logout: async () => {
-    await supabase.auth.signOut();
+    await withTimeout(supabase.auth.signOut(), 'Не удалось завершить сессию на сервере');
     return ok({ success: true });
   },
 };

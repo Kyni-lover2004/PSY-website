@@ -35,6 +35,12 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const logout = useCallback(async ({ skipRequest = false } = {}) => {
+    // Сначала выходим локально: если запрос к Supabase зависнет, пользователь
+    // всё равно окажется разлогинен, а не останется ждать неизвестно чего.
+    clearSessionData();
+    setToken(null);
+    setUser(null);
+
     if (!skipRequest) {
       try {
         await authAPI.logout();
@@ -42,9 +48,6 @@ export const AuthProvider = ({ children }) => {
         console.error('Logout request failed:', error);
       }
     }
-    clearSessionData();
-    setToken(null);
-    setUser(null);
   }, [clearSessionData]);
 
   useEffect(() => {

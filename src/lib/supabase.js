@@ -30,11 +30,36 @@ function resolveKey(raw) {
 const supabaseUrl = resolveUrl(import.meta.env.VITE_SUPABASE_URL);
 const supabaseAnonKey = resolveKey(import.meta.env.VITE_SUPABASE_ANON_KEY);
 
+// Штатная блокировка supabase (navigator.locks) иногда залипает: одна
+// незавершённая операция авторизации вешает все последующие — вход, выход,
+// обновление токена — и висят они бесконечно. Ждём блокировку ограниченное
+// время, после чего выполняем операцию без неё.
+const LOCK_TIMEOUT_MS = 5000;
+
+async function lockWithTimeout(name, _acquireTimeout, fn) {
+  if (typeof navigator === 'undefined' || !navigator.locks?.request) return fn();
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), LOCK_TIMEOUT_MS);
+  try {
+    return await navigator.locks.request(name, { signal: controller.signal }, fn);
+  } catch (error) {
+    if (error?.name === 'AbortError') {
+      console.warn('Блокировка авторизации не освободилась, продолжаем без неё');
+      return fn();
+    }
+    throw error;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: false,
+    lock: lockWithTimeout,
   },
 });
 
